@@ -2,17 +2,15 @@
 export const incident = {
   id: 'INC-2847',
   severity: 'critical',
-  title: 'Payment service p99 latency 12x baseline',
-  summary: 'Payment service is 12x slower than normal. 3 other services are affected. Nothing was deployed recently.',
+  title: 'Payment service 12× slower',
+  summary: 'ECS tasks on payment-service-east-2 are hitting memory limits and getting killed. 3 downstream services are degraded.',
   timestamp: '2:03 AM',
-  acknowledgedAt: null,
 
-  // AI-generated brief (phone view)
+  // AI-generated brief
   brief: {
-    hypothesis: 'Connection pool exhaustion on payment-service-east-2',
-    details: 'Memory pressure spike detected at 1:47am. No deployment in last 6 hours. Upstream traffic is normal.',
+    hypothesis: 'ECS tasks on payment-service-east-2 hit memory limits. Tasks are OOM-killed and restarting in a loop. No deploys in 6h. Traffic normal.',
     confidence: 'high',
-    rootCauseType: 'infrastructure',
+    rootCauseType: 'ECS memory exhaustion',
   },
 
   // Blast radius
@@ -28,42 +26,43 @@ export const incident = {
 
   // Timeline
   timeline: [
-    { time: '1:47 AM', event: 'Memory pressure spike on payment-service-east-2', type: 'signal' },
-    { time: '1:52 AM', event: 'Connection pool utilization hits 95%', type: 'signal' },
-    { time: '1:58 AM', event: 'p99 latency crosses 1,000ms threshold', type: 'alert' },
-    { time: '2:01 AM', event: 'Downstream services begin degrading', type: 'signal' },
-    { time: '2:03 AM', event: 'Critical alert fired — PagerDuty notified', type: 'alert' },
+    { time: '1:47 AM', event: 'Memory usage on payment-service-east-2 crosses 90%', type: 'signal' },
+    { time: '1:52 AM', event: 'First ECS task OOM-killed, replacement task starts', type: 'signal' },
+    { time: '1:55 AM', event: 'Second task OOM-killed — restart loop begins', type: 'alert' },
+    { time: '1:58 AM', event: 'p99 latency crosses 1,000ms', type: 'signal' },
+    { time: '2:01 AM', event: 'Checkout, order, and inventory services start degrading', type: 'signal' },
+    { time: '2:03 AM', event: 'Critical alert fired', type: 'alert' },
   ],
 
   // AI reasoning steps
   reasoning: [
-    { step: 1, action: 'Checked recent deployments', result: 'None in last 6 hours', status: 'clear' },
-    { step: 2, action: 'Analyzed traffic patterns', result: 'Upstream traffic normal — not a load spike', status: 'clear' },
-    { step: 3, action: 'Correlated memory metrics', result: 'Memory pressure spike at 1:47am on payment-service-east-2', status: 'found' },
-    { step: 4, action: 'Checked connection pool metrics', result: 'Pool utilization at 98%, max connections reached', status: 'found' },
-    { step: 5, action: 'Mapped downstream impact', result: '3 services degraded via dependency chain', status: 'found' },
+    { step: 1, action: 'Checked recent deployments', result: 'None in last 6 hours — not a bad deploy', status: 'clear' },
+    { step: 2, action: 'Checked incoming traffic', result: 'Normal levels — not a traffic spike', status: 'clear' },
+    { step: 3, action: 'Checked ECS task metrics', result: 'Memory at 98%, tasks OOM-killed 6 times since 1:52am', status: 'found' },
+    { step: 4, action: 'Checked task definition', result: 'Memory limit set to 512MB — likely too low for current workload', status: 'found' },
+    { step: 5, action: 'Mapped downstream impact', result: '3 services degraded via dependency chain from payment-service', status: 'found' },
   ],
 
   // Suggested queries (console view)
   suggestedQueries: [
     {
-      label: 'Connection pool metrics',
-      query: 'SELECT avg(pool_active), max(pool_active), avg(pool_idle)\nFROM payment_service_metrics\nWHERE time > now() - 2h\nGROUP BY time(1m)',
+      label: 'ECS task memory over time',
+      query: 'SELECT AVG(MemoryUtilization)\nFROM ECS/ContainerInsights\nWHERE ServiceName = "payment-service"\nGROUP BY TaskId\nORDER BY time DESC',
     },
     {
-      label: 'Memory pressure timeline',
-      query: 'fields @timestamp, memory_used_percent, gc_pause_ms\n| filter service = "payment-service-east-2"\n| sort @timestamp desc\n| limit 200',
+      label: 'OOM kill events',
+      query: 'fields @timestamp, @message\n| filter @message like /OOM/\n| filter service = "payment-service-east-2"\n| sort @timestamp desc\n| limit 50',
     },
     {
-      label: 'Error rate by endpoint',
-      query: 'fields @timestamp, endpoint, status_code\n| filter service = "payment-service" AND status_code >= 500\n| stats count() by endpoint, bin(5m)',
+      label: 'Downstream error rates',
+      query: 'fields @timestamp, service, status_code\n| filter status_code >= 500\n| filter service in ["checkout-service", "order-service", "inventory-service"]\n| stats count() by service, bin(5m)',
     },
   ],
 
   // Remediation options
   remediations: [
-    { id: 'pool-fix', label: 'Run connection pool remediation playbook', description: 'Restarts connection pool, increases max connections from 50 to 100', risk: 'low' },
-    { id: 'rollback', label: 'Rollback last config change', description: 'Reverts config deployed 18 hours ago (pool timeout reduction)', risk: 'medium' },
-    { id: 'restart', label: 'Rolling restart payment-service-east-2', description: 'Graceful restart of all instances in the region', risk: 'medium' },
+    { id: 'restart', label: 'Restart ECS tasks with more memory', description: 'Recycles payment service tasks one at a time with 1GB memory (up from 512MB). No downtime.', risk: 'low' },
+    { id: 'scale', label: 'Scale out payment service', description: 'Adds 2 more tasks to spread the load across more instances.', risk: 'low' },
+    { id: 'rollback', label: 'Rollback task definition', description: 'Reverts to the previous task definition from 3 days ago.', risk: 'medium' },
   ],
 }

@@ -1,16 +1,10 @@
 import { useState } from 'react'
 import {
-  Warning, WarningCircle, CheckCircle, Sparkle, Lightning,
+  Warning, WarningCircle, CheckCircle, Lightning,
   ArrowClockwise, Copy, Play, CaretDown, CaretUp,
   Clock, ArrowRight, FileText
 } from '@phosphor-icons/react'
 import { incident } from '../data/incident'
-
-function StatusDot({ status }) {
-  const color = status === 'critical' ? 'bg-status-outage' :
-    status === 'degraded' ? 'bg-status-blocked' : 'bg-status-active'
-  return <div className={`w-2 h-2 rounded-full ${color}`} />
-}
 
 function StatusBadge({ status }) {
   const config = {
@@ -20,7 +14,7 @@ function StatusBadge({ status }) {
   }
   const c = config[status]
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase ${c.bg} border ${c.border} ${c.text}`}>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${c.bg} border ${c.border} ${c.text}`}>
       {c.label}
     </span>
   )
@@ -33,53 +27,57 @@ function DependencyMap() {
   const healthy = services.filter(s => s.status === 'healthy')
 
   return (
-    <div className="flex flex-col items-center gap-6 py-4">
-      {/* Critical - center */}
-      <div className="flex gap-3">
-        {critical.map(s => (
-          <div key={s.name} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-status-outage/8 border border-status-outage/20">
-            <div className="w-3 h-3 rounded-full bg-status-outage animate-pulse" />
-            <span className="text-[10px] font-semibold text-foreground text-center">{s.name}</span>
-            <span className="text-[9px] text-foreground-muted">{s.region}</span>
-            <span className="text-[11px] font-mono font-semibold text-status-outage">{s.latency}</span>
-          </div>
-        ))}
-      </div>
+    <svg viewBox="0 0 280 180" className="w-full" fill="none">
+      {/* Lines */}
+      <line x1="140" y1="42" x2="50" y2="110" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.4">
+        <animate attributeName="strokeDasharray" values="0 4 4 0;4 4" dur="1.5s" repeatCount="indefinite" />
+      </line>
+      <line x1="140" y1="46" x2="140" y2="100" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
+        <animate attributeName="strokeDashoffset" values="0;-6" dur="1s" repeatCount="indefinite" />
+      </line>
+      <line x1="140" y1="42" x2="230" y2="110" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
+        <animate attributeName="strokeDashoffset" values="0;-6" dur="1s" repeatCount="indefinite" />
+      </line>
 
-      {/* Arrow down */}
-      <div className="flex flex-col items-center gap-1">
-        <div className="w-px h-4 bg-border-muted" />
-        <span className="text-[9px] text-foreground-muted">affects</span>
-        <div className="w-px h-4 bg-border-muted" />
-      </div>
+      {/* Root — payment */}
+      <circle cx="140" cy="30" r="22" fill="#0a0e1a" stroke="#ef4444" strokeWidth="2">
+        <animate attributeName="strokeOpacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="140" cy="30" r="24" fill="none" stroke="#ef4444" strokeWidth="0.5" strokeOpacity="0.2">
+        <animate attributeName="r" values="24;28;24" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="strokeOpacity" values="0.2;0;0.2" dur="2s" repeatCount="indefinite" />
+      </circle>
+      <text x="140" y="34" textAnchor="middle" fill="white" fontSize="11" fontWeight="600" fontFamily="monospace">2.4s</text>
+      <circle cx="158" cy="14" r="7" fill="#ef4444" />
+      <text x="158" y="17.5" textAnchor="middle" fill="white" fontSize="8" fontWeight="700">3</text>
+      <text x="140" y="62" textAnchor="middle" fill="white" fillOpacity="0.8" fontSize="9" fontWeight="500">Payment</text>
 
       {/* Degraded */}
-      <div className="flex gap-3 flex-wrap justify-center">
-        {degraded.map(s => (
-          <div key={s.name} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-status-blocked/6 border border-status-blocked/15">
-            <div className="w-2.5 h-2.5 rounded-full bg-status-blocked" />
-            <span className="text-[10px] font-semibold text-foreground text-center">{s.name}</span>
-            <span className="text-[9px] text-foreground-muted">{s.region}</span>
-            <span className="text-[11px] font-mono text-status-blocked">{s.latency}</span>
-          </div>
-        ))}
-      </div>
+      <circle cx="50" cy="115" r="18" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
+      <text x="50" y="119" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="monospace">1.8s</text>
+      <circle cx="65" cy="101" r="3.5" fill="#f59e0b" />
+      <text x="50" y="142" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="8">Checkout</text>
 
-      {/* Healthy */}
-      <div className="flex gap-3 flex-wrap justify-center">
-        {healthy.map(s => (
-          <div key={s.name} className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-background-surface-1 border border-border-muted">
-            <div className="w-2 h-2 rounded-full bg-status-active" />
-            <span className="text-[10px] text-foreground-muted text-center">{s.name}</span>
-            <span className="text-[9px] text-foreground-disabled">{s.region}</span>
-          </div>
-        ))}
-      </div>
-    </div>
+      <circle cx="140" cy="115" r="18" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
+      <text x="140" y="119" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="monospace">900ms</text>
+      <circle cx="155" cy="101" r="3.5" fill="#f59e0b" />
+      <text x="140" y="142" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="8">Order</text>
+
+      <circle cx="230" cy="115" r="18" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
+      <text x="230" y="119" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="monospace">600ms</text>
+      <circle cx="245" cy="101" r="3.5" fill="#f59e0b" />
+      <text x="230" y="142" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="8">Inventory</text>
+
+      {/* Healthy cluster */}
+      <circle cx="260" cy="30" r="12" fill="#0a0e1a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
+      <text x="260" y="34" textAnchor="middle" fill="#22c55e" fontSize="9" fontWeight="600">3</text>
+      <circle cx="269" cy="22" r="3" fill="#22c55e" fillOpacity="0.8" />
+      <text x="260" y="50" textAnchor="middle" fill="white" fillOpacity="0.3" fontSize="8">Healthy</text>
+    </svg>
   )
 }
 
-function QueryCard({ query, onRun }) {
+function QueryCard({ query }) {
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -104,7 +102,6 @@ function QueryCard({ query, onRun }) {
             }
           </button>
           <button
-            onClick={() => onRun(query)}
             className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors duration-hover"
             aria-label="Run query"
           >
@@ -141,8 +138,16 @@ export default function ConsoleView() {
         <header className="border-b border-border-muted px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <Warning size={16} className="text-status-outage" />
-              <span className="text-heading-m font-normal text-foreground">{incident.id}</span>
+              <svg width="14" height="16" viewBox="0 0 28 32" fill="none">
+                <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
+                <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
+              </svg>
+              <span className="text-heading-m font-normal text-foreground">CloudWatch Omni</span>
+            </div>
+            <span className="text-foreground-muted">·</span>
+            <div className="flex items-center gap-2">
+              <Warning size={14} className="text-status-outage" />
+              <span className="text-body-s text-foreground">{incident.id}</span>
             </div>
             <StatusBadge status="critical" />
             <span className="text-body-s text-foreground-muted">
@@ -157,7 +162,7 @@ export default function ConsoleView() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-body-s text-primary hover:bg-primary/15 transition-colors duration-hover"
               >
                 <FileText size={14} />
-                Generate Post-Mortem
+                Generate post-mortem
               </button>
             )}
           </div>
@@ -166,7 +171,6 @@ export default function ConsoleView() {
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-6 py-6">
-            {/* Page title */}
             <h1 className="text-heading-xl font-normal tracking-tighter text-foreground mb-1">
               {incident.title}
             </h1>
@@ -176,17 +180,13 @@ export default function ConsoleView() {
 
             {/* Post-mortem banner */}
             {postMortem && (
-              <div className="ai-glass-card p-4 mb-6 flex items-start gap-3">
-                <Sparkle size={16} className="text-primary mt-0.5" />
-                <div>
-                  <span className="text-heading-s font-normal text-foreground block mb-1">
-                    Post-mortem draft generated
-                  </span>
-                  <p className="text-body-s text-foreground-secondary">
-                    AI has drafted a post-mortem with timeline, root cause analysis, and action items
-                    pre-populated from this incident. Review and edit before publishing.
-                  </p>
-                </div>
+              <div className="ai-glass-card p-4 mb-6">
+                <span className="text-heading-s font-normal text-foreground block mb-1">
+                  Post-mortem draft generated
+                </span>
+                <p className="text-body-s text-foreground-secondary">
+                  AI drafted a post-mortem with timeline, root cause, and action items from this incident. Review and edit before publishing.
+                </p>
               </div>
             )}
 
@@ -195,27 +195,20 @@ export default function ConsoleView() {
               <div className="lg:col-span-2 space-y-3">
                 {/* AI Brief */}
                 <div className="ai-glass-card p-4 space-y-3">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkle size={14} className="text-primary" />
-                    <span className="text-[9px] font-bold tracking-wider uppercase text-primary">
-                      AI-Generated Incident Brief
-                    </span>
-                  </div>
+                  <span className="text-body-s font-semibold text-orange-400">AI analysis</span>
                   <p className="text-body-m text-foreground leading-relaxed">
-                    <span className="font-semibold">Root cause hypothesis:</span>{' '}
-                    {incident.brief.hypothesis}. Correlated signals: memory pressure spike at 1:47am,
-                    no deployment in last 6 hours, upstream traffic normal.
+                    {incident.brief.hypothesis}
                   </p>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-body-s text-foreground-muted">Confidence:</span>
+                      <span className="text-body-s text-foreground-muted">Confidence</span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-status-active/10 border border-status-active/20 text-[10px] font-semibold text-status-active">
                         High
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-body-s text-foreground-muted">Type:</span>
-                      <span className="text-body-s text-foreground capitalize">{incident.brief.rootCauseType}</span>
+                      <span className="text-body-s text-foreground-muted">Root cause</span>
+                      <span className="text-body-s text-foreground">{incident.brief.rootCauseType}</span>
                     </div>
                   </div>
                 </div>
@@ -226,12 +219,9 @@ export default function ConsoleView() {
                     onClick={() => setShowReasoning(!showReasoning)}
                     className="flex items-center justify-between w-full mb-3"
                   >
-                    <div className="flex items-center gap-1.5">
-                      <Sparkle size={14} className="text-primary" />
-                      <span className="text-heading-s font-normal text-foreground">
-                        AI Reasoning Steps
-                      </span>
-                    </div>
+                    <span className="text-heading-s font-normal text-foreground">
+                      How AI reached this conclusion
+                    </span>
                     {showReasoning
                       ? <CaretUp size={14} className="text-foreground-muted" />
                       : <CaretDown size={14} className="text-foreground-muted" />
@@ -260,11 +250,11 @@ export default function ConsoleView() {
                 {/* Suggested Queries */}
                 <div>
                   <h3 className="text-heading-s font-normal text-foreground mb-3">
-                    AI-Suggested Queries
+                    Suggested queries
                   </h3>
                   <div className="space-y-3">
                     {incident.suggestedQueries.map((q, i) => (
-                      <QueryCard key={i} query={q} onRun={() => {}} />
+                      <QueryCard key={i} query={q} />
                     ))}
                   </div>
                 </div>
@@ -275,7 +265,7 @@ export default function ConsoleView() {
                 {/* Dependency Map */}
                 <div className="glass-card p-4">
                   <h3 className="text-heading-s font-normal text-foreground mb-2">
-                    Dependency Map
+                    Service map
                   </h3>
                   <DependencyMap />
                 </div>
@@ -312,7 +302,7 @@ export default function ConsoleView() {
                     <div className="p-3 rounded-lg bg-status-active/8 border border-status-active/20 flex items-center gap-2">
                       <CheckCircle size={16} className="text-status-active" weight="bold" />
                       <span className="text-body-s text-status-active font-semibold">
-                        Remediation applied successfully
+                        Fix applied successfully
                       </span>
                     </div>
                   ) : (
@@ -339,8 +329,8 @@ export default function ConsoleView() {
                               <ArrowRight size={14} className="text-foreground-muted" />
                             )}
                           </div>
-                          <p className="text-[11px] text-foreground-muted mt-1 ml-5">{r.description}</p>
-                          <span className={`text-[9px] font-bold tracking-wider uppercase mt-1.5 ml-5 inline-block ${
+                          <p className="text-body-s text-foreground-muted mt-1 ml-5">{r.description}</p>
+                          <span className={`text-[10px] font-semibold mt-1.5 ml-5 inline-block ${
                             r.risk === 'low' ? 'text-status-active' : 'text-status-blocked'
                           }`}>
                             {r.risk} risk
