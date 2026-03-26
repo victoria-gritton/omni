@@ -1,0 +1,57 @@
+import { SquaresFour, TrendUp, Stack, Globe, ChartBar, Triangle, Database, Gear, Bell, User, MagnifyingGlass } from '@phosphor-icons/react'
+
+const navItems = [
+  { icon: SquaresFour, label: 'Overview' },
+  { icon: TrendUp, label: 'Signals' },
+  { icon: Stack, label: 'Services' },
+  { icon: Globe, label: 'Map' },
+  { icon: ChartBar, label: 'Metrics' },
+  { icon: Triangle, label: 'Alarms', active: true },
+  { icon: Database, label: 'Logs' },
+  { icon: Gear, label: 'Settings' },
+]
+
+export default function ConsoleLayout({ children }) {
+  return (
+    <div className="h-screen flex overflow-hidden">
+      <div className="gradient-bg-dark" />
+      <div className="content-layer h-full flex w-full">
+        <nav className="w-14 border-r border-border-muted flex flex-col items-center py-3 gap-1 flex-shrink-0">
+          <div className="mb-4">
+            <svg width="28" height="32" viewBox="0 0 28 32" fill="none">
+              <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
+              <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
+            </svg>
+          </div>
+          {navItems.map(({ icon: Icon, label, active }) => (
+            <button key={label} className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-foreground-muted hover:text-foreground hover:bg-background-surface-2'}`} aria-label={label}>
+              <Icon size={20} />
+            </button>
+          ))}
+        </nav>
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2 bg-background-surface-1 rounded-lg px-3 py-1.5 w-80">
+              <MagnifyingGlass size={14} className="text-foreground-muted" />
+              <span className="text-body-s text-foreground-disabled">Search services, metrics, traces...</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-status-active" />
+                <span className="text-body-s text-foreground-muted">Live</span>
+              </div>
+              <button className="p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted"><Gear size={16} /></button>
+              <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
+                <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
+              </button>
+              <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                <User size={14} className="text-primary" />
+              </div>
+            </div>
+          </header>
+          <div className="flex-1 overflow-y-auto">{children}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
