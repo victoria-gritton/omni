@@ -1,222 +1,167 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Warning, WarningCircle, CheckCircle, ArrowRight,
-  Lightning, ArrowClockwise, Sparkle, CaretDown, CaretUp
+  Warning, CheckCircle, ArrowRight, Lightning, Sparkle
 } from '@phosphor-icons/react'
 import { incident } from '../data/incident'
 
-function StatusBadge({ status }) {
-  const config = {
-    critical: { bg: 'bg-status-outage/10', border: 'border-status-outage/20', text: 'text-status-outage', label: 'Critical' },
-    degraded: { bg: 'bg-status-blocked/10', border: 'border-status-blocked/20', text: 'text-status-blocked', label: 'Degraded' },
-    healthy: { bg: 'bg-status-active/10', border: 'border-status-active/20', text: 'text-status-active', label: 'Healthy' },
-  }
-  const c = config[status]
-  return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase ${c.bg} border ${c.border} ${c.text}`}>
-      {c.label}
-    </span>
-  )
-}
-
-function TimelineItem({ item, isLast }) {
-  const isAlert = item.type === 'alert'
-  return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center">
-        <div className={`w-2 h-2 rounded-full mt-1.5 ${isAlert ? 'bg-status-outage' : 'bg-primary'}`} />
-        {!isLast && <div className="w-px flex-1 bg-border-muted mt-1" />}
-      </div>
-      <div className="pb-4">
-        <span className="text-[10px] text-foreground-muted block">{item.time}</span>
-        <span className="text-[12px] text-foreground leading-tight">{item.event}</span>
-      </div>
-    </div>
-  )
-}
-
-function ReasoningStep({ step }) {
-  const icon = step.status === 'found'
-    ? <WarningCircle size={14} className="text-status-blocked" />
-    : <CheckCircle size={14} className="text-status-active" />
-  return (
-    <div className="flex items-start gap-2 py-2 border-b border-border-muted last:border-0">
-      <div className="mt-0.5">{icon}</div>
-      <div>
-        <span className="text-[12px] text-foreground block">{step.action}</span>
-        <span className="text-[11px] text-foreground-muted">{step.result}</span>
-      </div>
-    </div>
-  )
+function StatusDot({ status }) {
+  const color = status === 'critical' ? 'bg-red-500' :
+    status === 'degraded' ? 'bg-amber-500' : 'bg-green-500'
+  return <div className={`w-1.5 h-1.5 rounded-full ${color}`} />
 }
 
 export default function PhoneView() {
   const navigate = useNavigate()
-  const [showReasoning, setShowReasoning] = useState(false)
-  const [remediating, setRemediating] = useState(null)
-
-  function handleRemediate(id) {
-    setRemediating(id)
-    setTimeout(() => navigate('/console'), 1200)
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center py-8">
       <div className="gradient-bg-dark" />
       <div className="content-layer flex flex-col items-center gap-6">
-        {/* Label */}
         <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">
           iPhone · 2:05 AM
         </span>
 
         {/* Phone frame */}
-        <div className="w-[390px] min-h-[700px] rounded-[44px] border-2 border-border bg-background overflow-hidden flex flex-col">
+        <div className="w-[390px] h-[844px] rounded-[44px] border-2 border-border bg-black overflow-hidden flex flex-col">
           {/* Status bar */}
           <div className="flex items-center justify-between px-8 pt-4 pb-2">
-            <span className="text-[12px] text-foreground-muted font-semibold">2:05 AM</span>
-            <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-status-outage animate-pulse" />
-              <span className="text-[10px] text-status-outage font-semibold">{incident.id}</span>
+            <span className="text-[12px] text-white/60 font-semibold">2:05 AM</span>
+            <div className="flex items-center gap-1.5">
+              <svg width="10" height="12" viewBox="0 0 28 32" fill="none">
+                <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
+                <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
+              </svg>
+              <span className="text-[10px] text-white/40 font-medium">CloudWatch Omni</span>
             </div>
           </div>
 
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-6 pb-8 space-y-4">
-            {/* Incident header */}
-            <div className="pt-2">
-              <div className="flex items-center gap-2 mb-2">
-                <Warning size={16} className="text-status-outage" />
-                <span className="text-[9px] font-bold tracking-wider uppercase text-status-outage">
-                  Critical Incident
+          {/* Content */}
+          <div className="flex-1 px-5 pb-6 flex flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-3">
+              <Warning size={18} weight="fill" className="text-red-500" />
+              <div>
+                <span className="text-[10px] font-bold tracking-wider uppercase text-red-400 block">
+                  Critical · {incident.id}
                 </span>
+                <h1 className="text-[17px] leading-[22px] font-semibold text-white">
+                  Payment service 12× slower
+                </h1>
               </div>
-              <h1 className="text-heading-l font-normal text-foreground">
-                {incident.title}
-              </h1>
             </div>
 
             {/* AI Brief */}
-            <div className="ai-glass-card p-4 space-y-3">
-              <div className="flex items-center gap-1.5">
-                <Sparkle size={14} className="text-primary" />
-                <span className="text-[9px] font-bold tracking-wider uppercase text-primary">
-                  AI Analysis
-                </span>
-              </div>
-              <p className="text-body-s text-foreground leading-relaxed">
-                <span className="text-foreground font-semibold">Best guess:</span>{' '}
-                {incident.brief.hypothesis}. Memory started spiking at 1:47am.
-                Nothing was deployed in the last 6 hours. Incoming traffic looks normal.
+            <div className="ai-glass-card p-3 mb-3">
+              <p className="text-[13px] leading-[18px] text-white/90">
+                <span className="text-orange-400 text-[10px] font-bold tracking-wider uppercase mr-1">AI</span>
+                Connection pool exhaustion on payment-service-east-2. Memory spike at 1:47am. No deploys in 6h. Traffic normal.
               </p>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-foreground-muted">Confidence:</span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-status-active/10 border border-status-active/20 text-[10px] font-semibold text-status-active">
-                  High
-                </span>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] text-white/40">Confidence</span>
+                <span className="text-[10px] font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full">High</span>
+                <span className="text-[10px] text-white/40 ml-2">Root cause</span>
+                <span className="text-[10px] font-semibold text-white/70">ECS memory exhaustion</span>
               </div>
             </div>
 
-            {/* Blast radius */}
-            <div className="glass-card p-4">
-              <h3 className="text-heading-s font-normal text-foreground mb-3">
+            {/* Blast radius — mini service map */}
+            <div className="glass-card p-3 mb-3">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-white/40 block mb-2">
                 Blast Radius
-              </h3>
-              <div className="space-y-2">
-                {incident.services.map((svc) => (
-                  <div key={svc.name} className="flex items-center justify-between py-1.5 border-b border-border-muted last:border-0">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        svc.status === 'critical' ? 'bg-status-outage' :
-                        svc.status === 'degraded' ? 'bg-status-blocked' : 'bg-status-active'
-                      }`} />
-                      <span className="text-body-s text-foreground">{svc.name}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[11px] font-mono text-foreground-muted">{svc.latency}</span>
-                      <StatusBadge status={svc.status} />
+              </span>
+              <svg viewBox="0 0 340 140" className="w-full" fill="none">
+                {/* Connection lines with animated dashes */}
+                {/* payment → checkout */}
+                <line x1="170" y1="38" x2="60" y2="90" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.4">
+                  <animate attributeName="strokeDasharray" values="0 4 4 0;4 4" dur="1.5s" repeatCount="indefinite" />
+                </line>
+                {/* payment → order */}
+                <line x1="170" y1="42" x2="170" y2="82" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
+                  <animate attributeName="strokeDashoffset" values="0;-6" dur="1s" repeatCount="indefinite" />
+                </line>
+                {/* payment → inventory */}
+                <line x1="170" y1="38" x2="280" y2="90" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
+                  <animate attributeName="strokeDashoffset" values="0;-6" dur="1s" repeatCount="indefinite" />
+                </line>
+
+                {/* Root node — payment (critical) */}
+                <circle cx="170" cy="28" r="20" fill="#0a0e1a" stroke="#ef4444" strokeWidth="2">
+                  <animate attributeName="strokeOpacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
+                </circle>
+                {/* Glow */}
+                <circle cx="170" cy="28" r="22" fill="none" stroke="#ef4444" strokeWidth="0.5" strokeOpacity="0.2">
+                  <animate attributeName="r" values="22;26;22" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="strokeOpacity" values="0.2;0;0.2" dur="2s" repeatCount="indefinite" />
+                </circle>
+                <text x="170" y="32" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="monospace">2.4s</text>
+                {/* Badge */}
+                <circle cx="186" cy="14" r="6" fill="#ef4444" />
+                <text x="186" y="17" textAnchor="middle" fill="white" fontSize="7" fontWeight="700">3</text>
+                {/* Label */}
+                <text x="170" y="56" textAnchor="middle" fill="white" fillOpacity="0.8" fontSize="8" fontWeight="500">Payment</text>
+
+                {/* Degraded node — checkout */}
+                <circle cx="60" cy="95" r="16" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
+                <text x="60" y="99" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="monospace">1.8s</text>
+                {/* Status dot */}
+                <circle cx="73" cy="83" r="3" fill="#f59e0b" />
+                {/* Label */}
+                <text x="60" y="120" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="7">Checkout</text>
+
+                {/* Degraded node — order */}
+                <circle cx="170" cy="95" r="16" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
+                <text x="170" y="99" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="monospace">900ms</text>
+                <circle cx="183" cy="83" r="3" fill="#f59e0b" />
+                <text x="170" y="120" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="7">Order</text>
+
+                {/* Degraded node — inventory */}
+                <circle cx="280" cy="95" r="16" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
+                <text x="280" y="99" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="monospace">600ms</text>
+                <circle cx="293" cy="83" r="3" fill="#f59e0b" />
+                <text x="280" y="120" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="7">Inventory</text>
+
+                {/* Healthy cluster */}
+                <circle cx="320" cy="28" r="10" fill="#0a0e1a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
+                <text x="320" y="32" textAnchor="middle" fill="#22c55e" fontSize="8" fontWeight="600">3</text>
+                <circle cx="328" cy="21" r="2.5" fill="#22c55e" fillOpacity="0.8" />
+                <text x="320" y="46" textAnchor="middle" fill="white" fillOpacity="0.3" fontSize="7">Healthy</text>
+              </svg>
+            </div>
+
+            {/* Timeline — just the key moments */}
+            <div className="glass-card p-3 mb-3">
+              <span className="text-[10px] font-bold tracking-wider uppercase text-white/40 block mb-2">
+                Timeline
+              </span>
+              <div className="space-y-1.5">
+                {incident.timeline.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <div className={`w-1 h-1 rounded-full mt-1.5 flex-shrink-0 ${item.type === 'alert' ? 'bg-red-500' : 'bg-sky-500'}`} />
+                    <div className="flex gap-2 items-baseline">
+                      <span className="text-[10px] text-white/30 flex-shrink-0">{item.time}</span>
+                      <span className="text-[11px] text-white/60 leading-tight">{item.event}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* AI Reasoning (expandable) */}
-            <div className="glass-card p-4">
-              <button
-                onClick={() => setShowReasoning(!showReasoning)}
-                className="flex items-center justify-between w-full"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Sparkle size={14} className="text-primary" />
-                  <span className="text-heading-s font-normal text-foreground">
-                    How the AI figured this out
-                  </span>
-                </div>
-                {showReasoning
-                  ? <CaretUp size={14} className="text-foreground-muted" />
-                  : <CaretDown size={14} className="text-foreground-muted" />
-                }
-              </button>
-              {showReasoning && (
-                <div className="mt-3">
-                  {incident.reasoning.map((step) => (
-                    <ReasoningStep key={step.step} step={step} />
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Spacer */}
+            <div className="flex-1" />
 
-            {/* Timeline */}
-            <div className="glass-card p-4">
-              <h3 className="text-heading-s font-normal text-foreground mb-3">
-                Timeline
-              </h3>
-              {incident.timeline.map((item, i) => (
-                <TimelineItem key={i} item={item} isLast={i === incident.timeline.length - 1} />
-              ))}
-            </div>
-
-            {/* Remediation actions */}
-            <div className="glass-card p-4">
-              <h3 className="text-heading-s font-normal text-foreground mb-3">
-                Quick Actions
-              </h3>
-              <div className="space-y-2">
-                {incident.remediations.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => handleRemediate(r.id)}
-                    disabled={remediating !== null}
-                    className={`w-full text-left p-3 rounded-lg border transition-all duration-hover ${
-                      remediating === r.id
-                        ? 'bg-primary/10 border-primary/30'
-                        : 'bg-background-surface-1/50 border-border-muted hover:border-primary/30 hover:bg-primary/5'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Lightning size={14} className="text-primary" />
-                        <span className="text-body-s text-foreground font-semibold">{r.label}</span>
-                      </div>
-                      {remediating === r.id ? (
-                        <ArrowClockwise size={14} className="text-primary animate-spin" />
-                      ) : (
-                        <ArrowRight size={14} className="text-foreground-muted" />
-                      )}
-                    </div>
-                    <p className="text-[11px] text-foreground-muted mt-1 ml-5">{r.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Open console link */}
+            {/* Quick action */}
             <button
               onClick={() => navigate('/console')}
-              className="w-full py-3 rounded-lg border border-border-muted text-body-s text-foreground-secondary hover:text-foreground hover:border-primary/30 transition-all duration-hover flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-2xl bg-[#0a84ff] text-[15px] font-semibold text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform mb-2"
             >
-              Open full console
+              <Lightning size={16} weight="fill" />
+              Run Remediation Playbook
+            </button>
+            <button
+              onClick={() => navigate('/console')}
+              className="w-full h-10 rounded-2xl bg-white/5 border border-white/10 text-[13px] text-white/60 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              Open Console
               <ArrowRight size={14} />
             </button>
           </div>
