@@ -1,0 +1,109 @@
+/**
+ * SSO Design System — Design Tokens & Theme
+ *
+ * Non-theme-dependent styles: glass utilities, typography, light mode placeholder.
+ * The actual CSS custom properties (using theme()) live in index.css
+ * inside @layer base, where Tailwind can resolve them in both dev and prod.
+ */
+
+/* New Glass - Light Mode (placeholder — values TBD) */
+/*
+.new-glass-light {
+  --background: ...;
+  --foreground: ...;
+  ... light mode tokens to be defined ...
+}
+*/
+
+/* New Glass typography — DM Sans everywhere, JetBrains Mono for code */
+.new-glass body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* All headings use font-weight 400 (normal) */
+.new-glass h1,
+.new-glass h2,
+.new-glass h3,
+.new-glass h4,
+.new-glass h5,
+.new-glass h6 {
+  font-weight: 400;
+}
+
+.new-glass code,
+.new-glass pre,
+.new-glass .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* New Glass — glass utility overrides */
+.new-glass .glass-card,
+.new-glass .glass-card-hover {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.new-glass .glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur-panel));
+  -webkit-backdrop-filter: blur(var(--glass-blur-panel));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.new-glass .glass-metric {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur-metric));
+  -webkit-backdrop-filter: blur(var(--glass-blur-metric));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ── Background Gradients ── */
+
+/* Dark mode — deep navy with subtle radial color accents */
+.gradient-bg-dark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-color: hsla(228, 84%, 4%, 1);
+  background-image:
+    radial-gradient(circle at 0% 0%, hsla(203, 86%, 53%, 0.15) 3.12%, transparent 40%),
+    radial-gradient(circle at 100% 0%, hsla(293, 77%, 74%, 0.15) 3%, transparent 40%),
+    radial-gradient(circle at 50% 0%, hsla(236, 77%, 74%, 0.15) 4%, transparent 40%);
+  background-blend-mode: normal;
+}
+
+/* Light mode — white with soft radial color accents */
+.gradient-bg-light {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-color: hsla(204, 0%, 100%, 1);
+  background-image:
+    radial-gradient(circle at 0% 0%, hsla(203, 86%, 53%, 0.2) 3.12%, transparent 40%),
+    radial-gradient(circle at 100% 0%, hsla(282, 77%, 74%, 0.2) 3%, transparent 40%),
+    radial-gradient(circle at 50% 0%, hsla(236, 77%, 74%, 0.24) 4%, transparent 40%);
+  background-blend-mode: normal;
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
