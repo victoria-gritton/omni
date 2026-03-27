@@ -21,8 +21,13 @@ export default function ConsoleLayout({ children }) {
         <nav className="w-14 border-r border-border-muted flex flex-col items-center py-3 gap-1 flex-shrink-0">
           <div className="mb-4 cursor-pointer" onClick={() => navigate('/home')}>
             <svg width="28" height="32" viewBox="0 0 28 32" fill="none">
-              <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
-              <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
+              <rect x="2" y="0" width="24" height="24" rx="12" stroke="#475569" strokeWidth="3.5" fill="none">
+                <animate attributeName="rx" values="12;6;12" dur="6s" repeatCount="indefinite" />
+              </rect>
+              <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9">
+                <animate attributeName="width" values="22;16;22" dur="6s" repeatCount="indefinite" />
+                <animate attributeName="x" values="3;6;3" dur="6s" repeatCount="indefinite" />
+              </rect>
             </svg>
           </div>
           {navItems.map(({ icon: Icon, label, active, path }) => (
