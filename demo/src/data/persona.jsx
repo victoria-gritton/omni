@@ -159,8 +159,48 @@ const maria = {
       { id: 't3-cross-account', title: 'Set up cross-account observability', question: 'Want to link your staging account (novamart-staging) for unified monitoring?', suggestion: 'I\'ll generate a CloudFormation template for both accounts. Someone with admin access will need to deploy it.', icon: 'link' },
     ]},
   },
+  // Widget display data — persona-specific
+  widgetData: {
+    alarms: { total: 42, ok: 42, alarm: 0, insufficient: 0, nearThreshold: [
+      { name: 'payment-service', metric: 'CPU', value: 72, threshold: 90, unit: '%' },
+      { name: 'orders-db', metric: 'ReadLatency', value: 14, threshold: 20, unit: 'ms' },
+      { name: 'checkout-service', metric: 'Memory', value: 68, threshold: 85, unit: '%' },
+    ]},
+    dashboard: { metrics: [
+      { name: 'API GW', color: '#0ea5e9' },
+      { name: 'Checkout', color: '#8b5cf6' },
+      { name: 'Payment', color: '#f59e0b' },
+      { name: 'Orders DB', color: '#22c55e' },
+    ]},
+    anomaly: { detectors: [
+      { metric: 'API GW requests', distance: '12%' },
+      { metric: 'ECS CPU', distance: '24%' },
+      { metric: 'RDS latency', distance: '8%' },
+      { metric: 'Lambda duration', distance: '31%' },
+      { metric: 'SQS age', distance: '5%' },
+    ]},
+    logs: { total: 14, standard: 13, ia: 1, topByVolume: [
+      { name: 'checkout-service', volume: '1.8 GB/day' },
+      { name: 'payment-service', volume: '1.2 GB/day' },
+      { name: 'api-gateway', volume: '0.9 GB/day' },
+    ]},
+    traces: { latency: [
+      { label: 'p50', value: '82ms' },
+      { label: 'p95', value: '210ms' },
+      { label: 'p99', value: '480ms' },
+    ]},
+    cwAgent: { services: [
+      { name: 'checkout', mem: 62 }, { name: 'payment', mem: 58 },
+      { name: 'user', mem: 45 }, { name: 'order', mem: 41 },
+      { name: 'inventory', mem: 33 }, { name: 'search', mem: 52 },
+    ]},
+    containerInsights: { clusters: [
+      { name: 'east-1', tasks: 13 }, { name: 'east-2', tasks: 10 }, { name: 'west-1', tasks: 3 },
+    ]},
+    logClass: { saved: '~$12/mo', detail: 'notification-service → Infrequent Access. image-processor → Standard (kept).' },
+    appSignals: { detail: 'Service map, latency breakdown, and error tracking enabled.' },
+  },
   agentActivity: [
-    { time: 'Just now', action: 'Scanned 2 accounts, discovered 16 services across 3 regions' },
     { time: 'Just now', action: 'Mapped service dependencies: api-gateway → checkout → payment → orders-db' },
     { time: 'Just now', action: 'Found 0 alarms, 0 dashboards, 0 traces configured' },
     { time: 'Just now', action: 'Analyzed 14 days of default metrics to establish baselines' },
@@ -336,6 +376,54 @@ const james = {
       { id: 't3-datadog', title: 'Plan Datadog migration', question: '4 accounts still use Datadog. Want to create a migration plan with parallel running?', suggestion: 'I can set up dual-shipping (metrics to both CW and Datadog) for 30 days, then cut over. Estimated savings: ~$8,000/mo.', icon: 'route' },
       { id: 't3-genai', title: 'Enable GenAI observability', question: 'Your Bedrock agent and SageMaker models need specialized monitoring. Enable AI-specific dashboards?', suggestion: 'I can track token usage, model latency, hallucination rates, and cost per inference across your AI stack.', icon: 'signal' },
     ]},
+  },
+  // Widget display data — persona-specific
+  widgetData: {
+    alarms: { total: 238, ok: 220, alarm: 3, insufficient: 15, nearThreshold: [
+      { name: 'payments-cluster', metric: 'Pod restarts', value: 8, threshold: 10, unit: '/hr' },
+      { name: 'transactions-db', metric: 'CPU', value: 76, threshold: 80, unit: '%' },
+      { name: 'trading-cluster', metric: 'Memory', value: 78, threshold: 85, unit: '%' },
+      { name: 'fraud-model', metric: 'Latency p99', value: 280, threshold: 300, unit: 'ms' },
+    ]},
+    dashboard: { metrics: [
+      { name: 'Public API', color: '#0ea5e9' },
+      { name: 'Payments', color: '#f59e0b' },
+      { name: 'Trading', color: '#8b5cf6' },
+      { name: 'Fraud Model', color: '#ef4444' },
+      { name: 'Transactions DB', color: '#22c55e' },
+      { name: 'Kinesis', color: '#f97316' },
+    ]},
+    anomaly: { detectors: [
+      { metric: 'Transaction volume (us-east-1)', distance: '6%' },
+      { metric: 'EKS pod restart rate', distance: '18%' },
+      { metric: 'Aurora replication lag', distance: '3%' },
+      { metric: 'Kinesis iterator age', distance: '42%' },
+      { metric: 'SageMaker model latency', distance: '15%' },
+      { metric: 'MSK consumer lag', distance: '28%' },
+      { metric: 'API error rate /v2/payments', distance: '9%' },
+    ]},
+    logs: { total: 22, standard: 20, ia: 2, topByVolume: [
+      { name: 'payments-cluster', volume: '18.4 GB/day' },
+      { name: 'trading-cluster', volume: '12.1 GB/day' },
+      { name: 'transaction-processor', volume: '6.8 GB/day' },
+      { name: 'public-api', volume: '4.2 GB/day' },
+    ]},
+    traces: { latency: [
+      { label: 'p50', value: '45ms' },
+      { label: 'p95', value: '180ms' },
+      { label: 'p99', value: '320ms' },
+    ]},
+    cwAgent: { services: [
+      { name: 'payments-cluster', mem: 71 }, { name: 'trading-cluster', mem: 68 },
+      { name: 'analytics-cluster', mem: 42 }, { name: 'auth-service', mem: 55 },
+      { name: 'compliance-engine', mem: 48 }, { name: 'account-service', mem: 39 },
+    ]},
+    containerInsights: { clusters: [
+      { name: 'payments (EKS)', tasks: 180 }, { name: 'trading (EKS)', tasks: 220 },
+      { name: 'analytics (EKS)', tasks: 80 }, { name: 'ECS (5 regions)', tasks: 86 },
+    ]},
+    logClass: { saved: '~$340/mo', detail: 'report-generator + notification-hub → Infrequent Access. Critical path logs kept on Standard.' },
+    appSignals: { detail: 'Service map across 22 services, 12 accounts, 5 regions. SLO-ready for PCI-DSS compliance.' },
   },
   agentActivity: [
     { time: 'Just now', action: 'Scanned 12 accounts across 5 regions, discovered 22 services' },

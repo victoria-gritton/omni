@@ -71,42 +71,24 @@ function Sparkline({ color = '#0ea5e9', height = 24, points = 12 }) {
 
 // ─── Rich Monitoring Widgets ──────────────────────────────────────
 
-function AlarmWidget() {
-  const nearThreshold = [
-    { name: 'payment-service', metric: 'CPU', value: 72, threshold: 90, unit: '%' },
-    { name: 'orders-db', metric: 'ReadLatency', value: 14, threshold: 20, unit: 'ms' },
-    { name: 'checkout-service', metric: 'Memory', value: 68, threshold: 85, unit: '%' },
-  ]
+function AlarmWidget({ data }) {
+  const d = data.alarms
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Bell size={16} className="text-status-active" />
-          <h3 className="text-body-s font-semibold text-foreground">Alarms</h3>
-        </div>
-        <span className="text-[10px] text-foreground-disabled">42 configured</span>
+        <div className="flex items-center gap-2"><Bell size={16} className="text-status-active" /><h3 className="text-body-s font-semibold text-foreground">Alarms</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{d.total} configured</span>
       </div>
       <div className="flex gap-2 mb-3">
-        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center">
-          <p className="text-body-l font-semibold text-status-active">42</p>
-          <p className="text-[9px] text-foreground-muted">OK</p>
-        </div>
-        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center">
-          <p className="text-body-l font-semibold text-status-degraded">0</p>
-          <p className="text-[9px] text-foreground-muted">In alarm</p>
-        </div>
-        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center">
-          <p className="text-body-l font-semibold text-foreground-muted">0</p>
-          <p className="text-[9px] text-foreground-muted">Insufficient</p>
-        </div>
+        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center"><p className="text-body-l font-semibold text-status-active">{d.ok}</p><p className="text-[9px] text-foreground-muted">OK</p></div>
+        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center"><p className="text-body-l font-semibold text-status-degraded">{d.alarm}</p><p className="text-[9px] text-foreground-muted">In alarm</p></div>
+        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">{d.insufficient}</p><p className="text-[9px] text-foreground-muted">Insufficient</p></div>
       </div>
       <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Closest to threshold</p>
-      {nearThreshold.map(a => (
+      {d.nearThreshold.map(a => (
         <div key={a.name} className="flex items-center gap-2 py-1">
           <span className="text-[10px] text-foreground w-28 truncate">{a.name}</span>
-          <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
-            <div className="h-full rounded-full bg-status-degraded/60" style={{ width: `${(a.value / a.threshold) * 100}%` }} />
-          </div>
+          <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-status-degraded/60" style={{ width: `${(a.value / a.threshold) * 100}%` }} /></div>
           <span className="text-[9px] text-foreground-muted w-16 text-right">{a.value}/{a.threshold}{a.unit}</span>
         </div>
       ))}
@@ -114,23 +96,15 @@ function AlarmWidget() {
   )
 }
 
-function DashboardWidget() {
-  const metrics = [
-    { name: 'API GW', color: '#0ea5e9' },
-    { name: 'Checkout', color: '#8b5cf6' },
-    { name: 'Payment', color: '#f59e0b' },
-    { name: 'Orders DB', color: '#22c55e' },
-  ]
+function DashboardWidget({ data }) {
+  const metrics = data.dashboard.metrics
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <ChartBar size={16} className="text-primary" />
-          <h3 className="text-body-s font-semibold text-foreground">Production Dashboard</h3>
-        </div>
+        <div className="flex items-center gap-2"><ChartBar size={16} className="text-primary" /><h3 className="text-body-s font-semibold text-foreground">Production Dashboard</h3></div>
         <span className="text-[10px] text-primary cursor-pointer hover:text-primary-hover">Open →</span>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className={`grid gap-3 ${metrics.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {metrics.map(m => (
           <div key={m.name} className="rounded-lg bg-background/40 border border-border-muted/30 p-2">
             <p className="text-[9px] text-foreground-muted mb-1">{m.name}</p>
@@ -142,22 +116,13 @@ function DashboardWidget() {
   )
 }
 
-function AnomalyWidget() {
-  const detectors = [
-    { metric: 'API GW requests', status: 'normal', distance: '12%' },
-    { metric: 'ECS CPU', status: 'normal', distance: '24%' },
-    { metric: 'RDS latency', status: 'normal', distance: '8%' },
-    { metric: 'Lambda duration', status: 'normal', distance: '31%' },
-    { metric: 'SQS age', status: 'normal', distance: '5%' },
-  ]
+function AnomalyWidget({ data }) {
+  const detectors = data.anomaly.detectors
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <WaveTriangle size={16} className="text-purple-400" />
-          <h3 className="text-body-s font-semibold text-foreground">Anomaly Detection</h3>
-        </div>
-        <span className="text-[10px] text-foreground-disabled">5 active</span>
+        <div className="flex items-center gap-2"><WaveTriangle size={16} className="text-purple-400" /><h3 className="text-body-s font-semibold text-foreground">Anomaly Detection</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{detectors.length} active</span>
       </div>
       {detectors.map(d => (
         <div key={d.metric} className="flex items-center gap-2 py-0.5">
@@ -170,27 +135,20 @@ function AnomalyWidget() {
   )
 }
 
-function LogsWidget() {
-  const logGroups = [
-    { name: 'checkout-service', volume: '1.8 GB/day' },
-    { name: 'payment-service', volume: '1.2 GB/day' },
-    { name: 'api-gateway', volume: '0.9 GB/day' },
-  ]
+function LogsWidget({ data }) {
+  const d = data.logs
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <FileText size={16} className="text-green-400" />
-          <h3 className="text-body-s font-semibold text-foreground">Logs</h3>
-        </div>
-        <span className="text-[10px] text-foreground-disabled">14 services</span>
+        <div className="flex items-center gap-2"><FileText size={16} className="text-green-400" /><h3 className="text-body-s font-semibold text-foreground">Logs</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{d.total} services</span>
       </div>
       <div className="flex gap-2 mb-2 text-[9px]">
-        <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400">Standard: 13</span>
-        <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">IA: 1</span>
+        <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400">Standard: {d.standard}</span>
+        <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">IA: {d.ia}</span>
       </div>
       <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1">Top by volume</p>
-      {logGroups.map(g => (
+      {d.topByVolume.map(g => (
         <div key={g.name} className="flex items-center justify-between py-0.5">
           <span className="text-[10px] text-foreground">{g.name}</span>
           <span className="text-[9px] text-foreground-muted">{g.volume}</span>
@@ -200,54 +158,38 @@ function LogsWidget() {
   )
 }
 
-function TracesWidget() {
+function TracesWidget({ data }) {
+  const latency = data.traces.latency
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Path size={16} className="text-orange-400" />
-          <h3 className="text-body-s font-semibold text-foreground">Traces</h3>
-        </div>
+        <div className="flex items-center gap-2"><Path size={16} className="text-orange-400" /><h3 className="text-body-s font-semibold text-foreground">Traces</h3></div>
         <span className="text-[10px] text-foreground-disabled">X-Ray active</span>
       </div>
       <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Critical path latency</p>
       <div className="flex gap-3">
-        {[{ label: 'p50', value: '82ms' }, { label: 'p95', value: '210ms' }, { label: 'p99', value: '480ms' }].map(p => (
-          <div key={p.label} className="flex-1 text-center">
-            <p className="text-body-s font-semibold text-foreground">{p.value}</p>
-            <p className="text-[9px] text-foreground-muted">{p.label}</p>
-          </div>
+        {latency.map(p => (
+          <div key={p.label} className="flex-1 text-center"><p className="text-body-s font-semibold text-foreground">{p.value}</p><p className="text-[9px] text-foreground-muted">{p.label}</p></div>
         ))}
       </div>
-      <div className="mt-2">
-        <Sparkline color="#fb923c" height={16} />
-      </div>
+      <div className="mt-2"><Sparkline color="#fb923c" height={16} /></div>
     </div>
   )
 }
 
-function CWAgentWidget() {
-  const svcs = [
-    { name: 'checkout', mem: 62 }, { name: 'payment', mem: 58 },
-    { name: 'user', mem: 45 }, { name: 'order', mem: 41 },
-    { name: 'inventory', mem: 33 }, { name: 'search', mem: 52 },
-  ]
+function CWAgentWidget({ data }) {
+  const svcs = data.cwAgent.services
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Cpu size={16} className="text-cyan-400" />
-          <h3 className="text-body-s font-semibold text-foreground">CloudWatch Agent</h3>
-        </div>
-        <span className="text-[10px] text-foreground-disabled">6 services</span>
+        <div className="flex items-center gap-2"><Cpu size={16} className="text-cyan-400" /><h3 className="text-body-s font-semibold text-foreground">CloudWatch Agent</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{svcs.length} services</span>
       </div>
       <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Memory utilization</p>
       {svcs.map(s => (
         <div key={s.name} className="flex items-center gap-2 py-0.5">
-          <span className="text-[10px] text-foreground w-16 truncate">{s.name}</span>
-          <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
-            <div className="h-full rounded-full bg-cyan-400/60" style={{ width: `${s.mem}%` }} />
-          </div>
+          <span className="text-[10px] text-foreground w-20 truncate">{s.name}</span>
+          <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-cyan-400/60" style={{ width: `${s.mem}%` }} /></div>
           <span className="text-[9px] text-foreground-muted w-8 text-right">{s.mem}%</span>
         </div>
       ))}
@@ -255,18 +197,16 @@ function CWAgentWidget() {
   )
 }
 
-function ContainerInsightsWidget() {
+function ContainerInsightsWidget({ data }) {
+  const clusters = data.containerInsights.clusters
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Package size={16} className="text-teal-400" />
-          <h3 className="text-body-s font-semibold text-foreground">Container Insights</h3>
-        </div>
-        <span className="text-[10px] text-foreground-disabled">3 clusters</span>
+        <div className="flex items-center gap-2"><Package size={16} className="text-teal-400" /><h3 className="text-body-s font-semibold text-foreground">Container Insights</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{clusters.length} clusters</span>
       </div>
       <div className="flex gap-2">
-        {[{ name: 'east-1', tasks: 13 }, { name: 'east-2', tasks: 10 }, { name: 'west-1', tasks: 3 }].map(c => (
+        {clusters.map(c => (
           <div key={c.name} className="flex-1 rounded-lg bg-background/40 border border-border-muted/30 p-2 text-center">
             <p className="text-body-s font-semibold text-foreground">{c.tasks}</p>
             <p className="text-[9px] text-foreground-muted">{c.name}</p>
@@ -277,33 +217,27 @@ function ContainerInsightsWidget() {
   )
 }
 
-function AppSignalsWidget() {
+function AppSignalsWidget({ data }) {
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Broadcast size={16} className="text-pink-400" />
-          <h3 className="text-body-s font-semibold text-foreground">Application Signals</h3>
-        </div>
+        <div className="flex items-center gap-2"><Broadcast size={16} className="text-pink-400" /><h3 className="text-body-s font-semibold text-foreground">Application Signals</h3></div>
         <span className="text-[10px] text-foreground-disabled">APM active</span>
       </div>
-      <p className="text-[11px] text-foreground-muted mb-2">Service map, latency breakdown, and error tracking enabled.</p>
+      <p className="text-[11px] text-foreground-muted mb-2">{data.appSignals.detail}</p>
       <span className="text-[10px] text-pink-400 cursor-pointer hover:text-pink-300">Open service map →</span>
     </div>
   )
 }
 
-function LogClassWidget() {
+function LogClassWidget({ data }) {
   return (
     <div className="glass-card p-4 animate-fadeIn">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Archive size={16} className="text-blue-400" />
-          <h3 className="text-body-s font-semibold text-foreground">Log Optimization</h3>
-        </div>
-        <span className="text-[10px] text-foreground-disabled">~$12/mo saved</span>
+        <div className="flex items-center gap-2"><Archive size={16} className="text-blue-400" /><h3 className="text-body-s font-semibold text-foreground">Log Optimization</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{data.logClass.saved} saved</span>
       </div>
-      <p className="text-[11px] text-foreground-muted">notification-service → Infrequent Access. image-processor → Standard (kept).</p>
+      <p className="text-[11px] text-foreground-muted">{data.logClass.detail}</p>
     </div>
   )
 }
@@ -622,7 +556,7 @@ export default function Day0Page() {
           <div className="grid grid-cols-2 gap-3 mb-6">
             {visibleWidgets.map(id => {
               const Widget = widgetRegistry[id]
-              return Widget ? <Widget key={id} /> : null
+              return Widget ? <Widget key={id} data={persona.widgetData} /> : null
             })}
           </div>
 
@@ -661,7 +595,7 @@ export default function Day0Page() {
             <div className="grid grid-cols-2 gap-3">
               {visibleWidgets.map(id => {
                 const Widget = widgetRegistry[id]
-                return Widget ? <Widget key={id} /> : null
+                return Widget ? <Widget key={id} data={persona.widgetData} /> : null
               })}
             </div>
           )}
