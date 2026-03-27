@@ -9,6 +9,7 @@ import { persona } from '../data/persona'
 
 const insightIcons = {
   'coverage-gap': ShieldCheck,
+  discovery: Globe,
   anomaly: WaveTriangle,
   recommendation: Eye,
   cost: CurrencyDollar,
@@ -124,7 +125,7 @@ export default function Day0Page() {
           {greeting}, {firstName}
         </h1>
         <p className="text-body-m text-foreground-muted mt-1">
-          {application.name} — {coverage.totalServices} services across {application.regions.length} regions
+          I just scanned your account and found {coverage.totalServices} services across {application.regions.length} regions. Let's get you set up.
         </p>
       </div>
 
@@ -231,7 +232,7 @@ export default function Day0Page() {
               {services.slice(0, 8).map((svc) => (
                 <div key={svc.name} className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${svc.status === 'healthy' ? 'bg-status-active' : 'bg-status-outage'}`} />
+                    <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
                     <span className="text-[11px] text-foreground">{svc.name}</span>
                   </div>
                   <span className="text-[10px] text-foreground-disabled">{svc.type}</span>
