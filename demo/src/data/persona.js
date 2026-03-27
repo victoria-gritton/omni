@@ -93,6 +93,7 @@ export const persona = {
       label: 'CloudWatch-only — no infrastructure changes',
       description: 'These create alarms, dashboards, and detection models inside CloudWatch. Your running services are not touched.',
       badge: 'Metadata only',
+      badgeTooltip: 'These actions only create CloudWatch resources (alarms, dashboards, models). Your running services, task definitions, and infrastructure are not modified.',
       items: [
         {
           id: 't1-alarms',
@@ -152,6 +153,7 @@ export const persona = {
       label: 'Infrastructure changes — needs your OK',
       description: 'These modify your running services (sidecars, task definitions, parameter groups). May cause rolling restarts.',
       badge: 'Modifies infrastructure',
+      badgeTooltip: 'These actions update your running AWS resources — ECS task definitions, RDS parameter groups, API Gateway stages. Some may trigger rolling restarts or redeployments.',
       items: [
         {
           id: 't2-cw-agent',
@@ -231,6 +233,7 @@ export const persona = {
       label: 'Business decisions — needs your input',
       description: 'These require choices the agent can\'t infer from your infrastructure — targets, routing, and org structure.',
       badge: 'Your call',
+      badgeTooltip: 'These require business decisions the agent can\'t infer from your infrastructure — like SLO targets, alert routing destinations, or cross-account permissions.',
       items: [
         {
           id: 't3-slos',

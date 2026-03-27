@@ -4,7 +4,7 @@ import {
   Lightning, Bell, Clock, Sparkle, Robot, ArrowRight, Play,
   WaveTriangle, Eye, Cpu, FileText, Path, Package,
   Broadcast, Target, SignOut, CheckCircle,
-  Archive, CaretDown, CaretUp, CaretRight,
+  Archive, CaretDown, CaretUp, CaretRight, Info,
 } from '@phosphor-icons/react'
 import { persona } from '../data/persona'
 
@@ -12,6 +12,18 @@ const tierIcons = {
   bell: Bell, chart: ChartBar, wave: WaveTriangle, archive: Archive,
   cpu: Cpu, file: FileText, path: Path, container: Package,
   signal: Broadcast, target: Crosshair, route: SignOut, link: LinkIcon,
+}
+
+function BadgeWithTooltip({ text, tooltip, colorClass, bgClass }) {
+  return (
+    <span className={`relative group inline-flex items-center gap-1 text-[9px] ${colorClass} ${bgClass} px-1.5 py-0.5 rounded-full font-medium cursor-help`}>
+      {text}
+      <Info size={9} />
+      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-64 px-3 py-2 rounded-lg bg-background-surface-2 border border-border-muted text-[10px] text-foreground-muted leading-relaxed opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-lg">
+        {tooltip}
+      </span>
+    </span>
+  )
 }
 
 function Toggle({ on, onChange }) {
@@ -224,7 +236,7 @@ export default function Day0Page() {
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle size={16} weight="fill" className="text-status-active" />
               <h3 className="text-body-s font-semibold text-foreground">{setup.tier1.label}</h3>
-              <span className="text-[9px] text-status-active bg-status-active/10 px-1.5 py-0.5 rounded-full font-medium">{setup.tier1.badge}</span>
+              <BadgeWithTooltip text={setup.tier1.badge} tooltip={setup.tier1.badgeTooltip} colorClass="text-status-active" bgClass="bg-status-active/10" />
             </div>
             <p className="text-[11px] text-foreground-muted mb-3 ml-6">{setup.tier1.description}</p>
             <div className="flex flex-col divide-y divide-border-muted/50 ml-6">
@@ -242,7 +254,7 @@ export default function Day0Page() {
             >
               <ShieldCheck size={16} className="text-status-degraded" />
               <h3 className="text-body-s font-semibold text-foreground flex-1">{setup.tier2.label}</h3>
-              <span className="text-[9px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium mr-2">{setup.tier2.badge}</span>
+              <BadgeWithTooltip text={setup.tier2.badge} tooltip={setup.tier2.badgeTooltip} colorClass="text-status-degraded" bgClass="bg-status-degraded/10" />
               <span className="text-[11px] text-foreground-disabled mr-2">{tier2Count} of {setup.tier2.items.length} enabled</span>
               {showTier2 ? <CaretUp size={14} className="text-foreground-muted" /> : <CaretDown size={14} className="text-foreground-muted" />}
             </button>
@@ -271,7 +283,7 @@ export default function Day0Page() {
             >
               <Clock size={16} className="text-foreground-muted" />
               <h3 className="text-body-s font-semibold text-foreground flex-1">{setup.tier3.label}</h3>
-              <span className="text-[9px] text-foreground-muted bg-foreground-muted/10 px-1.5 py-0.5 rounded-full font-medium mr-2">{setup.tier3.badge}</span>
+              <BadgeWithTooltip text={setup.tier3.badge} tooltip={setup.tier3.badgeTooltip} colorClass="text-foreground-muted" bgClass="bg-foreground-muted/10" />
               <span className="text-[11px] text-foreground-disabled mr-2">{setup.tier3.items.length} items</span>
               {showTier3 ? <CaretUp size={14} className="text-foreground-muted" /> : <CaretDown size={14} className="text-foreground-muted" />}
             </button>
