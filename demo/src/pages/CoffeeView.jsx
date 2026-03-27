@@ -403,23 +403,6 @@ export default function CoffeeView() {
               {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => setChatQuery(p)} />)}
             </div>
 
-            {/* Recommendation */}
-            <div className="ai-glass-card p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center"><Sparkle size={18} className="text-primary" /></div>
-                <h3 className="text-heading-m font-normal text-foreground">Recommendation</h3>
-              </div>
-              <p className="text-body-m text-foreground-secondary leading-relaxed mb-2">
-                <span className="text-foreground font-medium">Weekend traffic spike expected</span> (40-60% increase based on historical patterns). Your payment processing containers don't have memory monitoring configured.
-              </p>
-              <p className="text-body-s text-foreground-secondary mb-1"><span className="text-status-outage font-medium">Risk:</span> Potential out-of-memory (OOM) issues could disrupt customer transactions.</p>
-              <p className="text-body-s text-foreground-secondary mb-4"><span className="text-primary font-medium">Recommendation:</span> Set up container memory monitoring with automated alerts.</p>
-              <div className="flex gap-2">
-                <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-8 px-4 rounded-lg bg-primary border border-white/10 text-body-s font-medium text-primary-foreground hover:bg-slate-200 active:bg-slate-300 transition-all flex items-center gap-2"><Lightning size={14} /> Set up monitoring</button>
-                <button className="h-8 px-4 rounded-lg border border-primary/20 text-body-s text-primary hover:bg-primary/5 transition-colors">Tell me more</button>
-              </div>
-            </div>
-
             {/* Observability Feed + Right sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {/* Observability Feed — 2 cols */}
@@ -526,6 +509,18 @@ export default function CoffeeView() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Compact recommendation */}
+                <div className="mt-3 p-3 rounded-lg bg-background-surface-2/60 border border-primary/15 flex items-start gap-3">
+                  <Sparkle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-body-s text-foreground font-medium block">Set up container memory monitoring</span>
+                    <span className="text-[10px] text-foreground-muted">Weekend traffic spike expected — no memory alarms configured</span>
+                  </div>
+                  <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-6 px-2.5 rounded-md text-[10px] font-medium bg-primary text-primary-foreground hover:bg-slate-200 transition-colors flex items-center gap-1 flex-shrink-0">
+                    <Lightning size={10} /> Set up
+                  </button>
                 </div>
               </div>
 
