@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, Atom, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, MagnifyingGlass, User } from '@phosphor-icons/react'
+import {
+  House, Atom, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy,
+  MagnifyingGlass, User, ChatTeardropDots, Sparkle, X, PaperPlaneRight
+} from '@phosphor-icons/react'
 
 const navItems = [
   { icon: House, label: 'Home', path: '/home' },
@@ -14,10 +17,113 @@ const navItems = [
   { icon: Lifebuoy, label: 'Getting Started' },
 ]
 
+const CHAT_RESPONSES = {
+  default: "I'm monitoring the incident. The payment-service tasks in east-2 are the root cause — memory exhaustion triggered a restart loop. What would you like to know?",
+  'what caused': "The ECS tasks for payment-service-east-2 hit their 512 MB memory limit. The tasks were OOM-killed 6 times since 1:52 AM, creating a restart loop. No deploys in the last 6 hours, so this isn't a bad release — it's the workload outgrowing the memory allocation.",
+  'how many': "~2,400 failed checkouts in the last 10 minutes. 3 downstream services are degraded: checkout-service (1.8s latency), order-service (900ms), and inventory-service (600ms). 3 healthy services are unaffected.",
+  'rollback': "A rollback isn't recommended here. There were no deploys in the last 6 hours, so there's nothing to roll back to. The fix is increasing memory from 512 MB to 1 GB per task.",
+  'post-mortem': "I can generate a post-mortem draft with the full timeline, root cause analysis, and action items. Want me to do that?",
+}
+
+function getAIResponse(input) {
+  const lower = input.toLowerCase()
+  for (const [key, response] of Object.entries(CHAT_RESPONSES)) {
+    if (key !== 'default' && lower.includes(key)) return response
+  }
+  return CHAT_RESPONSES.default
+}
+
+function ChatPanel({ onClose }) {
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: "I'm investigating INC-2847. Payment-service in east-2 is hitting memory limits. What would you like to know?" }
+  ])
+  const [input, setInput] = useState('')
+  const [typing, setTyping] = useState(false)
+  const bottomRef = useRef(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, typing])
+
+  function handleSend(e) {
+    e.preventDefault()
+    if (!input.trim()) return
+    const userMsg = input.trim()
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+    setInput('')
+    setTyping(true)
+    setTimeout(() => {
+      setMessages(prev => [...prev, { role: 'ai', text: getAIResponse(userMsg) }])
+      setTyping(false)
+    }, 800 + Math.random() * 600)
+  }
+
+  return (
+    <div className="w-[320px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border-muted flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <Sparkle size={16} className="text-orange-400" />
+          <span className="text-heading-xs font-normal text-foreground">AI Assistant</span>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 transition-colors" aria-label="Close chat">
+          <X size={14} className="text-foreground-muted" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] px-3 py-2 rounded-xl text-body-s ${
+              msg.role === 'user'
+                ? 'bg-primary text-primary-foreground rounded-br-sm'
+                : 'bg-background-surface-2 text-foreground rounded-bl-sm'
+            }`}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+        {typing && (
+          <div className="flex justify-start">
+            <div className="bg-background-surface-2 px-3 py-2 rounded-xl rounded-bl-sm">
+              <span className="text-body-s text-foreground-muted animate-pulse">Thinking...</span>
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      <form onSubmit={handleSend} className="px-4 py-3 border-t border-border-muted flex-shrink-0">
+        <div className="flex items-center gap-2 h-10 px-3 border border-border-muted rounded-lg bg-input focus-within:border-foreground-disabled focus-within:shadow-ring-default transition-all">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Ask about this incident..."
+            className="flex-1 min-w-0 bg-transparent outline-none text-body-s text-foreground placeholder-foreground-muted"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            className={`p-1.5 rounded-md transition-all ${
+              input.trim()
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-white/5 text-foreground-disabled cursor-not-allowed'
+            }`}
+            aria-label="Send message"
+          >
+            <PaperPlaneRight size={14} />
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
 export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [expanded, setExpanded] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   return (
     <div className="h-screen flex overflow-hidden">
@@ -51,6 +157,8 @@ export default function ConsoleLayout({ children }) {
             )
           })}
         </nav>
+
+        {/* Main content column */}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2 bg-background-surface-1 rounded-lg px-3 py-1.5 w-80">
@@ -67,6 +175,13 @@ export default function ConsoleLayout({ children }) {
               <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
                 <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
               </button>
+              <button
+                onClick={() => setChatOpen(!chatOpen)}
+                className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s transition-colors ${chatOpen ? 'bg-primary/10 text-primary' : 'bg-background-surface-1 border border-border-muted text-foreground-secondary hover:bg-background-surface-2'}`}
+              >
+                <ChatTeardropDots size={16} />
+                Ask AI
+              </button>
               <div className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
                 <User size={14} className="text-primary" />
               </div>
@@ -74,6 +189,9 @@ export default function ConsoleLayout({ children }) {
           </header>
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>
+
+        {/* Chat panel — flex sibling, not overlay */}
+        {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
       </div>
     </div>
   )

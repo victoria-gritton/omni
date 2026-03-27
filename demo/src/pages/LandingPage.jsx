@@ -34,6 +34,14 @@ const flows = [
     ready: true,
     preview: 'home',
   },
+  {
+    id: 'day0',
+    title: 'Day 0 Homepage',
+    subtitle: 'First-run onboarding experience',
+    path: '/home',
+    ready: true,
+    preview: 'day0',
+  },
 ]
 
 function WatchPreview() {
@@ -87,6 +95,30 @@ function PlaceholderPreview() {
   )
 }
 
+function Day0Preview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[120px] h-[80px] rounded-lg border border-border-muted bg-background overflow-hidden flex">
+        <div className="w-3 border-r border-border-muted flex flex-col items-center py-1 gap-0.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted" />
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
+        </div>
+        <div className="flex-1 p-1.5 flex flex-col items-center justify-center gap-1">
+          <House size={10} className="text-primary" />
+          <div className="h-1 w-10 bg-primary/20 rounded" />
+          <div className="flex gap-0.5">
+            <div className="w-2 h-2 rounded-full border border-status-active/30 flex items-center justify-center">
+              <CheckCircle size={4} className="text-status-active" />
+            </div>
+            <div className="w-2 h-2 rounded-full border border-border-muted" />
+            <div className="w-2 h-2 rounded-full border border-border-muted" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const navigate = useNavigate()
 
@@ -120,6 +152,7 @@ export default function LandingPage() {
               <div className="h-40 bg-background-surface-1/30">
                 {flow.preview === 'watch' && <WatchPreview />}
                 {flow.preview === 'home' && <HomePreview />}
+                {flow.preview === 'day0' && <Day0Preview />}
                 {flow.preview === 'placeholder' && <PlaceholderPreview />}
               </div>
               <div className="p-3">

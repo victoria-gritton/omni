@@ -1,22 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Warning, CheckCircle, ArrowRight, Lightning, ArrowClockwise
 } from '@phosphor-icons/react'
 import { incident } from '../data/incident'
 
+const PROGRESS_STEPS = [
+  { tasks: '1/4', memory: '72%', latency: '1,800ms', services: [] },
+  { tasks: '2/4', memory: '58%', latency: '800ms', services: ['Checkout'] },
+  { tasks: '3/4', memory: '41%', latency: '350ms', services: ['Checkout', 'Order'] },
+  { tasks: '4/4', memory: '34%', latency: '210ms', services: ['Checkout', 'Order', 'Inventory'] },
+]
+
 export default function PhoneView() {
   const navigate = useNavigate()
-  const [restarting, setRestarting] = useState(false)
-  const [restarted, setRestarted] = useState(false)
+  const [phase, setPhase] = useState('idle') // idle | progress | done
+  const [stepIndex, setStepIndex] = useState(0)
+  const timerRef = useRef(null)
 
   function handleRestart() {
-    setRestarting(true)
-    setTimeout(() => {
-      setRestarting(false)
-      setRestarted(true)
-    }, 2000)
+    setPhase('progress')
+    setStepIndex(0)
   }
+
+  useEffect(() => {
+    if (phase !== 'progress') return
+    if (stepIndex >= PROGRESS_STEPS.length) {
+      setPhase('done')
+      return
+    }
+    timerRef.current = setTimeout(() => setStepIndex(i => i + 1), 1000)
+    return () => clearTimeout(timerRef.current)
+  }, [phase, stepIndex])
 
   return (
     <div className="min-h-screen flex items-center justify-center py-8">
@@ -94,35 +109,83 @@ export default function PhoneView() {
 
               {/* Divider */}
               <div className="border-t border-white/10 pt-3">
-                <span className="text-[12px] font-semibold text-sky-400/80 block mb-1.5">
-                  Auto-remediation authorized
+                <span className="text-[12px] font-semibold text-sky-400/80 block mb-1">
+                  Matches your runbook
                 </span>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-white/50 font-mono">
+                    OOM restart → increase memory
+                  </div>
+                </div>
                 <p className="text-[12px] leading-[17px] text-white/50 mb-3">
-                  You pre-approved this fix. Restart ECS tasks with 1 GB memory (up from 512 MB), one task at a time. No downtime.
+                  Restart ECS tasks with 1 GB memory (up from 512 MB), one task at a time. No downtime.
                 </p>
 
-                {!restarted ? (
+                {phase === 'idle' && (
                   <button
                     onClick={handleRestart}
-                    disabled={restarting}
                     className="w-full h-9 rounded-lg bg-[#0a84ff] text-[13px] font-semibold text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                   >
-                    {restarting ? (
-                      <>
-                        <ArrowClockwise size={14} className="animate-spin" />
-                        Restarting 0/4 tasks...
-                      </>
-                    ) : (
-                      <>
-                        <Lightning size={14} weight="fill" />
-                        Restart ECS Tasks
-                      </>
-                    )}
+                    <Lightning size={14} weight="fill" />
+                    Approve &amp; Execute
                   </button>
-                ) : (
-                  <div className="w-full h-9 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center gap-2">
-                    <CheckCircle size={14} className="text-green-400" weight="fill" />
-                    <span className="text-[13px] text-green-400 font-semibold">4/4 tasks restarted</span>
+                )}
+
+                {phase === 'progress' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ArrowClockwise size={14} className="text-sky-400 animate-spin" />
+                      <span className="text-[13px] font-semibold text-white">
+                        Restarting {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].tasks} tasks...
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <div className="px-2 py-1.5 rounded bg-white/5 text-center">
+                        <span className="text-[9px] text-white/40 block">Memory</span>
+                        <span className="text-[11px] font-semibold text-white/80 font-mono">
+                          {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].memory}
+                        </span>
+                      </div>
+                      <div className="px-2 py-1.5 rounded bg-white/5 text-center">
+                        <span className="text-[9px] text-white/40 block">p99</span>
+                        <span className="text-[11px] font-semibold text-white/80 font-mono">
+                          {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].latency}
+                        </span>
+                      </div>
+                      <div className="px-2 py-1.5 rounded bg-white/5 text-center">
+                        <span className="text-[9px] text-white/40 block">Recovered</span>
+                        <span className="text-[11px] font-semibold text-green-400">
+                          {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].services.length}/3
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {phase === 'done' && (
+                  <div className="space-y-2">
+                    <div className="w-full h-9 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center gap-2">
+                      <CheckCircle size={14} className="text-green-400" weight="fill" />
+                      <span className="text-[13px] text-green-400 font-semibold">All clear</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                        <div className="w-1 h-1 rounded-full bg-green-500" />
+                        <span className="text-[10px] text-white/60">4/4 tasks healthy</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                        <div className="w-1 h-1 rounded-full bg-green-500" />
+                        <span className="text-[10px] text-white/60">Memory 34%</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                        <div className="w-1 h-1 rounded-full bg-green-500" />
+                        <span className="text-[10px] text-white/60">p99 210ms</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                        <div className="w-1 h-1 rounded-full bg-green-500" />
+                        <span className="text-[10px] text-white/60">3/3 services recovered</span>
+                      </div>
+                    </div>
                   </div>
                 )}
                 <button
