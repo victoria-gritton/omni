@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   MagnifyingGlassPlus, Sparkle, Lightning, ArrowRight,
   Clock, Warning, WarningCircle, CheckCircle, CaretRight
@@ -6,12 +7,13 @@ import {
 
 const activeInvestigations = [
   {
-    id: 'INV-1024',
-    title: 'Payment service latency regression',
+    id: 'INC-2847',
+    title: 'payment-service is timing out',
     status: 'in-progress',
     started: '35 min ago',
     findings: 3,
     severity: 'high',
+    path: '/console',
   },
   {
     id: 'INV-1023',
@@ -43,6 +45,8 @@ const aiSuggestions = [
 ]
 
 export default function InvestigatePage() {
+  const navigate = useNavigate()
+
   return (
     <div className="px-6 py-6">
       <h1 className="text-heading-xl font-normal tracking-tighter text-foreground mb-1">
@@ -95,7 +99,7 @@ export default function InvestigatePage() {
           </h3>
           <div className="space-y-0">
             {activeInvestigations.map((inv) => (
-              <div key={inv.id} className="flex items-center gap-3 py-3 border-b border-border-muted last:border-0 cursor-pointer hover:bg-background-surface-2/50 -mx-2 px-2 rounded-lg transition-colors">
+              <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-3 border-b border-border-muted last:border-0 cursor-pointer hover:bg-background-surface-2/50 -mx-2 px-2 rounded-lg transition-colors">
                 {inv.status === 'resolved'
                   ? <CheckCircle size={16} className="text-status-active flex-shrink-0" />
                   : inv.severity === 'high'

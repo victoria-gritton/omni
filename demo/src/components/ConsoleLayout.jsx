@@ -8,9 +8,9 @@ import {
 import { usePersona } from '../data/persona'
 
 const navItems = [
-  { icon: House, label: 'Home', subtitle: 'Overview & recommendations', path: '/home' },
+  { icon: House, label: 'Home', subtitle: 'Overview', path: '/home' },
   { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search & discovery', path: '/explore' },
-  { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/console' },
+  { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/monitor' },
   { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate' },
   { icon: CodeBlock, label: 'Query Studio', subtitle: 'SQL & PromQL queries', path: '/query' },
   { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources', path: '/configure' },
@@ -177,6 +177,7 @@ function Row({ label, value }) {
 export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const [navOpen, setNavOpen] = useState(true)
   const [chatOpen, setChatOpen] = useState(false)
   const [showPersona, setShowPersona] = useState(false)
   const { persona } = usePersona()
@@ -185,69 +186,77 @@ export default function ConsoleLayout({ children }) {
     <div className="h-screen flex overflow-hidden">
       <div className="gradient-bg-dark" />
       <div className="content-layer h-full flex w-full">
-        {/* Sidebar — Supriya's redesigned nav */}
-        <nav className="w-56 border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto">
-          <div className="px-4 pt-4 pb-3 flex items-center gap-2">
+        {/* Sidebar */}
+        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto transition-all duration-200`}>
+          <div className="px-3 pt-4 pb-3 flex items-center gap-2 cursor-pointer" onClick={() => setNavOpen(!navOpen)}>
             <svg width="24" height="28" viewBox="0 0 28 32" fill="none" className="flex-shrink-0">
               <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
               <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
             </svg>
-            <span className="text-body-s font-semibold text-foreground">CloudWatch Omni</span>
+            {navOpen && <span className="text-body-s font-semibold text-foreground">CloudWatch Omni</span>}
           </div>
 
           <div className="px-3 pt-2">
-            <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted px-2 mb-2 block">Navigation</span>
+            {navOpen && <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted px-2 mb-2 block">Navigation</span>}
             <div className="space-y-0.5">
-              {navItems.map(({ icon: Icon, label, subtitle, path }) => {
-                const active = path && location.pathname === path
+              {navItems.map(({ icon: Icon, label, subtitle, path, also }) => {
+                const active = path && (location.pathname === path || (also && also.includes(location.pathname)))
                 return (
                   <button key={label} onClick={() => path && navigate(path)} className={`w-full text-left rounded-lg flex items-start gap-2.5 px-2 py-2 transition-colors ${active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-background-surface-2'}`} aria-label={label}>
                     <Icon size={18} className={`flex-shrink-0 mt-0.5 ${active ? 'text-primary' : 'text-foreground-muted'}`} />
-                    <div>
-                      <span className={`text-body-s font-medium block leading-tight ${active ? 'text-primary' : 'text-foreground'}`}>{label}</span>
-                      <span className="text-[10px] text-foreground-muted leading-tight">{subtitle}</span>
-                    </div>
+                    {navOpen && (
+                      <div>
+                        <span className={`text-body-s font-medium block leading-tight ${active ? 'text-primary' : 'text-foreground'}`}>{label}</span>
+                        <span className="text-[10px] text-foreground-muted leading-tight">{subtitle}</span>
+                      </div>
+                    )}
                   </button>
                 )
               })}
             </div>
           </div>
 
-          <div className="px-3 pt-4">
-            <div className="flex items-center gap-1.5 px-2 mb-2">
-              <Star size={10} className="text-foreground-muted" />
-              <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Favorites</span>
-            </div>
-            <div className="space-y-0.5">
-              {favorites.map(({ label }) => (
-                <button key={label} className="w-full text-left rounded-lg px-2 py-1.5 text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">{label}</button>
-              ))}
-            </div>
-          </div>
+          {navOpen && (
+            <>
+              <div className="px-3 pt-4">
+                <div className="flex items-center gap-1.5 px-2 mb-2">
+                  <Star size={10} className="text-foreground-muted" />
+                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Favorites</span>
+                </div>
+                <div className="space-y-0.5">
+                  {favorites.map(({ label }) => (
+                    <button key={label} className="w-full text-left rounded-lg px-2 py-1.5 text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">{label}</button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="px-3 pt-4">
-            <div className="flex items-center gap-1.5 px-2 mb-2">
-              <Clock size={10} className="text-foreground-muted" />
-              <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Recent</span>
-            </div>
-            <div className="space-y-0.5">
-              {recents.map(({ label }) => (
-                <button key={label} className="w-full text-left rounded-lg px-2 py-1.5 text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">{label}</button>
-              ))}
-            </div>
-          </div>
+              <div className="px-3 pt-4">
+                <div className="flex items-center gap-1.5 px-2 mb-2">
+                  <Clock size={10} className="text-foreground-muted" />
+                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Recent</span>
+                </div>
+                <div className="space-y-0.5">
+                  {recents.map(({ label }) => (
+                    <button key={label} className="w-full text-left rounded-lg px-2 py-1.5 text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">{label}</button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="flex-1" />
 
-          <div className="px-3 pb-4 pt-4">
-            <div className="rounded-lg border border-primary/15 bg-primary/[0.04] p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Sparkle size={14} className="text-primary" />
-                <span className="text-body-s font-medium text-foreground">AI-Powered Navigation</span>
+          {navOpen && (
+            <div className="px-3 pb-4 pt-4">
+              <div className="rounded-lg border border-primary/15 bg-primary/[0.04] p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkle size={14} className="text-primary" />
+                  <span className="text-body-s font-medium text-foreground">AI-Powered Navigation</span>
+                </div>
+                <span className="text-[10px] text-foreground-muted leading-relaxed">Ask the assistant to guide you to the right place</span>
               </div>
-              <span className="text-[10px] text-foreground-muted leading-relaxed">Ask the assistant to guide you to the right place</span>
             </div>
-          </div>
+          )}
         </nav>
 
         {/* Main content area */}

@@ -12,6 +12,7 @@ import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
 import QueryStudioPage from './pages/QueryStudioPage'
 import ConfigurePage from './pages/ConfigurePage'
+import MonitorPage from './pages/MonitorPage'
 import ConsoleLayout from './components/ConsoleLayout'
 import { PersonaProvider } from './data/persona'
 import './index.css'
@@ -26,6 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/phone" element={<PhoneView />} />
           <Route path="/home" element={<ConsoleLayout><HomePage /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
+          <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />
           <Route path="/day0" element={<ConsoleLayout><Day0Page /></ConsoleLayout>} />
           <Route path="/coffee" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
           <Route path="/explore" element={<ConsoleLayout><ExplorePage /></ConsoleLayout>} />

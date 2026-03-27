@@ -36,8 +36,8 @@ const flows = [
   },
   {
     id: 'day0',
-    title: 'Day 0 Homepage',
-    subtitle: 'First-time setup and onboarding',
+    title: 'Getting Started + Ingestion',
+    subtitle: 'WIP',
     path: '/day0',
     ready: true,
     preview: 'day0',
