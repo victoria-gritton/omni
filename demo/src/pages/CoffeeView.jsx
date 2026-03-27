@@ -4,7 +4,7 @@ import {
   CaretDown, CaretUp, ArrowRight, Lightning, ShieldCheck,
   Coffee, ArrowClockwise, Microphone, WarningCircle, Globe,
   ChatTeardropDots, Cpu, HardDrives, Database, CloudArrowUp,
-  ListChecks, MagnifyingGlassPlus, CaretRight, Eye
+  ListChecks, MagnifyingGlassPlus, CaretRight, Eye, X
 } from '@phosphor-icons/react'
 import { coffee } from '../data/coffee'
 
@@ -28,9 +28,9 @@ function ActIndicator({ current, total }) {
   )
 }
 
-function PromptPill({ text }) {
+function PromptPill({ text, onClick }) {
   return (
-    <button className="px-3 py-1.5 rounded-full border border-primary/20 text-body-s text-primary hover:bg-primary/5 hover:border-primary/40 transition-all whitespace-nowrap">
+    <button onClick={onClick} className="px-3 py-1.5 rounded-full border border-primary/20 text-body-s text-primary hover:bg-primary/5 hover:border-primary/40 transition-all whitespace-nowrap">
       {text}
     </button>
   )
@@ -108,7 +108,7 @@ function ServiceTopology() {
   ]
   const edges = [[0,1],[0,2],[0,3],[2,4],[2,5],[4,6],[5,6],[3,5]]
   return (
-    <svg viewBox="0 0 400 360" className="w-full">
+    <svg viewBox="0 0 400 360" className="w-full max-h-[280px]">
       {edges.map(([f,t],i) => {
         const a=nodes[f],b=nodes[t], w=a.status==='warning'||b.status==='warning'
         return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={w?'#f59e0b':'#22c55e'} strokeWidth="1" strokeOpacity="0.25" strokeDasharray={w?'4 3':'none'}>{w&&<animate attributeName="strokeDashoffset" values="0;-7" dur="1s" repeatCount="indefinite"/>}</line>
@@ -127,7 +127,7 @@ function MemoryChart({ data, threshold }) {
   const areaPath=linePath+` L${points[points.length-1].x},${padding.top+chartH} L${points[0].x},${padding.top+chartH} Z`
   const thresholdY=padding.top+chartH-((threshold-min)/(max-min))*chartH
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full max-h-[180px]">
       <defs><linearGradient id="mem-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.18"/><stop offset="100%" stopColor="#0ea5e9" stopOpacity="0"/></linearGradient></defs>
       {[400,500,600,700,800].map(v=>{const y=padding.top+chartH-((v-min)/(max-min))*chartH;return<g key={v}><line x1={padding.left} y1={y} x2={width-padding.right} y2={y} stroke="rgba(51,65,85,0.2)" strokeWidth="0.5"/><text x={padding.left-6} y={y+3} textAnchor="end" fill="rgba(148,163,184,0.6)" fontSize="9" fontFamily="DM Sans">{v} MB</text></g>})}
       <line x1={padding.left} y1={thresholdY} x2={width-padding.right} y2={thresholdY} stroke="#ef4444" strokeWidth="1" strokeDasharray="4 3" strokeOpacity="0.6"/>
@@ -155,6 +155,82 @@ const promptPills = [
   "List my dashboards", "How are my containers doing?",
   "Top invoked Lambda functions", "Check my database instances health",
 ]
+
+const chatResponses = {
+  "What's the health of my services?": "All 12 services are currently operational. However, **payment-service** is showing elevated latency (245ms avg, baseline 80ms) and **DynamoDB UsersTable** is experiencing read throttling. The remaining 10 services are within normal parameters.\n\nKey metrics:\n• 12M requests/hr across all services\n• 99.2% overall availability\n• 2 active situations requiring attention",
+  "Show me all active alarms": "You have **4 active alarms**:\n\n1. 🔴 **DynamoDB UsersTable ReadThrottles** — ReadThrottleEvents is 847 (threshold: 0) — triggered just now\n2. 🔴 **PaymentService Fault Rate** — 12.3% fault rate (threshold: 5%) — triggered 2m ago\n3. 🟡 **API Gateway 5xx Errors** — 5.2% error rate (threshold: 1%) — triggered 4m ago\n4. 🟡 **Container Memory Warning** — 85% utilization (no alarm configured, detected by anomaly detection)",
+  "Which services have the highest error rates?": "Top services by error rate in the last hour:\n\n1. **payment-service** — 12.3% fault rate (847 faults / 6,891 requests)\n2. **API Gateway** — 5.2% 5xx error rate (correlated with payment-service)\n3. **order-service** — 0.8% error rate (within normal range)\n4. **checkout-service** — 0.3% error rate (within normal range)\n\nThe payment-service errors are caused by DynamoDB throttling on UsersTable. This should self-resolve once auto-scaling completes (~3 minutes).",
+  "Show me my service dependency map": "Your service topology shows 7 services across 3 tiers:\n\n**Tier 1 (Entry):** API Gateway → routes to Auth, Payment, Order\n**Tier 2 (Business Logic):** Payment → Checkout, Inventory; Order → Inventory\n**Tier 3 (Data):** Checkout, Inventory → DynamoDB\n\n⚠️ Payment service is currently in WARNING state — this is cascading to API Gateway (5xx errors). The dependency chain: DynamoDB throttling → Payment timeouts → API Gateway 5xx.",
+  "Find services with elevated latency": "Services with latency above baseline:\n\n1. **payment-service** — 245ms avg (baseline: 80ms) — **3× above normal**\n2. **checkout-service** — 189ms avg (baseline: 120ms) — 1.6× above normal\n3. **order-service** — 134ms avg (baseline: 90ms) — 1.5× above normal\n\nRoot cause: DynamoDB UsersTable read throttling is causing cascading latency increases through the payment validation path.",
+  "Show me recent errors in my logs": "Recent error patterns from the last 30 minutes:\n\n• **847 occurrences** — `TimeoutError: DynamoDB read timed out after 5000ms` in payment-service\n• **234 occurrences** — `HTTP 504 Gateway Timeout` in API Gateway access logs\n• **89 occurrences** — `ProvisionedThroughputExceededException` in DynamoDB\n• **12 occurrences** — `ConnectionPoolExhausted` in analytics-db (resolved)\n\nAll errors correlate to the DynamoDB throttling event that started 4 minutes ago.",
+  "List my dashboards": "You have **6 dashboards**:\n\n1. 📊 **Production Overview** — Last viewed 2h ago\n2. 📊 **Payment Service Health** — Last viewed yesterday\n3. 📊 **API Gateway Metrics** — Last viewed 3 days ago\n4. 📊 **Lambda Performance** — Last viewed 1 week ago\n5. 📊 **DynamoDB Capacity** — Last viewed 2 weeks ago\n6. 📊 **Cost & Usage** — Last viewed 1 month ago\n\nWould you like me to open any of these, or create a new dashboard?",
+  "How are my containers doing?": "I'll show you the health of your containers with key metrics from your EKS cluster.\n\nYour **payment-processing-prod** cluster has 10 containers running:\n• Top container memory: **680 MB** (85% of 800 MB limit) ⚠️\n• Average CPU utilization: **62%**\n• No OOM kills in the last 24h\n• 2 containers restarted last weekend due to OOM (no alarm caught it)\n\n**Recommendation:** Set up memory monitoring with a 700 MB threshold alarm before the weekend traffic spike.",
+  "Top invoked Lambda functions": "Top 10 Lambda functions by invocation count (last hour):\n\n1. **payment-validator** — 6,891 invocations, 12.3% error rate ⚠️\n2. **auth-token-refresh** — 4,234 invocations, 0.1% error rate\n3. **order-processor** — 3,102 invocations, 0.8% error rate\n4. **notification-sender** — 2,890 invocations, 0% error rate\n5. **search-indexer** — 1,567 invocations, 0.2% error rate\n\nCold start avg: 340ms (up 15% since last deploy). The payment-validator errors are due to DynamoDB throttling.",
+  "Check my database instances health": "Database health summary:\n\n**DynamoDB:**\n• UsersTable — ⚠️ Read throttling active, auto-scaling triggered\n• OrdersTable — ✅ Healthy, 45% read capacity\n• ProductsTable — ✅ Healthy, 23% read capacity\n\n**RDS (PostgreSQL):**\n• analytics-db — ✅ Connection pool at 62% (was 85%, now resolved)\n• reporting-db — ✅ Healthy, 34% CPU\n• config-db — ✅ Healthy, 12% CPU\n\nThe UsersTable throttling should resolve in ~3 minutes as auto-scaling provisions additional capacity.",
+}
+
+/* ── Chat Panel ── */
+function ChatPanel({ query, onClose }) {
+  const response = chatResponses[query] || "I'm analyzing your system. One moment..."
+
+  return (
+    <div className="fixed inset-y-0 right-0 w-[60%] z-50 flex flex-col" style={{ animation: 'slideIn 0.25s ease-out' }}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm border-l border-border-muted" />
+
+      {/* Content */}
+      <div className="relative flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border-muted">
+          <div className="flex items-center gap-2">
+            <Sparkle size={16} className="text-primary" />
+            <span className="text-body-s font-semibold text-foreground">AI Assistant</span>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 transition-colors text-foreground-muted" aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* User message */}
+          <div>
+            <span className="text-[10px] font-semibold text-primary mb-1 block">@sarah</span>
+            <div className="p-3 rounded-lg bg-background-surface-1 border border-border-muted">
+              <span className="text-body-s text-foreground">{query}</span>
+            </div>
+          </div>
+
+          {/* AI response */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                <Sparkle size={10} className="text-primary" />
+              </div>
+              <span className="text-[10px] font-semibold text-foreground-muted">ASSISTANT</span>
+            </div>
+            <div className="text-body-s text-foreground-secondary leading-relaxed whitespace-pre-line">
+              {response.split(/(\*\*.*?\*\*)/).map((part, i) =>
+                part.startsWith('**') && part.endsWith('**')
+                  ? <span key={i} className="text-foreground font-medium">{part.slice(2, -2)}</span>
+                  : part
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Input */}
+        <div className="px-5 py-3 border-t border-border-muted">
+          <div className="flex items-center gap-2 h-10 rounded-lg bg-background-surface-1 border border-border-muted px-3">
+            <Sparkle size={14} className="text-primary flex-shrink-0" />
+            <input type="text" placeholder="Ask a question about your system" className="flex-1 bg-transparent text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none" />
+            <Microphone size={14} className="text-foreground-muted flex-shrink-0" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const feedItems = [
   { severity: 'critical', title: 'DynamoDB UsersTable ReadThrottles', source: 'DynamoDB', detail: 'ReadThrottleEvents spiked to 847 (threshold: 0). Auto-scaling triggered but not yet effective.', time: 'just now', aiSummary: 'This correlates with the PaymentService fault rate increase. The UsersTable is receiving 3× normal read traffic from the payment validation path. Auto-scaling should resolve within 5 minutes.' },
@@ -198,6 +274,7 @@ const monitoredSystems = {
 export default function CoffeeView() {
   const [act, setAct] = useState(0)
   const [expandedFeed, setExpandedFeed] = useState(null)
+  const [chatQuery, setChatQuery] = useState(null)
   const [aiTypingDone, setAiTypingDone] = useState(false)
   const [settingUp, setSettingUp] = useState(false)
   const [setupDone, setSetupDone] = useState(false)
@@ -230,7 +307,7 @@ export default function CoffeeView() {
               <Microphone size={16} className="text-foreground-muted flex-shrink-0" />
             </div>
             <div className="flex flex-wrap gap-2">
-              {promptPills.map(p => <PromptPill key={p} text={p} />)}
+              {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => setChatQuery(p)} />)}
             </div>
 
             {/* Recommendation */}
@@ -445,7 +522,8 @@ export default function CoffeeView() {
           </div>
         )}
       </div>
-      <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
+      {chatQuery && <ChatPanel query={chatQuery} onClose={() => setChatQuery(null)} />}
     </main>
   )
 }
