@@ -220,10 +220,11 @@ export default function Day0Page() {
           </div>
 
           {/* Tier 1 — automatic */}
-          <div className="glass-card p-5">
+          <div className="glass-card p-5 border-l-2 border-l-status-active/50">
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle size={16} weight="fill" className="text-status-active" />
               <h3 className="text-body-s font-semibold text-foreground">{setup.tier1.label}</h3>
+              <span className="text-[9px] text-status-active bg-status-active/10 px-1.5 py-0.5 rounded-full font-medium">{setup.tier1.badge}</span>
             </div>
             <p className="text-[11px] text-foreground-muted mb-3 ml-6">{setup.tier1.description}</p>
             <div className="flex flex-col divide-y divide-border-muted/50 ml-6">
@@ -234,13 +235,14 @@ export default function Day0Page() {
           </div>
 
           {/* Tier 2 — toggles */}
-          <div className="glass-card p-5">
+          <div className="glass-card p-5 border-l-2 border-l-status-degraded/50">
             <button
               onClick={() => setShowTier2(!showTier2)}
               className="flex items-center gap-2 mb-1 w-full text-left"
             >
-              <ShieldCheck size={16} className="text-primary" />
+              <ShieldCheck size={16} className="text-status-degraded" />
               <h3 className="text-body-s font-semibold text-foreground flex-1">{setup.tier2.label}</h3>
+              <span className="text-[9px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium mr-2">{setup.tier2.badge}</span>
               <span className="text-[11px] text-foreground-disabled mr-2">{tier2Count} of {setup.tier2.items.length} enabled</span>
               {showTier2 ? <CaretUp size={14} className="text-foreground-muted" /> : <CaretDown size={14} className="text-foreground-muted" />}
             </button>
@@ -262,13 +264,14 @@ export default function Day0Page() {
           </div>
 
           {/* Tier 3 — next steps */}
-          <div className="glass-card p-5">
+          <div className="glass-card p-5 border-l-2 border-l-foreground-muted/30">
             <button
               onClick={() => setShowTier3(!showTier3)}
               className="flex items-center gap-2 mb-1 w-full text-left"
             >
               <Clock size={16} className="text-foreground-muted" />
               <h3 className="text-body-s font-semibold text-foreground flex-1">{setup.tier3.label}</h3>
+              <span className="text-[9px] text-foreground-muted bg-foreground-muted/10 px-1.5 py-0.5 rounded-full font-medium mr-2">{setup.tier3.badge}</span>
               <span className="text-[11px] text-foreground-disabled mr-2">{setup.tier3.items.length} items</span>
               {showTier3 ? <CaretUp size={14} className="text-foreground-muted" /> : <CaretDown size={14} className="text-foreground-muted" />}
             </button>

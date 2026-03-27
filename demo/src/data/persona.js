@@ -90,8 +90,9 @@ export const persona = {
     },
 
     tier1: {
-      label: 'Instant setup — no input needed',
-      description: 'I\'ll apply smart defaults based on your service types. You can customize later.',
+      label: 'CloudWatch-only — no infrastructure changes',
+      description: 'These create alarms, dashboards, and detection models inside CloudWatch. Your running services are not touched.',
+      badge: 'Metadata only',
       items: [
         {
           id: 't1-alarms',
@@ -148,8 +149,9 @@ export const persona = {
     },
 
     tier2: {
-      label: 'Recommended — needs your OK',
-      description: 'These touch running infrastructure. I\'ll handle the config, but want your go-ahead first.',
+      label: 'Infrastructure changes — needs your OK',
+      description: 'These modify your running services (sidecars, task definitions, parameter groups). May cause rolling restarts.',
+      badge: 'Modifies infrastructure',
       items: [
         {
           id: 't2-cw-agent',
@@ -226,8 +228,9 @@ export const persona = {
     },
 
     tier3: {
-      label: 'Next steps — needs your input',
-      description: 'These need decisions only you can make. I\'ll queue them up for after the initial setup.',
+      label: 'Business decisions — needs your input',
+      description: 'These require choices the agent can\'t infer from your infrastructure — targets, routing, and org structure.',
+      badge: 'Your call',
       items: [
         {
           id: 't3-slos',
