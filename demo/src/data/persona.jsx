@@ -297,11 +297,11 @@ const james = {
     { name: 'transaction-stream', type: 'Kinesis', aws: 'Amazon Kinesis', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
     { name: 'event-backbone', type: 'MSK', aws: 'Amazon MSK', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
   ],
-  coverage: { totalServices: 22, withMetrics: 22, withAlarms: 7, withDashboards: 3, withLogs: 9, withTraces: 0 },
+  coverage: { totalServices: 22, withMetrics: 22, withAlarms: 8, withDashboards: 3, withLogs: 9, withTraces: 0, existingAlarmCount: 147, staleAlarms: 52 },
   setup: {
-    summary: { headline: 'I found 22 services across 12 accounts — and some issues', subtext: 'You have partial monitoring: 7 alarms (40% stale), 3 dashboards (last updated 4 months ago), no tracing. I can fix the gaps and consolidate everything.' },
+    summary: { headline: 'I found 22 services across 12 accounts — and some issues', subtext: 'You have 147 existing alarms (52 are stale or misconfigured), 3 dashboards last updated 4 months ago, and no tracing. I can fix the gaps and consolidate everything.' },
     tier1: { ...TIER_LABELS.tier1, items: [
-      { id: 't1-alarms', title: 'Fix 82 stale alarms + create 156 new ones', description: 'Reconfigure 82 misconfigured alarms and add coverage for 15 unmonitored services', icon: 'bell', viewLabel: 'View alarms', viewPath: '/console', detailsPerResource: true, details: [
+      { id: 't1-alarms', title: 'Fix 52 stale alarms + create 91 new ones', description: 'Reconfigure 52 misconfigured alarms and add coverage for 14 unmonitored services. Total after: 238 alarms.', icon: 'bell', viewLabel: 'View alarms', viewPath: '/console', detailsPerResource: true, details: [
         { service: 'EKS clusters (3)', alarms: 'Pod restart rate, node CPU/memory, pending pods, OOM kills' },
         { service: 'ECS services (14)', alarms: 'CPUUtilization > 90%, MemoryUtilization > 85%, RunningTaskCount < desired' },
         { service: 'Lambda functions (23)', alarms: 'Errors > 0.5%, Duration p99 > threshold, Throttles > 0, ConcurrentExecutions' },
@@ -310,7 +310,7 @@ const james = {
         { service: 'API Gateways (3)', alarms: '5XXError > 0.5%, Latency p99, IntegrationLatency, Count anomaly' },
         { service: 'Kinesis + MSK', alarms: 'GetRecords.IteratorAgeMilliseconds, ReadProvisionedThroughputExceeded' },
         { service: 'SageMaker (2)', alarms: 'ModelLatency p99, Invocation5XXErrors, CPUUtilization, MemoryUtilization' },
-        { service: 'Stale alarms (82)', alarms: 'Reconfigure thresholds, remove orphaned alarms for deleted resources' },
+        { service: 'Stale alarms (52)', alarms: 'Reconfigure thresholds, remove orphaned alarms for deleted resources' },
       ]},
       { id: 't1-dashboard', title: 'Rebuild 3 stale dashboards + create 4 new ones', description: 'Current dashboards are 4 months old and missing 15 services. I\'ll rebuild and add cross-account views.', icon: 'chart', viewLabel: 'View dashboards', viewPath: '/home', details: [
         { dashboard: 'Executive Overview', status: 'Rebuild — add cross-account health, SLO status, cost trend' },
@@ -427,7 +427,7 @@ const james = {
   },
   agentActivity: [
     { time: 'Just now', action: 'Scanned 12 accounts across 5 regions, discovered 22 services' },
-    { time: 'Just now', action: 'Found 82 stale/misconfigured alarms across 4 accounts' },
+    { time: 'Just now', action: 'Found 147 existing alarms — 52 stale or misconfigured across 4 accounts' },
     { time: 'Just now', action: '3 dashboards found — last updated 4 months ago' },
     { time: 'Just now', action: 'Detected Datadog agents in 4 accounts (parallel monitoring)' },
     { time: 'Just now', action: 'Identified PCI-DSS compliance gaps: no SLOs, incomplete audit logging' },
