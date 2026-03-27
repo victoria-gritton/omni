@@ -100,6 +100,8 @@ export const persona = {
           title: 'Create 42 recommended alarms',
           description: 'CPU > 90%, memory > 85%, 5xx errors > 1%, p99 latency thresholds per service type',
           icon: 'bell',
+          viewLabel: 'View alarms',
+          viewPath: '/console',
           details: [
             { service: 'ECS services (6)', alarms: 'CPUUtilization > 90%, MemoryUtilization > 85%, RunningTaskCount < desired' },
             { service: 'Lambda functions (2)', alarms: 'Errors > 1%, Duration p99 > 10s, Throttles > 0' },
@@ -116,6 +118,8 @@ export const persona = {
           title: 'Generate production dashboard',
           description: 'Overview with health, latency, errors, and throughput for all services',
           icon: 'chart',
+          viewLabel: 'View dashboard',
+          viewPath: '/home',
           details: [
             { section: 'Top row', widgets: 'Service health summary, active alarms count, error rate trend' },
             { section: 'Compute', widgets: 'ECS CPU/memory per service, Lambda invocations/errors/duration' },
@@ -128,6 +132,8 @@ export const persona = {
           title: 'Enable anomaly detection',
           description: 'Using 14 days of existing metric history to establish baselines',
           icon: 'wave',
+          viewLabel: 'View detectors',
+          viewPath: null,
           details: [
             { metric: 'API Gateway request count', reason: 'Detect traffic spikes or drops' },
             { metric: 'ECS CPU/memory per service', reason: 'Catch resource exhaustion early' },
@@ -141,6 +147,8 @@ export const persona = {
           title: 'Optimize Lambda log classes',
           description: 'Move notification-service logs to Infrequent Access (low volume, saves ~$12/mo)',
           icon: 'archive',
+          viewLabel: 'View log groups',
+          viewPath: null,
           details: [
             { logGroup: '/aws/lambda/notification-service', currentClass: 'Standard', recommended: 'Infrequent Access', reason: 'Low query frequency, ~80K invocations/day' },
             { logGroup: '/aws/lambda/image-processor', currentClass: 'Standard', recommended: 'Keep Standard', reason: 'May need real-time debugging for image failures' },
@@ -162,6 +170,8 @@ export const persona = {
           impact: 'Rolling restart of 6 ECS services (~22 tasks)',
           defaultOn: true,
           icon: 'cpu',
+          viewLabel: 'View agents',
+          viewPath: null,
           details: [
             { service: 'user-service (4 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
             { service: 'checkout-service (6 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
@@ -178,6 +188,8 @@ export const persona = {
           impact: 'Updates service configurations. No restarts for API GW, RDS, CloudFront. ECS needs task redeploy.',
           defaultOn: true,
           icon: 'file',
+          viewLabel: 'View logs',
+          viewPath: null,
           details: [
             { service: 'API Gateway', action: 'Enable access logging to CloudWatch Logs (no restart)' },
             { service: '6 ECS services', action: 'Add awslogs log driver to task definitions (rolling redeploy)' },
@@ -194,6 +206,8 @@ export const persona = {
           impact: 'Rolling restart of ECS services. API Gateway config update (no downtime).',
           defaultOn: true,
           icon: 'path',
+          viewLabel: 'View traces',
+          viewPath: null,
           details: [
             { service: 'API Gateway', action: 'Enable X-Ray tracing on stage (config update, no downtime)' },
             { service: '6 ECS services', action: 'Add X-Ray daemon sidecar container (rolling redeploy)' },
@@ -207,6 +221,8 @@ export const persona = {
           impact: 'Updates ECS cluster settings. No service restarts.',
           defaultOn: true,
           icon: 'container',
+          viewLabel: 'View insights',
+          viewPath: null,
           details: [
             { cluster: 'novamart-east-1', services: 4, action: 'Enable containerInsights account setting' },
             { cluster: 'novamart-east-2', services: 2, action: 'Enable containerInsights account setting' },
@@ -220,6 +236,8 @@ export const persona = {
           impact: 'Requires CloudWatch Agent with app signals config. Triggers rolling restart.',
           defaultOn: false,
           icon: 'signal',
+          viewLabel: 'View service map',
+          viewPath: null,
           details: [
             { what: 'Auto-instrumentation', action: 'Adds OpenTelemetry auto-instrumentation to ECS tasks via CW Agent' },
             { what: 'Service map', action: 'Generates real-time dependency map from trace data' },

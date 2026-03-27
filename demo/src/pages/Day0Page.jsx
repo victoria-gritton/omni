@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   PaperPlaneRight, ShieldCheck, ChartBar, Crosshair, Link as LinkIcon,
   Lightning, Bell, Clock, Sparkle, Robot, ArrowRight, Play,
@@ -109,16 +110,27 @@ function DetailTable({ details }) {
   )
 }
 
-function ItemStatus({ id, states, progress, onRun }) {
+function ItemStatus({ id, item, states, progress, onRun }) {
+  const navigate = useNavigate()
   const state = states[id] || 'idle'
   const config = simConfig[id]
   const step = progress[id] || 0
 
   if (state === 'done') {
     return (
-      <span className="flex items-center gap-1 text-[10px] text-status-active flex-shrink-0">
-        <CheckCircle size={12} weight="fill" />
-        {config?.done || 'Done'}
+      <span className="flex items-center gap-2 flex-shrink-0">
+        <span className="flex items-center gap-1 text-[10px] text-status-active">
+          <CheckCircle size={12} weight="fill" />
+          {config?.done || 'Done'}
+        </span>
+        {item?.viewLabel && (
+          <button
+            onClick={(e) => { e.stopPropagation(); item.viewPath ? navigate(item.viewPath) : null }}
+            className={`text-[10px] text-primary hover:text-primary-hover ${item.viewPath ? '' : 'opacity-50 cursor-default'}`}
+          >
+            {item.viewLabel} →
+          </button>
+        )}
       </span>
     )
   }
@@ -182,7 +194,7 @@ function Tier1Item({ item, states, progress, onRun }) {
             <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
           )}
         </div>
-        <ItemStatus id={item.id} states={states} progress={progress} onRun={onRun} />
+        <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />
       </div>
       {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} /></div>}
     </div>
@@ -233,15 +245,12 @@ function Tier2Item({ item, enabled, onToggle, states, progress, onRun }) {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {state === 'done' ? (
-            <span className="flex items-center gap-1 text-[10px] text-status-active">
-              <CheckCircle size={12} weight="fill" />
-              {simConfig[item.id]?.done}
-            </span>
+            <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />
           ) : state === 'running' ? (
-            <ItemStatus id={item.id} states={states} progress={progress} onRun={onRun} />
+            <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />
           ) : (
             <>
-              {enabled && <ItemStatus id={item.id} states={states} progress={progress} onRun={onRun} />}
+              {enabled && <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />}
               <Toggle on={enabled} onChange={onToggle} />
             </>
           )}
