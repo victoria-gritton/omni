@@ -131,43 +131,7 @@ export default function ConsoleView() {
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="gradient-bg-dark" />
-      <div className="content-layer min-h-screen flex flex-col">
-        {/* Header */}
-        <header className="border-b border-border-muted px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <svg width="14" height="16" viewBox="0 0 28 32" fill="none">
-                <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
-                <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
-              </svg>
-              <span className="text-heading-m font-normal text-foreground">CloudWatch Omni</span>
-            </div>
-            <span className="text-foreground-muted">·</span>
-            <div className="flex items-center gap-2">
-              <Warning size={14} className="text-status-outage" />
-              <span className="text-body-s text-foreground">{incident.id}</span>
-            </div>
-            <StatusBadge status="critical" />
-            <span className="text-body-s text-foreground-muted">
-              <Clock size={12} className="inline mr-1" />
-              Started {incident.timeline[0].time}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {remediated && (
-              <button
-                onClick={() => setPostMortem(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-body-s text-primary hover:bg-primary/15 transition-colors duration-hover"
-              >
-                <FileText size={14} />
-                Generate post-mortem
-              </button>
-            )}
-          </div>
-        </header>
-
+    <>
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-6 py-6">
@@ -345,6 +309,6 @@ export default function ConsoleView() {
           </div>
         </main>
       </div>
-    </div>
+    </>
   )
 }
