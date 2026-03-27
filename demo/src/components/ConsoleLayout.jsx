@@ -408,7 +408,7 @@ export default function ConsoleLayout({ children }) {
               <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
                 <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
               </button>
-              <button onClick={() => setChatOpen(!chatOpen)} className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s transition-colors ${chatOpen ? 'bg-primary/10 text-primary' : 'bg-background-surface-1 border border-border-muted text-foreground-secondary hover:bg-background-surface-2'}`}>
+              <button onClick={() => setChatOpen(!chatOpen)} className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s font-medium transition-colors ${chatOpen ? 'bg-primary text-primary-foreground' : 'bg-primary/15 text-primary border border-primary/30 hover:bg-primary/25'}`}>
                 <ChatTeardropDots size={16} />
                 Ask AI
               </button>

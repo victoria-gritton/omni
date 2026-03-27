@@ -395,7 +395,22 @@ export default function CoffeeView() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="px-6 py-6">
-        <h1 className="text-[20px] font-normal text-foreground mb-4">{coffee.greeting}</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-[20px] font-normal text-foreground">{coffee.greeting}</h1>
+          <div className="flex items-center gap-2">
+            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="3h">
+              <option value="1h">Last 1 hour</option>
+              <option value="3h">Last 3 hours</option>
+              <option value="6h">Last 6 hours</option>
+              <option value="12h">Last 12 hours</option>
+              <option value="24h">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+            </select>
+            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">
+              Actions ▾
+            </button>
+          </div>
+        </div>
 
         {/* ═══════ ACT 1: Homepage ═══════ */}
         {act === 0 && (
