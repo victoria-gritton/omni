@@ -533,13 +533,13 @@ function ActivityItem({ item, isLast }) {
 
 export default function Day0Page() {
   const [input, setInput] = useState('')
+  const navigate = useNavigate()
   const { user, application, coverage, setup, agentActivity, services } = persona
   const { states, progress, run } = useSimulation()
 
   const [tier2State, setTier2State] = useState(() => Object.fromEntries(setup.tier2.items.map(i => [i.id, i.defaultOn])))
   const toggleTier2 = (id) => { if (states[id] === 'running' || states[id] === 'done') return; setTier2State(prev => ({ ...prev, [id]: !prev[id] })) }
 
-  // Pinned widgets (non-auto items that user manually pinned)
   const [pinned, setPinned] = useState({})
   const togglePin = (id) => setPinned(prev => ({ ...prev, [id]: !prev[id] }))
 
@@ -555,7 +555,6 @@ export default function Day0Page() {
   const totalCount = allSetupIds.length
   const allDone = doneCount === totalCount && doneCount > 0
 
-  // Visible widgets: auto-pinned (when done) + manually pinned (when done)
   const visibleWidgets = allSetupIds.filter(id =>
     states[id] === 'done' && (AUTO_PIN.has(id) || pinned[id])
   )
@@ -574,6 +573,71 @@ export default function Day0Page() {
     })
   }, [run, states, tier2State, setup])
 
+  const prompts = [
+    { icon: Lightning, text: 'Why is checkout-service slow right now?' },
+    { icon: Bell, text: 'Show me all critical alarms from the last hour' },
+    { icon: ChartBar, text: 'What changed in payment-service since yesterday?', path: '/console' },
+    { icon: Broadcast, text: 'Which services have the highest error rate?' },
+  ]
+
+  // ─── Day 1 layout (all done — matches HomePage pattern) ────────
+  if (allDone) {
+    return (
+      <div className="px-6 py-6">
+        <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
+          Home
+        </h1>
+        <div className="mb-8" />
+
+        {/* Chat input — centered like HomePage */}
+        <div className="max-w-5xl mx-auto">
+          <div className="relative mb-6">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about your services, metrics, or alarms..."
+              className="w-full h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 pr-12 text-body-m text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 transition-colors"
+            />
+            <button className="absolute right-2 top-2 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
+              <PaperPlaneRight size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 mb-8">
+            {prompts.map(({ icon: Icon, text, path }) => (
+              <button
+                key={text}
+                onClick={() => path ? navigate(path) : setInput(text)}
+                className="flex items-start gap-3 p-3 rounded-xl border border-border-muted hover:border-primary/30 hover:bg-primary/5 text-left transition-all"
+              >
+                <Icon size={16} className="text-foreground-muted mt-0.5 flex-shrink-0" />
+                <span className="text-body-s text-foreground-secondary">{text}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Monitoring widgets */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {visibleWidgets.map(id => {
+              const Widget = widgetRegistry[id]
+              return Widget ? <Widget key={id} /> : null
+            })}
+          </div>
+
+          {/* Collapsed setup bar */}
+          <button onClick={() => setShowSetup(true)} className="glass-card p-3 flex items-center gap-3 hover:border-primary/20 transition-colors w-full">
+            <CheckCircle size={16} weight="fill" className="text-status-active" />
+            <span className="text-body-s font-medium text-foreground flex-1 text-left">Setup complete</span>
+            <span className="text-[11px] text-foreground-disabled">{doneCount} of {totalCount} done</span>
+            <CaretDown size={14} className="text-foreground-muted" />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Day 0 layout (setup in progress — 2 column with sidebar) ──
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
       <div className="mb-6">
@@ -582,19 +646,16 @@ export default function Day0Page() {
           <span className="text-[11px] text-primary font-medium">Agent active</span>
         </div>
         <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-          {allDone ? `${firstName}'s Dashboard` : `Welcome, ${firstName}`}
+          Welcome, {firstName}
         </h1>
         <p className="text-body-m text-foreground-muted mt-1">
-          {allDone
-            ? `${application.name} — ${coverage.totalServices} services monitored across ${application.regions.length} regions`
-            : `I just scanned your account and found ${coverage.totalServices} services across ${application.regions.length} regions. Let's get you set up.`}
+          I just scanned your account and found {coverage.totalServices} services across {application.regions.length} regions. Let's get you set up.
         </p>
       </div>
 
       <div className="grid grid-cols-[1fr_300px] gap-6">
         <div className="flex flex-col gap-5">
 
-          {/* Monitoring Widgets */}
           {visibleWidgets.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
               {visibleWidgets.map(id => {
@@ -604,29 +665,26 @@ export default function Day0Page() {
             </div>
           )}
 
-          {/* Setup Section */}
           {doneCount > 0 && !showSetup ? (
             <button onClick={() => setShowSetup(true)} className="glass-card p-3 flex items-center gap-3 hover:border-primary/20 transition-colors">
-              <CheckCircle size={16} weight="fill" className={allDone ? 'text-status-active' : 'text-primary'} />
-              <span className="text-body-s font-medium text-foreground flex-1 text-left">{allDone ? 'Setup complete' : 'Setup in progress'}</span>
+              <CheckCircle size={16} weight="fill" className="text-primary" />
+              <span className="text-body-s font-medium text-foreground flex-1 text-left">Setup in progress</span>
               <span className="text-[11px] text-foreground-disabled">{doneCount} of {totalCount} done</span>
               <CaretDown size={14} className="text-foreground-muted" />
             </button>
           ) : (
             <>
-              {!allDone && (
-                <div className="ai-glass-card p-5">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0"><Robot size={22} /></div>
-                    <div className="flex-1">
-                      <h2 className="text-body-l font-semibold text-foreground">{setup.summary.headline}</h2>
-                      <p className="text-body-s text-foreground-muted mt-1">{setup.summary.subtext}</p>
-                      <p className="text-[11px] text-foreground-disabled mt-2">Click any item to see details. Run individually or all at once.</p>
-                    </div>
-                    {doneCount > 0 && <button onClick={() => setShowSetup(false)} className="text-foreground-muted hover:text-foreground p-1"><CaretUp size={14} /></button>}
+              <div className="ai-glass-card p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0"><Robot size={22} /></div>
+                  <div className="flex-1">
+                    <h2 className="text-body-l font-semibold text-foreground">{setup.summary.headline}</h2>
+                    <p className="text-body-s text-foreground-muted mt-1">{setup.summary.subtext}</p>
+                    <p className="text-[11px] text-foreground-disabled mt-2">Click any item to see details. Run individually or all at once.</p>
                   </div>
+                  {doneCount > 0 && <button onClick={() => setShowSetup(false)} className="text-foreground-muted hover:text-foreground p-1"><CaretUp size={14} /></button>}
                 </div>
-              )}
+              </div>
 
               <div className="glass-card p-5 border-l-2 border-l-status-active/50">
                 <div className="flex items-center gap-2 mb-1">
@@ -678,11 +736,9 @@ export default function Day0Page() {
                 )}
               </div>
 
-              {!allDone && (
-                <button onClick={runAll} className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-body-m flex items-center justify-center gap-2 transition-colors">
-                  <Sparkle size={18} weight="fill" />Set up everything<ArrowRight size={16} />
-                </button>
-              )}
+              <button onClick={runAll} className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-body-m flex items-center justify-center gap-2 transition-colors">
+                <Sparkle size={18} weight="fill" />Set up everything<ArrowRight size={16} />
+              </button>
             </>
           )}
         </div>
