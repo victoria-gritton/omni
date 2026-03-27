@@ -78,13 +78,8 @@ export default function WatchView() {
                 {/* Quick glance stats */}
                 <div className="flex justify-center gap-4 mb-3">
                   <div className="flex flex-col items-center">
-                    <span className="text-[9px] text-white/40 uppercase tracking-wider">Blast</span>
-                    <span className="text-[13px] font-semibold text-white">3 svc</span>
-                  </div>
-                  <div className="w-px h-6 bg-white/10" />
-                  <div className="flex flex-col items-center">
-                    <span className="text-[9px] text-white/40 uppercase tracking-wider">Type</span>
-                    <span className="text-[13px] font-semibold text-white">Infra</span>
+                    <span className="text-[9px] text-white/40 uppercase tracking-wider">Impact</span>
+                    <span className="text-[13px] font-semibold text-status-outage">2.4K</span>
                   </div>
                   <div className="w-px h-6 bg-white/10" />
                   <div className="flex flex-col items-center">
