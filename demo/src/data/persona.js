@@ -102,6 +102,7 @@ export const persona = {
           icon: 'bell',
           viewLabel: 'View alarms',
           viewPath: '/console',
+          detailsPerResource: true,
           details: [
             { service: 'ECS services (6)', alarms: 'CPUUtilization > 90%, MemoryUtilization > 85%, RunningTaskCount < desired' },
             { service: 'Lambda functions (2)', alarms: 'Errors > 1%, Duration p99 > 10s, Throttles > 0' },
@@ -172,6 +173,7 @@ export const persona = {
           icon: 'cpu',
           viewLabel: 'View agents',
           viewPath: null,
+          detailsPerResource: true,
           details: [
             { service: 'user-service (4 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
             { service: 'checkout-service (6 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
@@ -190,6 +192,7 @@ export const persona = {
           icon: 'file',
           viewLabel: 'View logs',
           viewPath: null,
+          detailsPerResource: true,
           details: [
             { service: 'API Gateway', action: 'Enable access logging to CloudWatch Logs (no restart)' },
             { service: '6 ECS services', action: 'Add awslogs log driver to task definitions (rolling redeploy)' },
@@ -208,6 +211,7 @@ export const persona = {
           icon: 'path',
           viewLabel: 'View traces',
           viewPath: null,
+          detailsPerResource: true,
           details: [
             { service: 'API Gateway', action: 'Enable X-Ray tracing on stage (config update, no downtime)' },
             { service: '6 ECS services', action: 'Add X-Ray daemon sidecar container (rolling redeploy)' },
@@ -223,6 +227,7 @@ export const persona = {
           icon: 'container',
           viewLabel: 'View insights',
           viewPath: null,
+          detailsPerResource: true,
           details: [
             { cluster: 'novamart-east-1', services: 4, action: 'Enable containerInsights account setting' },
             { cluster: 'novamart-east-2', services: 2, action: 'Enable containerInsights account setting' },

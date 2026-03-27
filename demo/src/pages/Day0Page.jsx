@@ -83,9 +83,10 @@ function Toggle({ on, onChange }) {
   )
 }
 
-function DetailTable({ details, done }) {
+function DetailTable({ details, done, perResource }) {
   if (!details || details.length === 0) return null
   const keys = Object.keys(details[0])
+  const showStatus = done && perResource
   return (
     <div className="mt-2 rounded-lg bg-background/40 border border-border-muted/30 overflow-hidden">
       <table className="w-full text-[10px]">
@@ -94,7 +95,7 @@ function DetailTable({ details, done }) {
             {keys.map(k => (
               <th key={k} className="text-left px-2.5 py-1.5 text-foreground-disabled font-medium uppercase tracking-wider">{k}</th>
             ))}
-            {done && <th className="text-left px-2.5 py-1.5 text-foreground-disabled font-medium uppercase tracking-wider">Status</th>}
+            {showStatus && <th className="text-left px-2.5 py-1.5 text-foreground-disabled font-medium uppercase tracking-wider">Status</th>}
           </tr>
         </thead>
         <tbody>
@@ -103,7 +104,7 @@ function DetailTable({ details, done }) {
               {keys.map(k => (
                 <td key={k} className="px-2.5 py-1.5 text-foreground-muted">{row[k]}</td>
               ))}
-              {done && (
+              {showStatus && (
                 <td className="px-2.5 py-1.5">
                   <span className="flex items-center gap-2">
                     <span className="flex items-center gap-1 text-status-active">
@@ -208,7 +209,7 @@ function Tier1Item({ item, states, progress, onRun }) {
         </div>
         <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />
       </div>
-      {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} /></div>}
+      {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} perResource={item.detailsPerResource} /></div>}
     </div>
   )
 }
@@ -268,7 +269,7 @@ function Tier2Item({ item, enabled, onToggle, states, progress, onRun }) {
           )}
         </div>
       </div>
-      {expanded && state !== 'running' && enabled && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} /></div>}
+      {expanded && state !== 'running' && enabled && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} perResource={item.detailsPerResource} /></div>}
     </div>
   )
 }
