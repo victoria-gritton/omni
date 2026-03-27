@@ -91,7 +91,7 @@ export default function LandingPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
+    <div className="min-h-screen flex flex-col items-center pt-16">
       <div className="gradient-bg-dark" />
       <div className="content-layer flex flex-col items-center gap-8 px-6 w-full max-w-6xl">
         <div className="text-center">
