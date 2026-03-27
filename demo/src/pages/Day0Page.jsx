@@ -123,7 +123,7 @@ function DetailTable({ details, done, perResource }) {
   )
 }
 
-function ItemStatus({ id, item, states, progress, onRun }) {
+function ItemStatus({ id, item, states, progress, onRun, tier }) {
   const navigate = useNavigate()
   const state = states[id] || 'idle'
   const config = simConfig[id]
@@ -153,6 +153,18 @@ function ItemStatus({ id, item, states, progress, onRun }) {
       <span className="flex items-center gap-1.5 text-[10px] text-primary flex-shrink-0">
         <CircleNotch size={12} className="animate-spin" />
         <span>{config?.label(step, config.steps)}</span>
+      </span>
+    )
+  }
+
+  if (tier === 1) {
+    return (
+      <span
+        onClick={(e) => { e.stopPropagation(); onRun(id) }}
+        className="flex items-center gap-1 text-[10px] text-status-active/70 px-2 py-1 rounded-md cursor-pointer hover:bg-status-active/10 transition-colors flex-shrink-0"
+      >
+        <CheckCircle size={10} weight="fill" />
+        Included
       </span>
     )
   }
@@ -207,7 +219,7 @@ function Tier1Item({ item, states, progress, onRun }) {
             <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
           )}
         </div>
-        <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />
+        <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} tier={1} />
       </div>
       {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} perResource={item.detailsPerResource} /></div>}
     </div>
