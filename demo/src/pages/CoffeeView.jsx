@@ -405,9 +405,9 @@ export default function CoffeeView() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {/* Observability Feed */}
               <div className="glass-card p-3">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-heading-m font-normal text-foreground">Observability Feed</h3>
+                    <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
                     <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length} issues</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -426,9 +426,9 @@ export default function CoffeeView() {
               <div className="space-y-2">
                 {/* Pending Tasks */}
                 <div className="glass-card p-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <ListChecks size={16} className="text-foreground-muted" />
-                    <h3 className="text-heading-s font-normal text-foreground">Pending Tasks</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <ListChecks size={14} className="text-foreground-muted" />
+                    <h3 className="text-heading-xs font-normal text-foreground">Pending Tasks</h3>
                     <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
                   </div>
                   <div className="space-y-2">
@@ -450,9 +450,9 @@ export default function CoffeeView() {
 
                 {/* Investigations */}
                 <div className="glass-card p-3">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MagnifyingGlassPlus size={16} className="text-foreground-muted" />
-                    <h3 className="text-heading-s font-normal text-foreground">Investigations</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <MagnifyingGlassPlus size={14} className="text-foreground-muted" />
+                    <h3 className="text-heading-xs font-normal text-foreground">Investigations</h3>
                   </div>
                   <div className="space-y-2">
                     {investigations.map(inv => (
@@ -477,57 +477,57 @@ export default function CoffeeView() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {/* Monitored Systems */}
               <div className="glass-card p-3">
-                <h3 className="text-heading-m font-normal text-foreground mb-1">Monitored Systems</h3>
-                <p className="text-body-s text-foreground-muted mb-3">Applications and infrastructure under observation</p>
+                <h3 className="text-heading-xs font-normal text-foreground mb-0.5">Monitored Systems</h3>
+                <p className="text-[10px] text-foreground-muted mb-2">Applications and infrastructure under observation</p>
 
-                <div className="mb-3">
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted mb-2 block">Applications</span>
-                  <div className="space-y-0">
+                <div className="mb-2">
+                  <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
+                  <div>
                     {monitoredSystems.applications.map(app => (
-                      <div key={app.name} className="flex items-center gap-2 py-1.5 border-b border-border-muted last:border-0">
-                        <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)}`} />
-                        <span className="text-body-s text-foreground flex-1">{app.name}</span>
-                        <span className="text-[10px] text-foreground-muted px-1 py-0.5 rounded bg-background-surface-2 border border-border-muted">{app.type}</span>
-                        <span className="text-[10px] text-foreground-disabled">{app.metrics}</span>
+                      <div key={app.name} className="flex items-center gap-1.5 py-1 border-b border-border-muted/50 last:border-0">
+                        <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)} flex-shrink-0`} />
+                        <span className="text-[11px] text-foreground flex-1 font-mono">{app.name}</span>
+                        <span className="text-[9px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
+                        <span className="text-[9px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted mb-2 block">Infrastructure</span>
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="mb-2">
+                  <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Infrastructure</span>
+                  <div className="grid grid-cols-3 gap-1">
                     {monitoredSystems.infrastructure.map(infra => (
-                      <div key={infra.name} className="p-2 rounded-lg border border-border-muted">
-                        <div className="flex items-center gap-1.5 mb-0.5">
+                      <div key={infra.name} className="px-2 py-1.5 rounded-md border border-border-muted/50">
+                        <div className="flex items-center gap-1 mb-0.5">
                           <div className={`w-1.5 h-1.5 rounded-full ${statusDot(infra.status)}`} />
-                          <span className="text-body-s text-foreground font-medium">{infra.name}</span>
+                          <span className="text-[11px] text-foreground font-medium">{infra.name}</span>
                         </div>
-                        <span className="text-[10px] text-foreground-muted">{infra.count}</span>
+                        <span className="text-[9px] text-foreground-disabled">{infra.count}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Compact recommendation */}
-                <div className="mt-3 p-3 rounded-lg bg-purple-500/[0.06] border border-purple-400/20 flex items-start gap-3">
-                  <Sparkle size={16} className="text-purple-400 flex-shrink-0 mt-0.5" />
+                <div className="p-2 rounded-md bg-purple-500/[0.06] border border-purple-400/20 flex items-center gap-2">
+                  <Sparkle size={12} className="text-purple-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-body-s text-foreground font-medium block">Set up container memory monitoring</span>
-                    <span className="text-[10px] text-foreground-muted">Weekend traffic spike expected — no memory alarms configured</span>
+                    <span className="text-[11px] text-foreground font-medium">Set up container memory monitoring</span>
+                    <span className="text-[9px] text-foreground-muted ml-2">Weekend spike expected</span>
                   </div>
-                  <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-6 px-2.5 rounded-md text-[10px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
-                    <Sparkle size={10} /> Set up
+                  <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-5 px-2 rounded text-[9px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
+                    <Sparkle size={8} /> Set up
                   </button>
                 </div>
               </div>
 
               {/* Service Topology */}
               <div className="glass-card p-3">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h3 className="text-heading-m font-normal text-foreground">Service Topology</h3>
-                    <p className="text-body-s text-foreground-muted">Real-time dependency map</p>
+                    <h3 className="text-heading-xs font-normal text-foreground">Service Topology</h3>
+                    <p className="text-[10px] text-foreground-muted">Real-time dependency map</p>
                   </div>
                   <div className="flex items-center gap-4">
                     {[['Healthy','bg-status-active'],['Warning','bg-status-blocked'],['Critical','bg-status-outage']].map(([l,c])=>(
