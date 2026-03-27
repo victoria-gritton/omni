@@ -51,7 +51,7 @@ export default function ExplorePage() {
       </p>
 
       {/* Search bar */}
-      <div className="max-w-4xl">
+      <div>
         <div className="relative mb-6">
           <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
             <Sparkle size={16} className="text-primary flex-shrink-0" />

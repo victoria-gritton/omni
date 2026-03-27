@@ -58,7 +58,7 @@ export default function QueryStudioPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl flex gap-3">
+      <div className="flex gap-3">
         {/* Main editor area */}
         <div className="flex-1 space-y-3">
           {/* Query editor */}

@@ -39,7 +39,7 @@ export default function ConfigurePage() {
         Settings and resource management
       </p>
 
-      <div className="max-w-4xl space-y-6">
+      <div className="space-y-6">
         {configSections.map((section) => (
           <div key={section.title}>
             <h3 className="text-heading-s font-normal text-foreground mb-3">{section.title}</h3>

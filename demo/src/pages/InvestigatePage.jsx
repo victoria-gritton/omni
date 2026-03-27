@@ -52,9 +52,7 @@ export default function InvestigatePage() {
         Deep-dive analysis and AI-assisted troubleshooting
       </p>
 
-      <div className="max-w-5xl">
-        {/* Start new investigation */}
-        <div className="ai-glass-card p-4 mb-3">
+      <div className="ai-glass-card p-4 mb-3">
           <div className="flex items-center gap-2 mb-2">
             <Sparkle size={14} className="text-primary" />
             <span className="text-body-s font-semibold text-primary">AI-assisted investigation</span>
@@ -121,7 +119,6 @@ export default function InvestigatePage() {
             ))}
           </div>
         </div>
-      </div>
     </div>
   )
 }

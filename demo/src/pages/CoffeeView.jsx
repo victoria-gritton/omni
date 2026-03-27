@@ -252,10 +252,10 @@ export default function CoffeeView() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="px-6 py-6">
         {/* Header */}
         <h1 className="text-display-l font-normal tracking-tighter text-primary mb-1">
-          CloudWatch Expanse
+          CloudWatch Omni
         </h1>
         <p className="text-body-m text-foreground-muted mb-6">{coffee.greeting.replace('Good afternoon, ', 'Good afternoon, ')}</p>
 
@@ -288,7 +288,7 @@ export default function CoffeeView() {
                 <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
                   <Sparkle size={18} className="text-primary" />
                 </div>
-                <h3 className="text-heading-m font-normal text-foreground">Proactive Recommendation</h3>
+                <h3 className="text-heading-m font-normal text-foreground">Recommendation</h3>
               </div>
               <p className="text-body-m text-foreground-secondary leading-relaxed mb-2">
                 <span className="text-foreground font-medium">Weekend traffic spike expected</span> (40-60% increase based on historical patterns). Your payment processing containers don't have memory monitoring configured.
