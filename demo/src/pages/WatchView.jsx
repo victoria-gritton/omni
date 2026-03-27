@@ -19,7 +19,7 @@ export default function WatchView() {
         {/* Label */}
         <div className="w-full flex items-center justify-between">
           <span className="text-[11px] text-foreground-muted">Apple Watch · 45mm</span>
-          <a href="/" className="text-[11px] text-link">← Demos</a>
+          <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
 
         {/* Watch bezel */}

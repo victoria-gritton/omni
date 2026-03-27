@@ -58,7 +58,7 @@ export default function ConsoleLayout({ children }) {
               <span className="text-body-s text-foreground-disabled">Search services, metrics, traces...</span>
             </div>
             <div className="flex items-center gap-3">
-              <a href="/" className="text-body-s text-link">← Demos</a>
+              <a href="#/" className="text-body-s text-link">← Demos</a>
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-status-active" />
                 <span className="text-body-s text-foreground-muted">Live</span>

@@ -24,7 +24,7 @@ export default function PhoneView() {
       <div className="content-layer flex flex-col items-center gap-6">
         <div className="w-full flex items-center justify-between">
           <span className="text-[11px] text-foreground-muted">iPhone · 2:05 AM</span>
-          <a href="/" className="text-[11px] text-link">← Demos</a>
+          <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
 
         {/* Phone frame */}
