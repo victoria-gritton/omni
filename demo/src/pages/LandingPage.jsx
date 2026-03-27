@@ -22,9 +22,9 @@ const flows = [
     id: 'coffee',
     title: 'Coffee Flow',
     subtitle: 'Morning health check and SLO review',
-    path: null,
-    ready: false,
-    preview: 'placeholder',
+    path: '/coffee',
+    ready: true,
+    preview: 'coffee',
   },
   {
     id: 'home',
@@ -80,6 +80,35 @@ function HomePreview() {
           <div className="flex gap-0.5">
             <div className="h-3 flex-1 bg-background-surface-1 rounded border border-border-muted" />
             <div className="h-3 flex-1 bg-background-surface-1 rounded border border-border-muted" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CoffeePreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[120px] h-[80px] rounded-lg border border-border-muted bg-background overflow-hidden flex">
+        <div className="w-3 border-r border-border-muted flex flex-col items-center py-1 gap-0.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted" />
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
+        </div>
+        <div className="flex-1 p-1.5">
+          <div className="flex items-center gap-1 mb-1">
+            <Coffee size={6} className="text-foreground-muted" />
+            <div className="h-1 w-8 bg-foreground-muted/20 rounded" />
+          </div>
+          <div className="h-5 w-full bg-background-surface-1 rounded border border-primary/20 mb-1 p-0.5">
+            <div className="h-full w-3/4 bg-primary/10 rounded-sm" />
+          </div>
+          <div className="flex gap-0.5">
+            <div className="h-2.5 flex-1 bg-status-active/10 rounded border border-status-active/20 flex items-center justify-center">
+              <CheckCircle size={5} className="text-status-active" />
+            </div>
+            <div className="h-2.5 flex-1 bg-background-surface-1 rounded border border-border-muted" />
           </div>
         </div>
       </div>
@@ -153,6 +182,7 @@ export default function LandingPage() {
                 {flow.preview === 'watch' && <WatchPreview />}
                 {flow.preview === 'home' && <HomePreview />}
                 {flow.preview === 'day0' && <Day0Preview />}
+                {flow.preview === 'coffee' && <CoffeePreview />}
                 {flow.preview === 'placeholder' && <PlaceholderPreview />}
               </div>
               <div className="p-3">
