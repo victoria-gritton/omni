@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   PaperPlaneRight, ShieldCheck, ChartBar, Crosshair, Link as LinkIcon,
   Lightning, Bell, Clock, Sparkle, Robot, ArrowRight, Play,
   WaveTriangle, Eye, Cpu, FileText, Path, Package,
   Broadcast, Target, SignOut, CheckCircle,
   Archive, CaretDown, CaretUp, CaretRight, Info,
+  CircleNotch,
 } from '@phosphor-icons/react'
 import { persona } from '../data/persona'
 
@@ -12,6 +13,50 @@ const tierIcons = {
   bell: Bell, chart: ChartBar, wave: WaveTriangle, archive: Archive,
   cpu: Cpu, file: FileText, path: Path, container: Package,
   signal: Broadcast, target: Crosshair, route: SignOut, link: LinkIcon,
+}
+
+// Simulation config per item — how many steps and what the progress label looks like
+const simConfig = {
+  't1-alarms': { steps: 42, label: (n, t) => `Creating alarm ${n} of ${t}...`, done: '42 alarms created' },
+  't1-dashboard': { steps: 4, label: (n, t) => `Adding widget ${n} of ${t}...`, done: 'Dashboard created' },
+  't1-anomaly': { steps: 5, label: (n, t) => `Configuring detector ${n} of ${t}...`, done: 'Anomaly detection enabled' },
+  't1-logclass': { steps: 2, label: (n, t) => `Updating log group ${n} of ${t}...`, done: 'Log classes optimized' },
+  't2-cw-agent': { steps: 6, label: (n, t) => `Deploying to service ${n} of ${t}...`, done: 'Agent deployed to 6 services' },
+  't2-logs': { steps: 6, label: (n, t) => `Enabling logs on ${n} of ${t} services...`, done: 'Logging enabled on 14 services' },
+  't2-traces': { steps: 3, label: (n, t) => `Enabling tracing on ${n} of ${t}...`, done: 'X-Ray tracing enabled' },
+  't2-container-insights': { steps: 3, label: (n, t) => `Updating cluster ${n} of ${t}...`, done: 'Container Insights enabled' },
+  't2-app-signals': { steps: 3, label: (n, t) => `Configuring ${n} of ${t}...`, done: 'Application Signals enabled' },
+}
+
+// states: 'idle' | 'running' | 'done'
+function useSimulation() {
+  const [states, setStates] = useState({})
+  const [progress, setProgress] = useState({})
+  const timers = useRef({})
+
+  const run = useCallback((id) => {
+    const config = simConfig[id]
+    if (!config) return
+    setStates(s => ({ ...s, [id]: 'running' }))
+    setProgress(p => ({ ...p, [id]: 0 }))
+    let step = 0
+    timers.current[id] = setInterval(() => {
+      step++
+      if (step >= config.steps) {
+        clearInterval(timers.current[id])
+        setStates(s => ({ ...s, [id]: 'done' }))
+        setProgress(p => ({ ...p, [id]: config.steps }))
+      } else {
+        setProgress(p => ({ ...p, [id]: step }))
+      }
+    }, 80)
+  }, [])
+
+  useEffect(() => {
+    return () => Object.values(timers.current).forEach(clearInterval)
+  }, [])
+
+  return { states, progress, run }
 }
 
 function BadgeWithTooltip({ text, tooltip, colorClass, bgClass }) {
@@ -64,10 +109,32 @@ function DetailTable({ details }) {
   )
 }
 
-function RunButton({ onClick }) {
+function ItemStatus({ id, states, progress, onRun }) {
+  const state = states[id] || 'idle'
+  const config = simConfig[id]
+  const step = progress[id] || 0
+
+  if (state === 'done') {
+    return (
+      <span className="flex items-center gap-1 text-[10px] text-status-active flex-shrink-0">
+        <CheckCircle size={12} weight="fill" />
+        {config?.done || 'Done'}
+      </span>
+    )
+  }
+
+  if (state === 'running') {
+    return (
+      <span className="flex items-center gap-1.5 text-[10px] text-primary flex-shrink-0">
+        <CircleNotch size={12} className="animate-spin" />
+        <span>{config?.label(step, config.steps)}</span>
+      </span>
+    )
+  }
+
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); onClick?.() }}
+      onClick={(e) => { e.stopPropagation(); onRun(id) }}
       className="flex items-center gap-1 text-[10px] text-primary hover:text-primary-hover px-2 py-1 rounded-md hover:bg-primary/10 transition-colors flex-shrink-0"
     >
       <Play size={10} weight="fill" />
@@ -76,60 +143,111 @@ function RunButton({ onClick }) {
   )
 }
 
-function Tier1Item({ item }) {
+function Tier1Item({ item, states, progress, onRun }) {
   const [expanded, setExpanded] = useState(false)
   const Icon = tierIcons[item.icon] || Lightning
+  const state = states[item.id] || 'idle'
+
   return (
     <div className="py-2">
       <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <div className="w-7 h-7 rounded-lg bg-status-active/10 flex items-center justify-center text-status-active flex-shrink-0 mt-0.5">
-          <Icon size={14} />
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+          state === 'done' ? 'bg-status-active/10 text-status-active' :
+          state === 'running' ? 'bg-primary/10 text-primary' :
+          'bg-status-active/10 text-status-active'
+        }`}>
+          {state === 'done' ? <CheckCircle size={14} weight="fill" /> :
+           state === 'running' ? <CircleNotch size={14} className="animate-spin" /> :
+           <Icon size={14} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-body-s font-medium text-foreground">{item.title}</p>
-            {item.details && (
+            <p className={`text-body-s font-medium ${state === 'done' ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{item.title}</p>
+            {item.details && state !== 'running' && (
               expanded
                 ? <CaretDown size={10} className="text-foreground-disabled" />
                 : <CaretRight size={10} className="text-foreground-disabled" />
             )}
           </div>
-          <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
+          {state === 'running' ? (
+            <div className="mt-1">
+              <div className="w-full h-1 rounded-full bg-border-muted/30 overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-100"
+                  style={{ width: `${((progress[item.id] || 0) / simConfig[item.id].steps) * 100}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
+          )}
         </div>
-        <RunButton />
+        <ItemStatus id={item.id} states={states} progress={progress} onRun={onRun} />
       </div>
-      {expanded && <div className="ml-10"><DetailTable details={item.details} /></div>}
+      {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} /></div>}
     </div>
   )
 }
 
-function Tier2Item({ item, enabled, onToggle }) {
+function Tier2Item({ item, enabled, onToggle, states, progress, onRun }) {
   const [expanded, setExpanded] = useState(false)
   const Icon = tierIcons[item.icon] || Lightning
+  const state = states[item.id] || 'idle'
+
   return (
-    <div className={`py-2 ${!enabled ? 'opacity-50' : ''}`}>
+    <div className={`py-2 ${!enabled && state !== 'done' ? 'opacity-50' : ''}`}>
       <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
-          <Icon size={14} />
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${
+          state === 'done' ? 'bg-status-active/10 text-status-active' :
+          state === 'running' ? 'bg-primary/10 text-primary' :
+          'bg-primary/10 text-primary'
+        }`}>
+          {state === 'done' ? <CheckCircle size={14} weight="fill" /> :
+           state === 'running' ? <CircleNotch size={14} className="animate-spin" /> :
+           <Icon size={14} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-body-s font-medium text-foreground">{item.title}</p>
-            {item.details && (
+            <p className={`text-body-s font-medium ${state === 'done' ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{item.title}</p>
+            {item.details && state !== 'running' && (
               expanded
                 ? <CaretDown size={10} className="text-foreground-disabled" />
                 : <CaretRight size={10} className="text-foreground-disabled" />
             )}
           </div>
-          <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
-          {enabled && <p className="text-[10px] text-status-degraded/80 mt-1">⚡ {item.impact}</p>}
+          {state === 'running' ? (
+            <div className="mt-1">
+              <div className="w-full h-1 rounded-full bg-border-muted/30 overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-100"
+                  style={{ width: `${((progress[item.id] || 0) / simConfig[item.id].steps) * 100}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
+              {enabled && state === 'idle' && <p className="text-[10px] text-status-degraded/80 mt-1">⚡ {item.impact}</p>}
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {enabled && <RunButton />}
-          <Toggle on={enabled} onChange={onToggle} />
+          {state === 'done' ? (
+            <span className="flex items-center gap-1 text-[10px] text-status-active">
+              <CheckCircle size={12} weight="fill" />
+              {simConfig[item.id]?.done}
+            </span>
+          ) : state === 'running' ? (
+            <ItemStatus id={item.id} states={states} progress={progress} onRun={onRun} />
+          ) : (
+            <>
+              {enabled && <ItemStatus id={item.id} states={states} progress={progress} onRun={onRun} />}
+              <Toggle on={enabled} onChange={onToggle} />
+            </>
+          )}
         </div>
       </div>
-      {expanded && enabled && <div className="ml-10"><DetailTable details={item.details} /></div>}
+      {expanded && state !== 'running' && enabled && <div className="ml-10"><DetailTable details={item.details} /></div>}
     </div>
   )
 }
@@ -182,17 +300,37 @@ function ActivityItem({ item, isLast }) {
 export default function Day0Page() {
   const [input, setInput] = useState('')
   const { user, application, coverage, setup, agentActivity, services } = persona
+  const { states, progress, run } = useSimulation()
 
   const [tier2State, setTier2State] = useState(() =>
     Object.fromEntries(setup.tier2.items.map(i => [i.id, i.defaultOn]))
   )
-  const toggleTier2 = (id) => setTier2State(prev => ({ ...prev, [id]: !prev[id] }))
+  const toggleTier2 = (id) => {
+    if (states[id] === 'running' || states[id] === 'done') return
+    setTier2State(prev => ({ ...prev, [id]: !prev[id] }))
+  }
 
   const [showTier2, setShowTier2] = useState(true)
   const [showTier3, setShowTier3] = useState(false)
 
   const firstName = user.name.split(' ')[0]
   const tier2Count = Object.values(tier2State).filter(Boolean).length
+
+  // Run all: tier1 items + enabled tier2 items sequentially
+  const runAll = useCallback(() => {
+    const allIds = [
+      ...setup.tier1.items.map(i => i.id),
+      ...setup.tier2.items.filter(i => tier2State[i.id]).map(i => i.id),
+    ]
+    let delay = 0
+    allIds.forEach(id => {
+      if (states[id] === 'done' || states[id] === 'running') return
+      const config = simConfig[id]
+      const duration = config ? config.steps * 80 + 200 : 1000
+      setTimeout(() => run(id), delay)
+      delay += duration
+    })
+  }, [run, states, tier2State, setup])
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
@@ -241,7 +379,7 @@ export default function Day0Page() {
             <p className="text-[11px] text-foreground-muted mb-3 ml-6">{setup.tier1.description}</p>
             <div className="flex flex-col divide-y divide-border-muted/50 ml-6">
               {setup.tier1.items.map(item => (
-                <Tier1Item key={item.id} item={item} />
+                <Tier1Item key={item.id} item={item} states={states} progress={progress} onRun={run} />
               ))}
             </div>
           </div>
@@ -269,6 +407,9 @@ export default function Day0Page() {
                       item={item}
                       enabled={tier2State[item.id]}
                       onToggle={() => toggleTier2(item.id)}
+                      states={states}
+                      progress={progress}
+                      onRun={run}
                     />
                   ))}
                 </div>
@@ -302,7 +443,10 @@ export default function Day0Page() {
           </div>
 
           {/* GO button */}
-          <button className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-body-m flex items-center justify-center gap-2 transition-colors">
+          <button
+            onClick={runAll}
+            className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-body-m flex items-center justify-center gap-2 transition-colors"
+          >
             <Sparkle size={18} weight="fill" />
             Set up everything
             <ArrowRight size={16} />
