@@ -386,26 +386,25 @@ export default function CoffeeView() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="px-6 py-6">
-        <h1 className="text-display-l font-normal tracking-tighter text-primary mb-1">CloudWatch Omni</h1>
-        <p className="text-body-m text-foreground-muted mb-6">{coffee.greeting}</p>
+        <h1 className="text-[20px] font-normal text-foreground mb-4">{coffee.greeting}</h1>
 
         {/* ═══════ ACT 1: Homepage ═══════ */}
         {act === 0 && (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Search */}
             <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
               <Sparkle size={16} className="text-primary flex-shrink-0" />
               <input type="text" placeholder="Ask a question about your system" className="flex-1 bg-transparent text-body-m text-foreground placeholder:text-foreground-disabled focus:outline-none" />
               <Microphone size={16} className="text-foreground-muted flex-shrink-0" />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => setChatQuery(p)} />)}
             </div>
 
             {/* Observability Feed + Right sidebar */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {/* Observability Feed — 2 cols */}
-              <div className="lg:col-span-2 glass-card p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              {/* Observability Feed */}
+              <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <h3 className="text-heading-m font-normal text-foreground">Observability Feed</h3>
@@ -424,9 +423,9 @@ export default function CoffeeView() {
               </div>
 
               {/* Right sidebar: Tasks + Investigations */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {/* Pending Tasks */}
-                <div className="glass-card p-4">
+                <div className="glass-card p-3">
                   <div className="flex items-center gap-2 mb-3">
                     <ListChecks size={16} className="text-foreground-muted" />
                     <h3 className="text-heading-s font-normal text-foreground">Pending Tasks</h3>
@@ -450,7 +449,7 @@ export default function CoffeeView() {
                 </div>
 
                 {/* Investigations */}
-                <div className="glass-card p-4">
+                <div className="glass-card p-3">
                   <div className="flex items-center gap-2 mb-3">
                     <MagnifyingGlassPlus size={16} className="text-foreground-muted" />
                     <h3 className="text-heading-s font-normal text-foreground">Investigations</h3>
@@ -475,9 +474,9 @@ export default function CoffeeView() {
             </div>
 
             {/* Monitored Systems + Service Topology */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {/* Monitored Systems */}
-              <div className="glass-card p-4">
+              <div className="glass-card p-3">
                 <h3 className="text-heading-m font-normal text-foreground mb-1">Monitored Systems</h3>
                 <p className="text-body-s text-foreground-muted mb-3">Applications and infrastructure under observation</p>
 
@@ -524,7 +523,7 @@ export default function CoffeeView() {
               </div>
 
               {/* Service Topology */}
-              <div className="glass-card p-4">
+              <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="text-heading-m font-normal text-foreground">Service Topology</h3>
