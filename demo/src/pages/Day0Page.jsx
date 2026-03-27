@@ -159,13 +159,13 @@ function ItemStatus({ id, item, states, progress, onRun, tier }) {
 
   if (tier === 1) {
     return (
-      <span
+      <button
         onClick={(e) => { e.stopPropagation(); onRun(id) }}
-        className="flex items-center gap-1 text-[10px] text-status-active/70 px-2 py-1 rounded-md cursor-pointer hover:bg-status-active/10 transition-colors flex-shrink-0"
+        className="flex items-center gap-1 text-[10px] text-primary hover:text-primary-hover px-2 py-1 rounded-md hover:bg-primary/10 transition-colors flex-shrink-0"
       >
-        <CheckCircle size={10} weight="fill" />
-        Included
-      </span>
+        <Play size={10} weight="fill" />
+        Run
+      </button>
     )
   }
 
