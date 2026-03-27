@@ -1,10 +1,11 @@
+import { useNavigate } from 'react-router-dom'
 import {
-  MagnifyingGlassPlus, Sparkle, Lightning,
+  MagnifyingGlassPlus, MagnifyingGlass, Sparkle, Lightning,
   Clock, Warning, WarningCircle, CheckCircle, CaretRight
 } from '@phosphor-icons/react'
 
 const activeInvestigations = [
-  { id: 'INV-1024', title: 'Payment service latency regression', status: 'in-progress', started: '35 min ago', findings: 3, severity: 'high' },
+  { id: 'INC-2847', title: 'payment-service is timing out', status: 'in-progress', started: '35 min ago', findings: 3, severity: 'high', path: '/console' },
   { id: 'INV-1023', title: 'Lambda cold start increase after deploy', status: 'in-progress', started: '2h ago', findings: 5, severity: 'medium' },
   { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', started: 'Yesterday', findings: 7, severity: 'high' },
 ]
@@ -15,24 +16,16 @@ const aiSuggestions = [
 ]
 
 export default function InvestigatePage() {
+  const navigate = useNavigate()
   return (
     <div className="px-6 py-6">
-      <h1 className="text-heading-xl font-normal tracking-tighter text-foreground mb-1">Investigate</h1>
-      <p className="text-body-m text-foreground-muted mb-6">Deep-dive analysis and AI-assisted troubleshooting</p>
+      <h1 className="text-[22px] leading-[28px] font-normal tracking-tighter text-foreground mb-1">Investigate</h1>
+      <p className="text-body-m text-foreground-muted mb-4">Deep-dive analysis and AI-assisted troubleshooting</p>
 
-      <div className="ai-glass-card p-4 mb-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkle size={14} className="text-primary" />
-          <span className="text-body-s font-semibold text-primary">AI-assisted investigation</span>
-        </div>
-        <p className="text-body-m text-foreground mb-3">
-          Describe what you're seeing and I'll help you find the root cause. I can correlate metrics, logs, and traces automatically.
-        </p>
-        <div className="flex items-center gap-2 h-10 rounded-lg bg-background-surface-1 border border-border-muted px-3">
-          <input type="text" placeholder="e.g., Why are checkout errors increasing since 2pm?" className="flex-1 bg-transparent text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none" />
-          <button className="h-7 px-3 rounded-md bg-primary text-[11px] font-medium text-primary-foreground hover:bg-slate-200 transition-colors flex items-center gap-1.5">
-            <Lightning size={12} /> Investigate
-          </button>
+      <div className="relative mb-4">
+        <div className="flex items-center gap-2 h-10 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
+          <input type="text" placeholder="Describe what you're seeing — e.g., Why are checkout errors increasing since 2pm?" className="flex-1 bg-transparent text-body-m text-foreground placeholder:text-foreground-disabled focus:outline-none" />
+          <MagnifyingGlass size={16} className="text-foreground-muted flex-shrink-0" />
         </div>
       </div>
 
@@ -52,7 +45,7 @@ export default function InvestigatePage() {
         <h3 className="text-heading-s font-normal text-foreground mb-3">Investigations ({activeInvestigations.length})</h3>
         <div className="space-y-0">
           {activeInvestigations.map((inv) => (
-            <div key={inv.id} className="flex items-center gap-3 py-3 border-b border-border-muted last:border-0 cursor-pointer hover:bg-background-surface-2/50 -mx-2 px-2 rounded-lg transition-colors">
+            <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-3 border-b border-border-muted last:border-0 cursor-pointer hover:bg-background-surface-2/50 -mx-2 px-2 rounded-lg transition-colors">
               {inv.status === 'resolved'
                 ? <CheckCircle size={16} className="text-status-active flex-shrink-0" />
                 : inv.severity === 'high'

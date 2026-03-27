@@ -3,7 +3,7 @@
 
 export const coffee = {
   // Act 1: Homepage state
-  greeting: 'Good afternoon, Sarah',
+  greeting: 'Good afternoon',
   timestamp: '2:30 PM · Friday',
   healthBriefing: {
     servicesMonitored: 12,

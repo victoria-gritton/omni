@@ -19,14 +19,6 @@ const flows = [
     preview: 'placeholder',
   },
   {
-    id: 'coffee',
-    title: 'Coffee Flow',
-    subtitle: 'Morning health check and SLO review',
-    path: '/coffee',
-    ready: true,
-    preview: 'coffee',
-  },
-  {
     id: 'home',
     title: 'Home Dashboard',
     subtitle: 'Overview with AI assistant',

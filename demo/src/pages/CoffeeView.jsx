@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   CheckCircle, Warning, Sparkle, ChartBar, Bell, Clock,
   CaretDown, CaretUp, ArrowRight, Lightning, ShieldCheck,
@@ -7,6 +8,8 @@ import {
   ListChecks, MagnifyingGlassPlus, CaretRight, Eye, X
 } from '@phosphor-icons/react'
 import { coffee } from '../data/coffee'
+import { useChatPanel } from '../components/ConsoleLayout'
+import TopologyMap from '../components/TopologyMap'
 
 /* ── Act indicator ── */
 function ActIndicator({ current, total }) {
@@ -149,9 +152,8 @@ function TypedText({ text, speed=20, onDone }) {
 
 /* ── Data ── */
 const promptPills = [
-  "What's the health of my services?", "Show me all active alarms",
-  "Which services have the highest error rates?", "Show me my service dependency map",
-  "Find services with elevated latency", "Show me recent errors in my logs",
+  "Why is payment-service timing out?", "Show me all active alarms",
+  "Show me recent errors in my logs",
   "List my dashboards", "How are my containers doing?",
   "Top invoked Lambda functions", "Check my database instances health",
 ]
@@ -338,14 +340,15 @@ const feedItems = [
 ]
 
 const pendingTasks = [
-  { id: 'T-1', title: 'Set up container memory monitoring', description: 'Create dashboard + alarm for payment-processing-prod memory at 87.5% threshold', priority: 'high', source: 'Recommendation' },
+  { id: 'T-1', title: 'Create recommended alarms', description: '6 recommended alarms based on incidents and best practices', priority: 'high', source: 'Recommendation' },
   { id: 'T-2', title: 'Enable DynamoDB auto-scaling alerts', description: 'Add alarm for when auto-scaling events fire on UsersTable', priority: 'medium', source: 'Feed analysis' },
   { id: 'T-3', title: 'Archive 23 unused custom metrics', description: 'Metrics not queried in 90+ days. Estimated savings: $47/month', priority: 'low', source: 'Cost optimization' },
 ]
 
 const investigations = [
-  { id: 'INV-1024', title: 'DynamoDB + PaymentService cascade', status: 'active', progress: '3 of 5 steps', started: '4m ago' },
-  { id: 'INV-1023', title: 'Lambda cold start regression post-deploy', status: 'paused', progress: 'Waiting for data', started: '2h ago' },
+  { id: 'INC-2847', title: 'payment-service is timing out', status: 'active', progress: '3 findings', started: '35m ago', path: '/console' },
+  { id: 'INV-1023', title: 'Lambda cold start increase after deploy', status: 'paused', progress: '5 findings', started: '2h ago' },
+  { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', progress: '7 findings', started: 'Yesterday' },
 ]
 
 const monitoredSystems = {
@@ -368,10 +371,12 @@ const monitoredSystems = {
 
 /* ── Main Coffee Flow ── */
 export default function CoffeeView() {
+  const navigate = useNavigate()
   const [act, setAct] = useState(0)
   const [expandedFeed, setExpandedFeed] = useState(null)
   const [chatQuery, setChatQuery] = useState(null)
   const [setupComplete, setSetupComplete] = useState(false)
+  const { openChat } = useChatPanel()
   const [aiTypingDone, setAiTypingDone] = useState(false)
   const [settingUp, setSettingUp] = useState(false)
   const [setupDone, setSetupDone] = useState(false)
@@ -408,13 +413,13 @@ export default function CoffeeView() {
             )}
 
             {/* Search */}
-            <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
+            <div className="flex items-center gap-2 h-10 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
               <Sparkle size={16} className="text-primary flex-shrink-0" />
-              <input type="text" placeholder="Ask a question about your system" className="flex-1 bg-transparent text-body-m text-foreground placeholder:text-foreground-disabled focus:outline-none" />
+              <input type="text" placeholder="Ask a question about your system" className="flex-1 bg-transparent text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none" />
               <Microphone size={16} className="text-foreground-muted flex-shrink-0" />
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => setChatQuery(p)} />)}
+              {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => openChat(p)} />)}
             </div>
 
             {/* Observability Feed + Right sidebar */}
@@ -443,7 +448,7 @@ export default function CoffeeView() {
               <div className="glass-card p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <ListChecks size={14} className="text-foreground-muted" />
-                  <h3 className="text-heading-xs font-normal text-foreground">Pending Tasks</h3>
+                  <h3 className="text-heading-xs font-normal text-foreground">Recommendations</h3>
                   <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
                 </div>
                 <div className="space-y-2">
@@ -456,7 +461,10 @@ export default function CoffeeView() {
                       <p className="text-[10px] text-foreground-muted mb-2">{task.description}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-[9px] text-foreground-disabled">{task.source}</span>
-                        <button className="h-5 px-2 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="text-[9px] text-link hover:underline">View details</button>
+                          <button className="h-5 px-2 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -471,7 +479,7 @@ export default function CoffeeView() {
                 </div>
                 <div className="space-y-2">
                   {investigations.map(inv => (
-                    <div key={inv.id} className="flex items-center gap-3 p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
+                    <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
                       <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':'bg-foreground-disabled'}`} />
                       <div className="flex-1 min-w-0">
                         <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
@@ -535,10 +543,10 @@ export default function CoffeeView() {
                 <div className="p-2 rounded-md bg-purple-500/[0.06] border border-purple-400/20 flex items-center gap-2">
                   <Sparkle size={12} className="text-purple-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-[11px] text-foreground font-medium">Set up container memory monitoring</span>
-                    <span className="text-[9px] text-foreground-muted ml-2">Weekend spike expected</span>
+                    <span className="text-[11px] text-foreground font-medium">Create recommended alarms</span>
+                    <span className="text-[9px] text-foreground-muted ml-2">6 alarms found</span>
                   </div>
-                  <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-5 px-2 rounded text-[9px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => openChat('__alarms__')} className="h-5 px-2 rounded text-[9px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
                     <Sparkle size={8} /> Set up
                   </button>
                 </div>
@@ -546,18 +554,7 @@ export default function CoffeeView() {
 
               {/* Service Topology */}
               <div className="glass-card p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h3 className="text-heading-xs font-normal text-foreground">Service Topology</h3>
-                    <p className="text-[10px] text-foreground-muted">Real-time dependency map</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {[['Healthy','bg-status-active'],['Warning','bg-status-blocked'],['Critical','bg-status-outage']].map(([l,c])=>(
-                      <div key={l} className="flex items-center gap-1.5"><div className={`w-2 h-2 rounded-full ${c}`}/><span className="text-[10px] text-foreground-muted">{l}</span></div>
-                    ))}
-                  </div>
-                </div>
-                <ServiceTopology />
+                <TopologyMap />
               </div>
             </div>
           </div>
@@ -631,7 +628,6 @@ export default function CoffeeView() {
         )}
       </div>
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
-      {chatQuery && <ChatPanel query={chatQuery} onClose={() => setChatQuery(null)} onSetupComplete={() => setSetupComplete(true)} />}
     </main>
   )
 }
