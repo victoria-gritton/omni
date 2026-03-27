@@ -171,55 +171,148 @@ const chatResponses = {
 
 /* ── Chat Panel ── */
 function ChatPanel({ query, onClose }) {
-  const response = chatResponses[query] || "I'm analyzing your system. One moment..."
+  const isSetup = query === '__setup_monitoring__'
+  const response = isSetup ? null : (chatResponses[query] || "I'm analyzing your system. One moment...")
+  const [setupPhase, setSetupPhase] = useState(0) // 0=chart, 1=suggestion visible, 2=setting up, 3=done
+  const [chartVisible, setChartVisible] = useState(false)
+
+  useEffect(() => {
+    if (isSetup) {
+      const t1 = setTimeout(() => setChartVisible(true), 600)
+      const t2 = setTimeout(() => setSetupPhase(1), 1400)
+      return () => { clearTimeout(t1); clearTimeout(t2) }
+    }
+  }, [isSetup])
+
+  function handleApprove() {
+    setSetupPhase(2)
+    setTimeout(() => setSetupPhase(3), 2000)
+  }
 
   return (
     <div className="fixed inset-y-0 right-0 w-[60%] z-50 flex flex-col" style={{ animation: 'slideIn 0.25s ease-out' }}>
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm border-l border-border-muted" />
-
-      {/* Content */}
       <div className="relative flex flex-col h-full">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-border-muted">
           <div className="flex items-center gap-2">
             <Sparkle size={16} className="text-primary" />
             <span className="text-body-s font-semibold text-foreground">AI Assistant</span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 transition-colors text-foreground-muted" aria-label="Close">
-            <X size={16} />
-          </button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 transition-colors text-foreground-muted" aria-label="Close"><X size={16} /></button>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* User message */}
-          <div>
-            <span className="text-[10px] font-semibold text-primary mb-1 block">@sarah</span>
-            <div className="p-3 rounded-lg bg-background-surface-1 border border-border-muted">
-              <span className="text-body-s text-foreground">{query}</span>
-            </div>
-          </div>
-
-          {/* AI response */}
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                <Sparkle size={10} className="text-primary" />
+          {!isSetup && (
+            <>
+              <div>
+                <span className="text-[10px] font-semibold text-primary mb-1 block">@sarah</span>
+                <div className="p-3 rounded-lg bg-background-surface-1 border border-border-muted">
+                  <span className="text-body-s text-foreground">{query}</span>
+                </div>
               </div>
-              <span className="text-[10px] font-semibold text-foreground-muted">ASSISTANT</span>
-            </div>
-            <div className="text-body-s text-foreground-secondary leading-relaxed whitespace-pre-line">
-              {response.split(/(\*\*.*?\*\*)/).map((part, i) =>
-                part.startsWith('**') && part.endsWith('**')
-                  ? <span key={i} className="text-foreground font-medium">{part.slice(2, -2)}</span>
-                  : part
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center"><Sparkle size={10} className="text-primary" /></div>
+                  <span className="text-[10px] font-semibold text-foreground-muted">ASSISTANT</span>
+                </div>
+                <div className="text-body-s text-foreground-secondary leading-relaxed whitespace-pre-line">
+                  {response.split(/(\*\*.*?\*\*)/).map((part, i) =>
+                    part.startsWith('**') && part.endsWith('**')
+                      ? <span key={i} className="text-foreground font-medium">{part.slice(2, -2)}</span>
+                      : part
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {isSetup && (
+            <>
+              {/* AI message */}
+              <div className="ai-glass-card p-4">
+                <div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary" /><span className="text-body-s font-semibold text-primary">AI assistant</span></div>
+                <p className="text-body-m text-foreground leading-relaxed">
+                  I found your payment-processing-prod cluster. Here's the current memory usage across your containers — the top container is at 680 MB, which is 85% of the 800 MB limit.
+                </p>
+              </div>
+
+              {/* Query */}
+              <div className="glass-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-heading-xs font-normal text-foreground">Metric query</span>
+                  <span className="text-[10px] text-foreground-muted px-2 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">PromQL</span>
+                </div>
+                <pre className="text-pre font-mono bg-background-surface-2/40 rounded-lg p-3 text-foreground-secondary overflow-x-auto">{'topk(10, container_memory_working_set_bytes{cluster="payment-processing-prod"})'}</pre>
+              </div>
+
+              {/* Chart */}
+              {chartVisible && (
+                <div className="glass-card p-4" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-heading-s font-normal text-foreground">Container Memory Usage</h3>
+                    <span className="text-body-s text-foreground-muted">payment-processing-prod</span>
+                  </div>
+                  <MemoryChart data={coffee.memoryChartData} threshold={700} />
+                  <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-status-blocked/[0.06] border border-status-blocked/[0.15]">
+                    <Warning size={14} className="text-status-blocked" />
+                    <span className="text-body-s text-status-blocked">Your top container is currently at 680 MB (85% of 800 MB limit)</span>
+                  </div>
+                </div>
               )}
-            </div>
-          </div>
+
+              {/* Suggestion */}
+              {setupPhase >= 1 && setupPhase < 2 && (
+                <div className="ai-glass-card p-4" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                  <div className="flex items-center gap-2 mb-3"><Sparkle size={14} className="text-primary" /><span className="text-body-s font-semibold text-primary">Recommended setup</span></div>
+                  <p className="text-body-s text-foreground-secondary mb-3">Based on your container limits (800 MB) and current usage trends, I recommend:</p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-3 py-1.5"><ChartBar size={14} className="text-foreground-muted" /><span className="text-body-s text-foreground-muted w-32">Dashboard widget</span><span className="text-body-s text-foreground font-medium">Payment Container Memory Usage</span></div>
+                    <div className="flex items-center gap-3 py-1.5"><Bell size={14} className="text-foreground-muted" /><span className="text-body-s text-foreground-muted w-32">Alarm threshold</span><span className="text-body-s text-foreground font-medium">700 MB (87.5% of limit)</span></div>
+                    <div className="flex items-center gap-3 py-1.5"><Clock size={14} className="text-foreground-muted" /><span className="text-body-s text-foreground-muted w-32">Evaluation period</span><span className="text-body-s text-foreground font-medium">2 consecutive 5-minute periods</span></div>
+                  </div>
+                  <p className="text-body-s text-foreground-muted mb-4">This will give you early warning before OOM events occur.</p>
+                  <div className="flex gap-2 justify-end">
+                    <button onClick={onClose} className="h-8 px-4 rounded-lg border border-border-muted text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">Not now</button>
+                    <button onClick={handleApprove} className="h-8 px-4 rounded-lg bg-primary border border-white/10 text-body-s font-medium text-primary-foreground hover:bg-slate-200 active:bg-slate-300 transition-all flex items-center gap-2"><CheckCircle size={14} /> Yes, set it up</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Setting up */}
+              {setupPhase === 2 && (
+                <div className="ai-glass-card p-4 flex items-center gap-3"><ArrowClockwise size={16} className="text-primary animate-spin" /><div><span className="text-body-s font-semibold text-primary block">Setting up monitoring...</span><span className="text-body-s text-foreground-muted">Creating dashboard, alarm, and notifications</span></div></div>
+              )}
+
+              {/* Done */}
+              {setupPhase === 3 && (
+                <>
+                  <div className="glass-card p-4">
+                    <h3 className="text-heading-s font-normal text-foreground mb-3">Setup complete</h3>
+                    <div className="space-y-3">
+                      {[
+                        { title: 'Dashboard created', desc: '"Payment Service Health" with memory usage widget' },
+                        { title: 'Alarm configured', desc: '"Payment Container High Memory Alert" — triggers at 700 MB for 2 × 5 minutes' },
+                        { title: 'Notifications active', desc: 'Slack via SNS → #payments-oncall' },
+                      ].map((item, i) => (
+                        <div key={i} className={`flex items-start gap-3 py-2 ${i < 2 ? 'border-b border-border-muted' : ''}`}>
+                          <CheckCircle size={16} className="text-status-active mt-0.5" weight="fill" />
+                          <div><span className="text-body-s text-foreground font-medium block">{item.title}</span><span className="text-body-s text-foreground-muted">{item.desc}</span></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="ai-glass-card p-4">
+                    <div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary" /><span className="text-body-s font-semibold text-primary">AI assistant</span></div>
+                    <p className="text-body-m text-foreground leading-relaxed">
+                      All set. I've created the "Payment Service Health" dashboard with your memory widget, and the alarm is now active. Your team will get Slack alerts in #payments-oncall if memory crosses 700 MB for 10 consecutive minutes. You're covered for the weekend.
+                    </p>
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </div>
 
-        {/* Input */}
         <div className="px-5 py-3 border-t border-border-muted">
           <div className="flex items-center gap-2 h-10 rounded-lg bg-background-surface-1 border border-border-muted px-3">
             <Sparkle size={14} className="text-primary flex-shrink-0" />
@@ -322,7 +415,7 @@ export default function CoffeeView() {
               <p className="text-body-s text-foreground-secondary mb-1"><span className="text-status-outage font-medium">Risk:</span> Potential out-of-memory (OOM) issues could disrupt customer transactions.</p>
               <p className="text-body-s text-foreground-secondary mb-4"><span className="text-primary font-medium">Recommendation:</span> Set up container memory monitoring with automated alerts.</p>
               <div className="flex gap-2">
-                <button onClick={() => setAct(1)} className="h-8 px-4 rounded-lg bg-primary border border-white/10 text-body-s font-medium text-primary-foreground hover:bg-slate-200 active:bg-slate-300 transition-all flex items-center gap-2"><Lightning size={14} /> Set up monitoring</button>
+                <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-8 px-4 rounded-lg bg-primary border border-white/10 text-body-s font-medium text-primary-foreground hover:bg-slate-200 active:bg-slate-300 transition-all flex items-center gap-2"><Lightning size={14} /> Set up monitoring</button>
                 <button className="h-8 px-4 rounded-lg border border-primary/20 text-body-s text-primary hover:bg-primary/5 transition-colors">Tell me more</button>
               </div>
             </div>
