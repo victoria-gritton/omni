@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, Robot, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, MagnifyingGlass, User } from '@phosphor-icons/react'
+import { House, Atom, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, MagnifyingGlass, User } from '@phosphor-icons/react'
 
 const navItems = [
   { icon: House, label: 'Home', path: '/home' },
-  { icon: Robot, label: 'Agents' },
+  { icon: Atom, label: 'Agents' },
   { icon: Bell, label: 'Alarms', path: '/console' },
   { icon: ChartBar, label: 'Dashboards' },
   { icon: Globe, label: 'Application Map' },
