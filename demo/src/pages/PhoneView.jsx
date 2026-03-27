@@ -98,7 +98,7 @@ export default function PhoneView() {
                   Auto-remediation authorized
                 </span>
                 <p className="text-[12px] leading-[17px] text-white/50 mb-3">
-                  You pre-approved this fix. It recycles the payment service with more memory, one instance at a time, so nothing goes down.
+                  You pre-approved this fix. Restart ECS tasks with 1 GB memory (up from 512 MB), one task at a time. No downtime.
                 </p>
 
                 {!restarted ? (

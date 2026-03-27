@@ -2,13 +2,13 @@
 export const incident = {
   id: 'INC-2847',
   severity: 'critical',
-  title: 'Payment service 12× slower',
+  title: 'payment-service is timing out',
   summary: 'ECS tasks on payment-service-east-2 are hitting memory limits and getting killed. 3 downstream services are degraded.',
   timestamp: '2:03 AM',
 
   // AI-generated brief
   brief: {
-    hypothesis: 'ECS tasks on payment-service-east-2 hit memory limits. Tasks are OOM-killed and restarting in a loop. No deploys in 6h. Traffic normal.',
+    hypothesis: 'ECS tasks on payment-service-east-2 hit memory limits. Tasks are being killed and restarting in a loop. ~2,400 failed checkouts in the last 10 minutes. No deploys in 6h.',
     confidence: 'high',
     rootCauseType: 'ECS memory exhaustion',
   },
