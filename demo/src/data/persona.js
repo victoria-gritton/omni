@@ -134,7 +134,7 @@ export const persona = {
           description: 'Using 14 days of existing metric history to establish baselines',
           icon: 'wave',
           viewLabel: 'View detectors',
-          viewPath: null,
+          viewPath: '/home',
           details: [
             { metric: 'API Gateway request count', reason: 'Detect traffic spikes or drops' },
             { metric: 'ECS CPU/memory per service', reason: 'Catch resource exhaustion early' },
@@ -149,7 +149,7 @@ export const persona = {
           description: 'Move notification-service logs to Infrequent Access (low volume, saves ~$12/mo)',
           icon: 'archive',
           viewLabel: 'View log groups',
-          viewPath: null,
+          viewPath: '/home',
           details: [
             { logGroup: '/aws/lambda/notification-service', currentClass: 'Standard', recommended: 'Infrequent Access', reason: 'Low query frequency, ~80K invocations/day' },
             { logGroup: '/aws/lambda/image-processor', currentClass: 'Standard', recommended: 'Keep Standard', reason: 'May need real-time debugging for image failures' },
@@ -172,7 +172,7 @@ export const persona = {
           defaultOn: true,
           icon: 'cpu',
           viewLabel: 'View agents',
-          viewPath: null,
+          viewPath: '/home',
           detailsPerResource: true,
           details: [
             { service: 'user-service (4 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
@@ -191,7 +191,7 @@ export const persona = {
           defaultOn: true,
           icon: 'file',
           viewLabel: 'View logs',
-          viewPath: null,
+          viewPath: '/home',
           detailsPerResource: true,
           details: [
             { service: 'API Gateway', action: 'Enable access logging to CloudWatch Logs (no restart)' },
@@ -210,7 +210,7 @@ export const persona = {
           defaultOn: true,
           icon: 'path',
           viewLabel: 'View traces',
-          viewPath: null,
+          viewPath: '/home',
           detailsPerResource: true,
           details: [
             { service: 'API Gateway', action: 'Enable X-Ray tracing on stage (config update, no downtime)' },
@@ -226,7 +226,7 @@ export const persona = {
           defaultOn: true,
           icon: 'container',
           viewLabel: 'View insights',
-          viewPath: null,
+          viewPath: '/home',
           detailsPerResource: true,
           details: [
             { cluster: 'novamart-east-1', services: 4, action: 'Enable containerInsights account setting' },
@@ -242,7 +242,7 @@ export const persona = {
           defaultOn: false,
           icon: 'signal',
           viewLabel: 'View service map',
-          viewPath: null,
+          viewPath: '/home',
           details: [
             { what: 'Auto-instrumentation', action: 'Adds OpenTelemetry auto-instrumentation to ECS tasks via CW Agent' },
             { what: 'Service map', action: 'Generates real-time dependency map from trace data' },
