@@ -170,7 +170,7 @@ const chatResponses = {
 }
 
 /* ── Chat Panel ── */
-function ChatPanel({ query, onClose }) {
+function ChatPanel({ query, onClose, onSetupComplete }) {
   const isSetup = query === '__setup_monitoring__'
   const response = isSetup ? null : (chatResponses[query] || "I'm analyzing your system. One moment...")
   const [setupPhase, setSetupPhase] = useState(0) // 0=chart, 1=suggestion visible, 2=setting up, 3=done
@@ -186,7 +186,10 @@ function ChatPanel({ query, onClose }) {
 
   function handleApprove() {
     setSetupPhase(2)
-    setTimeout(() => setSetupPhase(3), 2000)
+    setTimeout(() => {
+      setSetupPhase(3)
+      setTimeout(() => { onSetupComplete?.(); onClose() }, 2500)
+    }, 2000)
   }
 
   return (
@@ -368,6 +371,7 @@ export default function CoffeeView() {
   const [act, setAct] = useState(0)
   const [expandedFeed, setExpandedFeed] = useState(null)
   const [chatQuery, setChatQuery] = useState(null)
+  const [setupComplete, setSetupComplete] = useState(false)
   const [aiTypingDone, setAiTypingDone] = useState(false)
   const [settingUp, setSettingUp] = useState(false)
   const [setupDone, setSetupDone] = useState(false)
@@ -391,6 +395,18 @@ export default function CoffeeView() {
         {/* ═══════ ACT 1: Homepage ═══════ */}
         {act === 0 && (
           <div className="space-y-2">
+            {/* Success banner */}
+            {setupComplete && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-status-active/[0.08] border border-status-active/20" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                <CheckCircle size={16} className="text-status-active" weight="fill" />
+                <div className="flex-1">
+                  <span className="text-body-s text-foreground font-medium">Monitoring setup complete</span>
+                  <span className="text-body-s text-foreground-muted ml-2">Dashboard, alarm, and Slack notifications are active for payment-processing-prod</span>
+                </div>
+                <button onClick={() => setSetupComplete(false)} className="text-foreground-muted hover:text-foreground"><X size={14} /></button>
+              </div>
+            )}
+
             {/* Search */}
             <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
               <Sparkle size={16} className="text-primary flex-shrink-0" />
@@ -481,6 +497,14 @@ export default function CoffeeView() {
                 <div className="mb-2">
                   <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
                   <div>
+                    {setupComplete && (
+                      <div className="flex items-center gap-1.5 py-1 border-b border-status-active/20 bg-status-active/[0.04] -mx-1 px-1 rounded" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+                        <ChartBar size={12} className="text-status-active flex-shrink-0" />
+                        <span className="text-[11px] text-status-active flex-1 font-medium">Payment Service Health</span>
+                        <span className="text-[9px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
+                        <span className="text-[9px] text-status-active/70">NEW</span>
+                      </div>
+                    )}
                     {monitoredSystems.applications.map(app => (
                       <div key={app.name} className="flex items-center gap-1.5 py-1 border-b border-border-muted/50 last:border-0">
                         <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)} flex-shrink-0`} />
@@ -607,7 +631,7 @@ export default function CoffeeView() {
         )}
       </div>
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } } @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`}</style>
-      {chatQuery && <ChatPanel query={chatQuery} onClose={() => setChatQuery(null)} />}
+      {chatQuery && <ChatPanel query={chatQuery} onClose={() => setChatQuery(null)} onSetupComplete={() => setSetupComplete(true)} />}
     </main>
   )
 }
