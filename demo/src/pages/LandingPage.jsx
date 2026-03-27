@@ -37,8 +37,8 @@ const flows = [
   {
     id: 'day0',
     title: 'Day 0 Homepage',
-    subtitle: 'First-run onboarding experience',
-    path: '/home',
+    subtitle: 'First-time setup and onboarding',
+    path: '/day0',
     ready: true,
     preview: 'day0',
   },
