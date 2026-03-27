@@ -27,11 +27,38 @@ const recents = [
 ]
 
 const CHAT_RESPONSES = {
-  default: "I'm monitoring the incident. The payment-service tasks in east-2 are the root cause — memory exhaustion triggered a restart loop. What would you like to know?",
-  'what caused': "The ECS tasks for payment-service-east-2 hit their 512 MB memory limit. The tasks were OOM-killed 6 times since 1:52 AM, creating a restart loop.",
-  'how many': "~2,400 failed checkouts in the last 10 minutes. 3 downstream services are degraded.",
-  'rollback': "A rollback isn't recommended here. No deploys in the last 6 hours. The fix is increasing memory from 512 MB to 1 GB per task.",
-  'post-mortem': "I can generate a post-mortem draft with the full timeline, root cause analysis, and action items.",
+  default: {
+    text: "I'm monitoring the incident. The payment-service tasks in east-2 are the root cause — memory exhaustion triggered a restart loop.",
+    followUps: ['What caused this?', 'How many users affected?', 'Show the timeline'],
+  },
+  'what caused': {
+    text: "The ECS tasks for payment-service-east-2 hit their 512 MB memory limit. The tasks were OOM-killed 6 times since 1:52 AM, creating a restart loop.",
+    followUps: ['How do we fix it?', 'Show affected services', 'Should we rollback?'],
+  },
+  'how many': {
+    text: "~2,400 failed checkouts in the last 10 minutes. 3 downstream services are degraded: checkout (1.8s), order (900ms), inventory (600ms).",
+    followUps: ['Which regions?', 'Show error rates', 'What caused this?'],
+  },
+  'rollback': {
+    text: "A rollback isn't recommended. No deploys in the last 6 hours — nothing to roll back to. The fix is increasing memory from 512 MB to 1 GB per task.",
+    followUps: ['Approve the fix', 'Show me the runbook', 'What are the risks?'],
+  },
+  'post-mortem': {
+    text: "I can generate a post-mortem draft with the full timeline, root cause analysis, and action items. Want me to start?",
+    followUps: ['Yes, generate it', 'Show the timeline first', 'Not now'],
+  },
+  'fix': {
+    text: "The recommended fix is to restart ECS tasks with 1 GB memory (up from 512 MB), one task at a time. No downtime. This matches your runbook: OOM restart → increase memory.",
+    followUps: ['Approve & execute', 'What are the risks?', 'Show affected services'],
+  },
+  'risk': {
+    text: "Low risk. Rolling restart — one task at a time, so there's always capacity. Memory increase from 512 MB to 1 GB is within the task definition limits. No config changes needed.",
+    followUps: ['Approve & execute', 'Show the runbook', 'Who else is on-call?'],
+  },
+  'affected': {
+    text: "3 downstream services degraded via dependency chain: checkout-service (1.8s latency), order-service (900ms), inventory-service (600ms). 3 healthy services unaffected.",
+    followUps: ['Show the service map', 'What caused this?', 'How do we fix it?'],
+  },
 }
 
 function getAIResponse(input) {
@@ -42,9 +69,38 @@ function getAIResponse(input) {
   return CHAT_RESPONSES.default
 }
 
-function ChatPanel({ onClose }) {
+const PAGE_CONTEXT = {
+  '/console': {
+    greeting: "I'm investigating INC-2847. Payment-service in east-2 is hitting memory limits. What would you like to know?",
+    prompts: ['What caused this?', 'How many users affected?', 'Should we rollback?', 'Generate post-mortem'],
+    placeholder: 'Ask about this incident...',
+  },
+  '/home': {
+    greeting: "Welcome. I can help you review your environment, set up monitoring, or answer questions about your services.",
+    prompts: ['What needs attention?', 'Show me error trends', 'Any stale alarms?', 'Summarize my services'],
+    placeholder: 'Ask about your environment...',
+  },
+  '/investigate': {
+    greeting: "I can help you start a new investigation or dig into an existing one. Describe what you're seeing.",
+    prompts: ['Why are checkout errors up?', 'Compare pre/post deploy', 'Correlate latency with errors', 'Show OOM events'],
+    placeholder: 'Describe what you are investigating...',
+  },
+  '/explore': {
+    greeting: "I can search across metrics, logs, traces, and alarms. What are you looking for?",
+    prompts: ['Find high-error services', 'Show unused metrics', 'Search OOM events', 'List active alarms'],
+    placeholder: 'Search or ask a question...',
+  },
+  '/monitor': {
+    greeting: "I can help you review active alarms, set up new monitors, or analyze alert patterns.",
+    prompts: ['Show active alarms', 'Which alarms are noisy?', 'Set up a new alarm', 'Alert trends this week'],
+    placeholder: 'Ask about monitoring...',
+  },
+}
+
+function ChatPanel({ onClose, path }) {
+  const ctx = PAGE_CONTEXT[path] || PAGE_CONTEXT['/home']
   const [messages, setMessages] = useState([
-    { role: 'ai', text: "I'm investigating INC-2847. Payment-service in east-2 is hitting memory limits. What would you like to know?" }
+    { role: 'ai', text: ctx.greeting }
   ])
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
@@ -52,17 +108,21 @@ function ChatPanel({ onClose }) {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, typing])
 
+  function sendMessage(text) {
+    setMessages(prev => [...prev, { role: 'user', text }])
+    setTyping(true)
+    setTimeout(() => {
+      const response = getAIResponse(text)
+      setMessages(prev => [...prev, { role: 'ai', text: response.text, followUps: response.followUps }])
+      setTyping(false)
+    }, 800 + Math.random() * 600)
+  }
+
   function handleSend(e) {
     e.preventDefault()
     if (!input.trim()) return
-    const userMsg = input.trim()
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+    sendMessage(input.trim())
     setInput('')
-    setTyping(true)
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'ai', text: getAIResponse(userMsg) }])
-      setTyping(false)
-    }, 800 + Math.random() * 600)
   }
 
   return (
@@ -76,16 +136,36 @@ function ChatPanel({ onClose }) {
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] px-3 py-2 rounded-xl text-body-s ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background-surface-2 text-foreground rounded-bl-sm'}`}>{msg.text}</div>
+          <div key={i}>
+            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] px-3 py-2 rounded-xl text-body-s ${msg.role === 'user' ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-background-surface-2 text-foreground rounded-bl-sm'}`}>{msg.text}</div>
+            </div>
+            {msg.followUps && i === messages.length - 1 && !typing && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {msg.followUps.map(p => (
+                  <button key={p} onClick={() => sendMessage(p)} className="px-2.5 py-1 rounded-full text-[11px] text-primary border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
+        {messages.length === 1 && !typing && (
+          <div className="flex flex-wrap gap-1.5">
+            {ctx.prompts.map(p => (
+              <button key={p} onClick={() => sendMessage(p)} className="px-2.5 py-1 rounded-full text-[11px] text-primary border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
+                {p}
+              </button>
+            ))}
+          </div>
+        )}
         {typing && <div className="flex justify-start"><div className="bg-background-surface-2 px-3 py-2 rounded-xl rounded-bl-sm"><span className="text-body-s text-foreground-muted animate-pulse">Thinking...</span></div></div>}
         <div ref={bottomRef} />
       </div>
       <form onSubmit={handleSend} className="px-4 py-3 border-t border-border-muted flex-shrink-0">
         <div className="flex items-center gap-2 h-10 px-3 border border-border-muted rounded-lg bg-input focus-within:border-foreground-disabled focus-within:shadow-ring-default transition-all">
-          <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder="Ask about this incident..." className="flex-1 min-w-0 bg-transparent outline-none text-body-s text-foreground placeholder-foreground-muted" />
+          <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder={ctx.placeholder} className="flex-1 min-w-0 bg-transparent outline-none text-body-s text-foreground placeholder-foreground-muted" />
           <button type="submit" disabled={!input.trim()} className={`p-1.5 rounded-md transition-all ${input.trim() ? 'bg-primary text-primary-foreground' : 'bg-white/5 text-foreground-disabled cursor-not-allowed'}`} aria-label="Send"><PaperPlaneRight size={14} /></button>
         </div>
       </form>
@@ -177,7 +257,7 @@ function Row({ label, value }) {
 export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [navOpen, setNavOpen] = useState(true)
+  const [navOpen, setNavOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [showPersona, setShowPersona] = useState(false)
   const { persona } = usePersona()
@@ -265,7 +345,7 @@ export default function ConsoleLayout({ children }) {
           <div className="flex-1 overflow-y-auto">{children}</div>
         </div>
 
-        {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} />}
+        {chatOpen && <ChatPanel onClose={() => setChatOpen(false)} path={location.pathname} />}
       </div>
     </div>
   )

@@ -53,7 +53,7 @@ export default function ExplorePage() {
       {/* Search bar */}
       <div className="max-w-4xl">
         <div className="relative mb-6">
-          <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
+          <div className="flex items-center gap-2 h-10 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
             <input
               type="text"
               value={query}
@@ -81,28 +81,17 @@ export default function ExplorePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* AI-suggested explorations */}
           <div className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkle size={14} className="text-primary" />
-              <h3 className="text-heading-s font-normal text-foreground">Suggested explorations</h3>
-            </div>
+            <h3 className="text-heading-s font-normal text-foreground mb-3">Suggested explorations</h3>
             <div className="space-y-0">
-              {suggestedExplorations.map((item) => {
-                const Icon = item.icon
-                return (
+              {suggestedExplorations.map((item) => (
                   <div key={item.title} className="flex items-start gap-3 py-3 border-b border-border-muted last:border-0 cursor-pointer hover:bg-background-surface-2/50 -mx-2 px-2 rounded-lg transition-colors">
-                    <Icon size={16} className={`mt-0.5 flex-shrink-0 ${
-                      item.type === 'anomaly' ? 'text-status-blocked' :
-                      item.type === 'optimization' ? 'text-primary' :
-                      'text-foreground-muted'
-                    }`} />
                     <div>
                       <span className="text-body-s text-foreground font-medium block">{item.title}</span>
                       <span className="text-body-s text-foreground-muted">{item.subtitle}</span>
                     </div>
                     <ArrowRight size={14} className="text-foreground-disabled mt-0.5 ml-auto flex-shrink-0" />
                   </div>
-                )
-              })}
+              ))}
             </div>
           </div>
 

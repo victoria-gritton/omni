@@ -59,7 +59,7 @@ export default function InvestigatePage() {
       <div className="max-w-5xl">
         {/* Search bar — same pattern as Explore */}
         <div className="relative mb-6">
-          <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
+          <div className="flex items-center gap-2 h-10 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
             <input
               type="text"
               placeholder="Describe what you're seeing — e.g., Why are checkout errors increasing since 2pm?"
