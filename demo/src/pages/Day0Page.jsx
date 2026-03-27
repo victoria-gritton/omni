@@ -29,6 +29,9 @@ const simConfig = {
   'logs': { steps: 6, label: (n, t) => `Enabling logs on ${n} of ${t}...`, done: 'Logs enabled' },
   'traces': { steps: 3, label: (n, t) => `Enabling tracing on ${n} of ${t}...`, done: 'Tracing enabled' },
   'anomaly': { steps: 5, label: (n, t) => `Configuring detector ${n} of ${t}...`, done: 'Anomaly detection enabled' },
+  'service-map': { steps: 3, label: (n, t) => `Mapping dependencies ${n} of ${t}...`, done: 'Service map generated' },
+  'slos': { steps: 3, label: (n, t) => `Creating SLO ${n} of ${t}...`, done: 'SLOs configured' },
+  'container-insights': { steps: 3, label: (n, t) => `Updating cluster ${n} of ${t}...`, done: 'Container Insights enabled' },
 }
 
 function useSimulation() {
@@ -117,13 +120,12 @@ function AgentBanner({ state, progress, onInstall }) {
 }
 
 // ─── Empty State Widget ───────────────────────────────────────────
-function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state, progress, simId, onAction }) {
+function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state, progress, simId, onAction, requiresAgent, agentInstalled }) {
   const config = simConfig[simId]
+  const needsAgent = requiresAgent && !agentInstalled
 
-  // Done state — show rich content
-  if (state === 'done') return null // handled by filled widgets
+  if (state === 'done') return null
 
-  // Running state
   if (state === 'running') {
     const step = progress[simId] || 0
     return (
@@ -140,20 +142,29 @@ function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state
     )
   }
 
-  // Empty/idle state
   return (
     <div className="glass-card p-4 border border-dashed border-border-muted/50">
       <div className="flex items-center gap-2 mb-3">
         <Icon size={16} className={color} style={{ opacity: 0.5 }} />
         <h3 className="text-body-s font-semibold text-foreground/50">{title}</h3>
+        {needsAgent && (
+          <span className="text-[8px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+            <Cpu size={8} /> Requires CW Agent
+          </span>
+        )}
       </div>
       <p className="text-[11px] text-foreground-disabled mb-3">{description}</p>
       <button
         onClick={onAction}
-        className="h-7 px-3 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-medium flex items-center gap-1.5 transition-colors"
+        className={`h-7 px-3 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
+          needsAgent
+            ? 'bg-foreground-muted/10 text-foreground-disabled cursor-not-allowed'
+            : 'bg-primary/10 hover:bg-primary/20 text-primary'
+        }`}
+        disabled={needsAgent}
       >
         <Sparkle size={12} weight="fill" />
-        {actionLabel}
+        {needsAgent ? 'Install CW Agent first' : actionLabel}
       </button>
     </div>
   )
@@ -267,6 +278,69 @@ function FilledAnomalyWidget({ data }) {
   )
 }
 
+function FilledServiceMapWidget() {
+  const nodes = ['API GW', 'Checkout', 'Payment', 'Orders DB', 'Inventory', 'Cache']
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2"><Globe size={16} className="text-cyan-400" /><h3 className="text-body-s font-semibold text-foreground">Service Map</h3></div>
+        <span className="text-[10px] text-cyan-400 cursor-pointer hover:text-cyan-300">Open full map →</span>
+      </div>
+      <div className="flex items-center justify-center gap-1 py-2">
+        {nodes.map((n, i) => (
+          <div key={n} className="flex items-center gap-1">
+            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[8px] text-foreground-muted">{n}</div>
+            {i < nodes.length - 1 && <div className="w-3 h-px bg-cyan-400/40" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FilledSLOWidget() {
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2"><Gauge size={16} className="text-emerald-400" /><h3 className="text-body-s font-semibold text-foreground">SLOs</h3></div>
+        <span className="text-[10px] text-foreground-disabled">3 objectives</span>
+      </div>
+      {[
+        { name: 'Checkout availability', target: '99.9%', current: '99.94%', ok: true },
+        { name: 'Payment latency p99', target: '< 500ms', current: '320ms', ok: true },
+        { name: 'API error rate', target: '< 0.5%', current: '0.12%', ok: true },
+      ].map(s => (
+        <div key={s.name} className="flex items-center gap-2 py-1">
+          <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-status-active' : 'bg-status-outage'}`} />
+          <span className="text-[10px] text-foreground flex-1">{s.name}</span>
+          <span className="text-[9px] text-foreground-muted">{s.current}</span>
+          <span className="text-[9px] text-foreground-disabled">/ {s.target}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FilledContainerInsightsWidget({ data }) {
+  const clusters = data.containerInsights.clusters
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2"><Package size={16} className="text-teal-400" /><h3 className="text-body-s font-semibold text-foreground">Container Insights</h3></div>
+        <span className="text-[10px] text-foreground-disabled">{clusters.length} clusters</span>
+      </div>
+      <div className="flex gap-2">
+        {clusters.map(c => (
+          <div key={c.name} className="flex-1 rounded-lg bg-background/40 border border-border-muted/30 p-2 text-center">
+            <p className="text-body-s font-semibold text-foreground">{c.tasks}</p>
+            <p className="text-[9px] text-foreground-muted">{c.name}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Playground Card ──────────────────────────────────────────────
 function PlaygroundCard() {
   const navigate = useNavigate()
@@ -291,11 +365,14 @@ function PlaygroundCard() {
 // ─── Main Page ────────────────────────────────────────────────────
 
 const widgetConfig = [
-  { id: 'alarms', icon: Bell, title: 'Alarms', color: 'text-status-active', description: 'No alarms configured yet. The agent can create recommended alarms based on your infrastructure.', actionLabel: 'Auto-configure alarms' },
-  { id: 'dashboard', icon: ChartBar, title: 'Dashboard', color: 'text-primary', description: 'No dashboards yet. The agent can generate a production overview with key metrics.', actionLabel: 'Generate dashboard' },
-  { id: 'logs', icon: FileText, title: 'Logs', color: 'text-green-400', description: 'Most services aren\'t sending logs to CloudWatch yet. Enable log delivery to start querying.', actionLabel: 'Enable logging' },
-  { id: 'traces', icon: Path, title: 'Traces', color: 'text-orange-400', description: 'No distributed tracing enabled. X-Ray tracing shows the full request path across services.', actionLabel: 'Enable tracing' },
-  { id: 'anomaly', icon: WaveTriangle, title: 'Anomaly Detection', color: 'text-purple-400', description: 'CloudWatch has 14 days of metric history. Enable anomaly detection to catch unusual patterns.', actionLabel: 'Enable anomaly detection' },
+  { id: 'alarms', icon: Bell, title: 'Alarms', color: 'text-status-active', description: 'No alarms configured yet. The agent can create recommended alarms based on your infrastructure.', actionLabel: 'Auto-configure alarms', requiresAgent: false },
+  { id: 'dashboard', icon: ChartBar, title: 'Dashboard', color: 'text-primary', description: 'No dashboards yet. The agent can generate a production overview with key metrics.', actionLabel: 'Generate dashboard', requiresAgent: false },
+  { id: 'logs', icon: FileText, title: 'Logs', color: 'text-green-400', description: 'Most services aren\'t sending logs to CloudWatch yet. Enable log delivery to start querying.', actionLabel: 'Enable logging', requiresAgent: false },
+  { id: 'traces', icon: Path, title: 'Traces', color: 'text-orange-400', description: 'No distributed tracing enabled. X-Ray tracing shows the full request path across services.', actionLabel: 'Enable tracing', requiresAgent: false },
+  { id: 'service-map', icon: Globe, title: 'Service Map', color: 'text-cyan-400', description: 'See how your services connect. Enable tracing first to generate the dependency map.', actionLabel: 'Generate service map', requiresAgent: false },
+  { id: 'anomaly', icon: WaveTriangle, title: 'Anomaly Detection', color: 'text-purple-400', description: 'CloudWatch has 14 days of metric history. Enable anomaly detection to catch unusual patterns.', actionLabel: 'Enable anomaly detection', requiresAgent: false },
+  { id: 'slos', icon: Gauge, title: 'SLOs', color: 'text-emerald-400', description: 'Define Service Level Objectives for your critical path. Requires Application Signals.', actionLabel: 'Define SLOs', requiresAgent: true },
+  { id: 'container-insights', icon: Package, title: 'Container Insights', color: 'text-teal-400', description: 'Cluster, node, and pod-level metrics for your ECS/EKS workloads.', actionLabel: 'Enable Container Insights', requiresAgent: true },
 ]
 
 const filledWidgets = {
@@ -303,7 +380,10 @@ const filledWidgets = {
   dashboard: FilledDashboardWidget,
   logs: FilledLogsWidget,
   traces: FilledTracesWidget,
+  'service-map': FilledServiceMapWidget,
   anomaly: FilledAnomalyWidget,
+  slos: FilledSLOWidget,
+  'container-insights': FilledContainerInsightsWidget,
 }
 
 export default function Day0Page() {
@@ -314,6 +394,8 @@ export default function Day0Page() {
   const { states, progress, run } = useSimulation()
 
   const firstName = user.name.split(' ')[0]
+
+  const agentInstalled = states['cw-agent'] === 'done'
 
   return (
     <div className="px-6 py-6">
@@ -383,6 +465,8 @@ export default function Day0Page() {
                 progress={progress}
                 simId={w.id}
                 onAction={() => run(w.id)}
+                requiresAgent={w.requiresAgent}
+                agentInstalled={agentInstalled}
               />
             )
           })}
