@@ -153,6 +153,66 @@ function TracesWidget() {
   )
 }
 
+function CWAgentWidget() {
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Cpu size={16} className="text-cyan-400" />
+          <h3 className="text-body-s font-semibold text-foreground">CloudWatch Agent</h3>
+        </div>
+        <span className="text-[10px] text-foreground-disabled">6 services</span>
+      </div>
+      <p className="text-[11px] text-foreground-muted">Collecting memory, disk, and network metrics from 22 ECS tasks via sidecar.</p>
+    </div>
+  )
+}
+
+function ContainerInsightsWidget() {
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Package size={16} className="text-teal-400" />
+          <h3 className="text-body-s font-semibold text-foreground">Container Insights</h3>
+        </div>
+        <span className="text-[10px] text-foreground-disabled">3 clusters</span>
+      </div>
+      <p className="text-[11px] text-foreground-muted">Cluster and task-level metrics active on novamart-east-1, east-2, and west-1.</p>
+    </div>
+  )
+}
+
+function AppSignalsWidget() {
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Broadcast size={16} className="text-pink-400" />
+          <h3 className="text-body-s font-semibold text-foreground">Application Signals</h3>
+        </div>
+        <span className="text-[10px] text-foreground-disabled">APM active</span>
+      </div>
+      <p className="text-[11px] text-foreground-muted">Service map, latency breakdown, and error tracking enabled. Ready for SLO configuration.</p>
+    </div>
+  )
+}
+
+function LogClassWidget() {
+  return (
+    <div className="glass-card p-4 animate-fadeIn">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Archive size={16} className="text-blue-400" />
+          <h3 className="text-body-s font-semibold text-foreground">Log Optimization</h3>
+        </div>
+        <span className="text-[10px] text-foreground-disabled">Saving ~$12/mo</span>
+      </div>
+      <p className="text-[11px] text-foreground-muted">notification-service moved to Infrequent Access. image-processor kept on Standard.</p>
+    </div>
+  )
+}
+
 // ─── Shared Components ────────────────────────────────────────────
 
 function BadgeWithTooltip({ text, tooltip, colorClass, bgClass }) {
@@ -409,9 +469,13 @@ export default function Day0Page() {
   const showAlarmWidget = states['t1-alarms'] === 'done'
   const showDashboardWidget = states['t1-dashboard'] === 'done'
   const showAnomalyWidget = states['t1-anomaly'] === 'done'
+  const showLogClassWidget = states['t1-logclass'] === 'done'
+  const showCWAgentWidget = states['t2-cw-agent'] === 'done'
   const showLogsWidget = states['t2-logs'] === 'done'
   const showTracesWidget = states['t2-traces'] === 'done'
-  const hasAnyWidget = showAlarmWidget || showDashboardWidget || showAnomalyWidget || showLogsWidget || showTracesWidget
+  const showContainerInsightsWidget = states['t2-container-insights'] === 'done'
+  const showAppSignalsWidget = states['t2-app-signals'] === 'done'
+  const hasAnyWidget = showAlarmWidget || showDashboardWidget || showAnomalyWidget || showLogClassWidget || showCWAgentWidget || showLogsWidget || showTracesWidget || showContainerInsightsWidget || showAppSignalsWidget
 
   // Auto-collapse setup when all done
   useEffect(() => {
@@ -461,31 +525,16 @@ export default function Day0Page() {
 
           {/* ── Monitoring Widgets (appear as items complete) ── */}
           {hasAnyWidget && (
-            <div className="flex flex-col gap-3">
-              {showAlarmWidget && showDashboardWidget ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <AlarmWidget />
-                  <DashboardWidget />
-                </div>
-              ) : (
-                <>
-                  {showAlarmWidget && <AlarmWidget />}
-                  {showDashboardWidget && <DashboardWidget />}
-                </>
-              )}
-              {showAnomalyWidget && showLogsWidget && showTracesWidget ? (
-                <div className="grid grid-cols-3 gap-3">
-                  <AnomalyWidget />
-                  <LogsWidget />
-                  <TracesWidget />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {showAnomalyWidget && <AnomalyWidget />}
-                  {showLogsWidget && <LogsWidget />}
-                  {showTracesWidget && <TracesWidget />}
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-3">
+              {showAlarmWidget && <AlarmWidget />}
+              {showDashboardWidget && <DashboardWidget />}
+              {showAnomalyWidget && <AnomalyWidget />}
+              {showLogClassWidget && <LogClassWidget />}
+              {showCWAgentWidget && <CWAgentWidget />}
+              {showLogsWidget && <LogsWidget />}
+              {showTracesWidget && <TracesWidget />}
+              {showContainerInsightsWidget && <ContainerInsightsWidget />}
+              {showAppSignalsWidget && <AppSignalsWidget />}
             </div>
           )}
 
