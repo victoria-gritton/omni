@@ -20,7 +20,7 @@ const flows = [
   },
   {
     id: 'home',
-    title: 'Home Dashboard',
+    title: 'Homepage + App',
     subtitle: 'Overview with AI assistant',
     path: '/home',
     ready: true,
@@ -28,8 +28,8 @@ const flows = [
   },
   {
     id: 'day0',
-    title: 'Getting Started + Ingestion',
-    subtitle: 'WIP',
+    title: 'Day 0 Homepage',
+    subtitle: 'New user',
     path: '/day0',
     ready: true,
     preview: 'day0',

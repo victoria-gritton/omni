@@ -15,8 +15,8 @@ export default function HomePage() {
 
   return (
     <div className="px-6 py-6">
-      <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-        Home
+      <h1 className="text-[22px] leading-[28px] font-normal tracking-tighter text-foreground">
+        Good afternoon
       </h1>
       <div className="mb-4" />
 
