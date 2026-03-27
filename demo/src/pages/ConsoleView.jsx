@@ -95,7 +95,7 @@ export default function ConsoleView() {
     <div className="flex-1 relative overflow-hidden">
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-heading-xl font-normal tracking-tighter text-foreground mb-1">{incident.title}</h1>
+          <h1 className="text-[22px] leading-[28px] font-normal tracking-tighter text-foreground mb-1">{incident.title}</h1>
           <p className="text-body-m text-foreground-secondary mb-4">{incident.summary}</p>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">

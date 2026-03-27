@@ -18,7 +18,7 @@ export default function HomePage() {
       <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
         Home
       </h1>
-      <div className="mb-8" />
+      <div className="mb-4" />
 
       {/* Chat input — centered */}
       <div className="max-w-5xl mx-auto">

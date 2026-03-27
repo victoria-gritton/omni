@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  MagnifyingGlassPlus, Sparkle, Lightning, ArrowRight,
+  MagnifyingGlassPlus, MagnifyingGlass, Sparkle, Lightning, ArrowRight,
   Clock, Warning, WarningCircle, CheckCircle, CaretRight
 } from '@phosphor-icons/react'
 
@@ -49,33 +49,23 @@ export default function InvestigatePage() {
 
   return (
     <div className="px-6 py-6">
-      <h1 className="text-heading-xl font-normal tracking-tighter text-foreground mb-1">
+      <h1 className="text-[22px] leading-[28px] font-normal tracking-tighter text-foreground mb-1">
         Investigate
       </h1>
-      <p className="text-body-m text-foreground-muted mb-6">
+      <p className="text-body-m text-foreground-muted mb-4">
         Deep-dive analysis and AI-assisted troubleshooting
       </p>
 
       <div className="max-w-5xl">
-        {/* Start new investigation */}
-        <div className="ai-glass-card p-4 mb-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkle size={14} className="text-primary" />
-            <span className="text-body-s font-semibold text-primary">AI-assisted investigation</span>
-          </div>
-          <p className="text-body-m text-foreground mb-3">
-            Describe what you're seeing and I'll help you find the root cause. I can correlate metrics, logs, and traces automatically.
-          </p>
-          <div className="flex items-center gap-2 h-10 rounded-lg bg-background-surface-1 border border-border-muted px-3">
+        {/* Search bar — same pattern as Explore */}
+        <div className="relative mb-6">
+          <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
             <input
               type="text"
-              placeholder="e.g., Why are checkout errors increasing since 2pm?"
-              className="flex-1 bg-transparent text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none"
+              placeholder="Describe what you're seeing — e.g., Why are checkout errors increasing since 2pm?"
+              className="flex-1 bg-transparent text-body-m text-foreground placeholder:text-foreground-disabled focus:outline-none"
             />
-            <button className="h-7 px-3 rounded-md bg-primary text-[11px] font-medium text-primary-foreground hover:bg-slate-200 transition-colors flex items-center gap-1.5">
-              <Lightning size={12} />
-              Investigate
-            </button>
+            <MagnifyingGlass size={16} className="text-foreground-muted flex-shrink-0" />
           </div>
         </div>
 

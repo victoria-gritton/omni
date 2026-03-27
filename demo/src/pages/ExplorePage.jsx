@@ -43,10 +43,10 @@ export default function ExplorePage() {
 
   return (
     <div className="px-6 py-6">
-      <h1 className="text-heading-xl font-normal tracking-tighter text-foreground mb-1">
+      <h1 className="text-[22px] leading-[28px] font-normal tracking-tighter text-foreground mb-1">
         Explore
       </h1>
-      <p className="text-body-m text-foreground-muted mb-6">
+      <p className="text-body-m text-foreground-muted mb-4">
         Unified search and discovery across metrics, logs, traces, and alarms
       </p>
 
@@ -54,7 +54,6 @@ export default function ExplorePage() {
       <div className="max-w-4xl">
         <div className="relative mb-6">
           <div className="flex items-center gap-2 h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
-            <Sparkle size={16} className="text-primary flex-shrink-0" />
             <input
               type="text"
               value={query}
@@ -109,14 +108,10 @@ export default function ExplorePage() {
 
           {/* Recent searches */}
           <div className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock size={14} className="text-foreground-muted" />
-              <h3 className="text-heading-s font-normal text-foreground">Recent searches</h3>
-            </div>
+            <h3 className="text-heading-s font-normal text-foreground mb-3">Recent searches</h3>
             <div className="space-y-0">
               {recentSearches.map((item) => (
                 <div key={item.query} className="flex items-center gap-3 py-3 border-b border-border-muted last:border-0 cursor-pointer hover:bg-background-surface-2/50 -mx-2 px-2 rounded-lg transition-colors">
-                  <MagnifyingGlass size={14} className="text-foreground-disabled flex-shrink-0" />
                   <span className="text-body-s text-foreground">{item.query}</span>
                   <span className="text-[10px] text-foreground-muted ml-auto px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">
                     {item.type}

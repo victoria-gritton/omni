@@ -9,7 +9,7 @@ import { usePersona } from '../data/persona'
 
 const navItems = [
   { icon: House, label: 'Home', subtitle: 'Overview', path: '/home' },
-  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search & discovery', path: '/explore' },
+  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search', path: '/explore' },
   { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/monitor' },
   { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate' },
   { icon: CodeBlock, label: 'Query Studio', subtitle: 'SQL & PromQL queries', path: '/query' },
@@ -187,7 +187,7 @@ export default function ConsoleLayout({ children }) {
       <div className="gradient-bg-dark" />
       <div className="content-layer h-full flex w-full">
         {/* Sidebar */}
-        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto transition-all duration-200`}>
+        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
           <div className="px-3 pt-4 pb-3 flex items-center gap-2 cursor-pointer" onClick={() => setNavOpen(!navOpen)}>
             <svg width="24" height="28" viewBox="0 0 28 32" fill="none" className="flex-shrink-0">
               <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
@@ -230,34 +230,12 @@ export default function ConsoleLayout({ children }) {
                 </div>
               </div>
 
-              <div className="px-3 pt-4">
-                <div className="flex items-center gap-1.5 px-2 mb-2">
-                  <Clock size={10} className="text-foreground-muted" />
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Recent</span>
-                </div>
-                <div className="space-y-0.5">
-                  {recents.map(({ label }) => (
-                    <button key={label} className="w-full text-left rounded-lg px-2 py-1.5 text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">{label}</button>
-                  ))}
-                </div>
-              </div>
             </>
           )}
 
           <div className="flex-1" />
-
-          {navOpen && (
-            <div className="px-3 pb-4 pt-4">
-              <div className="rounded-lg border border-primary/15 bg-primary/[0.04] p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkle size={14} className="text-primary" />
-                  <span className="text-body-s font-medium text-foreground">AI-Powered Navigation</span>
-                </div>
-                <span className="text-[10px] text-foreground-muted leading-relaxed">Ask the assistant to guide you to the right place</span>
-              </div>
-            </div>
-          )}
         </nav>
+
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -268,10 +246,6 @@ export default function ConsoleLayout({ children }) {
             </div>
             <div className="flex items-center gap-3">
               <a href="#/" className="text-body-s text-link">← Demos</a>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-status-active" />
-                <span className="text-body-s text-foreground-muted">Live</span>
-              </div>
               <button className="p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted"><GearSix size={16} /></button>
               <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
                 <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
