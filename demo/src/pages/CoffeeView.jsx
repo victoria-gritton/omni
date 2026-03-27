@@ -402,8 +402,10 @@ export default function CoffeeView() {
             </div>
 
             {/* Observability Feed + Right sidebar */}
-            {/* Observability Feed — full width */}
-            <div className="glass-card p-3">
+            {/* Feed 50% | Tasks 25% | Investigations 25% */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
+              {/* Observability Feed — 2/4 cols */}
+              <div className="lg:col-span-2 glass-card p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
@@ -421,9 +423,7 @@ export default function CoffeeView() {
               </div>
             </div>
 
-            {/* Tasks + Investigations — 2 column */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              {/* Pending Tasks */}
+              {/* Pending Tasks — 1/4 col */}
               <div className="glass-card p-3">
                 <div className="flex items-center gap-2 mb-2">
                   <ListChecks size={14} className="text-foreground-muted" />
