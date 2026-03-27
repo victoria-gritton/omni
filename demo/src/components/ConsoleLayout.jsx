@@ -29,7 +29,7 @@ export default function ConsoleLayout({ children }) {
               <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
               <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
             </svg>
-            {expanded && <span className="text-body-s font-semibold text-foreground">Omni</span>}
+            {expanded && <span className="text-body-s font-semibold text-foreground">CloudWatch Omni</span>}
           </div>
           {navItems.map(({ icon: Icon, label, path }) => {
             const active = path && location.pathname === path
