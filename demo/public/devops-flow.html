@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maya 2AM Incident - CloudWatch AI Experience</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;padding:14px 24px;gap:6px}
+.nav-btn{padding:10px 22px;border-radius:24px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.3s;background:transparent;color:#888;display:inline-flex;align-items:center;gap:6px}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,0.06)}
+.nav-btn.active{background:#ff9500;color:#000;font-weight:600}
+.nav-btn svg{width:14px;height:14px}
+.scene{display:none;padding-top:80px;min-height:100vh;flex-direction:column;align-items:center}
+.scene.active{display:flex}
+.ctx{text-align:center;padding:16px 20px;max-width:520px;line-height:1.6}
+.ctx .time{color:#ff9500;font-weight:600;font-size:15px;display:block;margin-bottom:4px}
+.ctx .nar{color:#777;font-size:13px;font-style:italic}
+.steps{display:flex;gap:6px;margin:12px 0 8px;justify-content:center}
+.step{padding:6px 14px;border-radius:14px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:#888;font-size:11px;cursor:pointer;transition:all 0.2s}
+.step:hover{background:rgba(255,255,255,0.08);color:#ccc}
+.step.on{background:rgba(255,149,0,0.15);border-color:#ff9500;color:#ff9500}
+.wrap{position:relative;margin:16px 0 24px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp 0.4s ease both}
+</style>
+<style>
+/* WATCH with SVG mockup */
+.watch-wrap{position:relative;width:330px;height:495px}
+.watch-svg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.watch-screen{position:absolute;top:102px;left:36px;right:36px;bottom:102px;border-radius:30px;overflow:hidden;background:#000;z-index:3}
+.ws{width:100%;height:100%;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none}
+.ws::-webkit-scrollbar{display:none}
+/* Notification face */
+.wn-face{height:100%;display:flex;flex-direction:column}
+.wn-time{font-size:51px;font-weight:200;color:#fff;text-align:center;padding-top:15px;letter-spacing:-1px}
+.wn-date{font-size:12px;color:#555;text-align:center;margin-top:0;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:12px}
+.wn-banner{margin:0 12px;background:rgba(255,59,48,0.1);border:1px solid rgba(255,59,48,0.18);border-radius:18px;padding:13px;cursor:pointer;transition:all 0.15s}
+.wn-banner:hover{background:rgba(255,59,48,0.2);transform:scale(1.02)}
+.wn-hdr{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.wn-icon{width:27px;height:27px;border-radius:7px;background:linear-gradient(135deg,#ff9500,#ff6b00);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wn-icon svg{width:15px;height:15px}
+.wn-app{font-size:12px;color:#ff9500;font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
+.wn-when{font-size:10px;color:#555;margin-left:auto}
+.wn-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:3px}
+.wn-body{font-size:13px;color:#999;line-height:1.35}
+.wn-body strong{color:#ff6b6b;font-weight:600}
+.wn-spark{margin-top:7px;height:30px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.02)}
+/* Alert detail */
+.wa-pad{padding:12px 15px 18px}
+.wa-top{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.wa-top .dot{width:9px;height:9px;border-radius:50%;background:#ff3b30;animation:pulse 1.5s infinite}
+.wa-top span{font-size:12px;font-weight:600;color:#ff6b6b;letter-spacing:0.3px}
+.wt{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.wm{font-size:13px;color:#bbb;line-height:1.4;margin-bottom:7px}
+.wm strong{color:#ff9500}
+.red{color:#ff3b30}.ylw{color:#ff9500}.grn{color:#30d158}
+/* Gauge */
+.w-gauge{display:flex;align-items:center;justify-content:space-around;margin:6px 6px 9px}
+.w-gr{position:relative;width:66px;height:66px}
+.w-gr svg{width:66px;height:66px;transform:rotate(-90deg)}
+.w-gr .bg{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:4}
+.w-gr .fg{fill:none;stroke-width:4;stroke-linecap:round}
+.w-gv{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;line-height:1}
+.w-gv .n{font-size:16px;font-weight:700;display:block}
+.w-gv .l{font-size:7px;color:#888;text-transform:uppercase;letter-spacing:0.2px;display:block;margin-top:2px}
+/* Mini chart */
+.w-mc{height:42px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,0.02);margin-bottom:7px}
+/* Stats */
+.wg{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px}
+.wgs{background:rgba(255,255,255,0.04);border-radius:7px;padding:6px;text-align:center}
+.wgs .vl{font-size:8px;color:#666;text-transform:uppercase;letter-spacing:0.3px}
+.wgs .vv{font-size:15px;font-weight:700;margin-top:2px}
+/* Agent box */
+.wc{background:rgba(255,149,0,0.08);border-left:3px solid #ff9500;border-radius:6px;padding:6px 9px;margin-bottom:7px}
+.wc .cl{font-size:10px;color:#ff9500;text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:4px}
+.wc .cl svg{width:13px;height:13px}
+.wc .ct{font-size:13px;color:#ddd;margin-top:3px;line-height:1.35}
+/* Buttons */
+.wa-btns{display:flex;flex-direction:column;gap:4px;margin-top:auto}
+.btn{width:100%;padding:9px;border-radius:12px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-p{background:#0a84ff;color:#fff}
+.btn-s{background:rgba(255,255,255,0.07);color:#ccc}
+.btn:hover{filter:brightness(1.15)}
+.lbl{font-size:11px;color:#888;margin:4px 0 3px;font-weight:600;text-transform:uppercase}
+.ok{color:#30d158;font-size:13px;line-height:1.5}
+.ok svg{width:12px;height:12px;vertical-align:middle;margin-right:3px}
+/* Service health rows */
+.w-svc{display:flex;align-items:center;gap:5px;font-size:12px;color:#aaa;margin-bottom:3px}
+.w-svc .d{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.w-svc .s{margin-left:auto;font-weight:600;font-size:10px}
+</style>
+<style>
+/* PHONE */
+.pf{width:375px;height:750px;border-radius:42px;background:#1a1a1e;border:3px solid #333;overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.5);display:flex;flex-direction:column}
+.pn{width:100px;height:22px;background:#000;border-radius:0 0 14px 14px;margin:0 auto;flex-shrink:0}
+.ps{flex:1;overflow-y:auto;padding:10px 14px 10px}
+.ps::-webkit-scrollbar{width:2px}
+.ps::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:2px}
+.p-bottom{flex-shrink:0;padding:6px 14px 20px;background:linear-gradient(to top,#1a1a1e 70%,transparent);border-top:1px solid rgba(255,255,255,0.06)}
+.ph{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ph .bk{font-size:16px;color:#0a84ff;cursor:pointer;text-decoration:none}
+.ph h2{font-size:15px;font-weight:700;color:#fff}
+.pill{margin-left:auto;font-size:9px;font-weight:600;padding:3px 8px;border-radius:10px}
+.pill-r{background:rgba(255,59,48,0.2);color:#ff6b6b}
+.pill-g{background:rgba(48,209,88,0.2);color:#30d158}
+.ac{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px;margin-bottom:10px}
+.ah{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#0a84ff,#5e5ce6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.av svg{width:14px;height:14px}
+.an{font-size:11px;font-weight:600;color:#0a84ff}
+.at{font-size:9px;color:#555;margin-left:auto}
+.ax{font-size:11.5px;color:#ccc;line-height:1.7}
+.ax strong{color:#fff}
+.hl{color:#ff9500;font-weight:600}
+.er{display:inline;background:rgba(255,59,48,0.12);color:#ff6b6b;font-family:'SF Mono',monospace;font-size:10.5px;padding:1px 5px;border-radius:3px}
+.sm{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px 0;margin:6px 0}
+.sn{text-align:center;width:60px}
+.sd{width:34px;height:34px;border-radius:50%;margin:0 auto 3px;display:flex;align-items:center;justify-content:center}
+.sd svg{width:16px;height:16px}
+.sd-r{background:rgba(255,59,48,0.2);border:2px solid #ff3b30}
+.sd-y{background:rgba(255,149,0,0.2);border:2px solid #ff9500}
+.sd-g{background:rgba(48,209,88,0.2);border:2px solid #30d158}
+.sl{font-size:8px;color:#888}
+.sa{color:#444;font-size:14px}
+.ir{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:10px 0}
+.is{background:rgba(255,255,255,0.04);border-radius:10px;padding:8px;text-align:center}
+.is .n{font-size:17px;font-weight:700}
+.is .d{font-size:8px;color:#777;margin-top:2px}
+.pa{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.pb{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:11px;padding:10px 12px;cursor:pointer;transition:all 0.2s;width:100%;text-align:left}
+.pb:hover{background:rgba(255,255,255,0.08)}
+.pi{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pi svg{width:14px;height:14px}
+.pi-b{background:rgba(10,132,255,0.15)}.pi-o{background:rgba(255,149,0,0.15)}.pi-p{background:rgba(94,92,230,0.15)}.pi-t{background:rgba(100,210,255,0.15)}
+.pt{font-size:12px;font-weight:600;color:#fff}
+.pu{font-size:9px;color:#777;margin-top:1px}
+.ub{background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.25);border-radius:14px 14px 4px 14px;padding:10px 12px;margin:8px 0 8px 40px;font-size:11.5px;color:#8bb8ff;line-height:1.5}
+.cb{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.06);border-radius:18px;padding:7px 10px;margin-top:8px}
+.cb input{flex:1;background:none;border:none;color:#fff;font-size:12px;outline:none}
+.cb input::placeholder{color:#444}
+.cb .mic{width:26px;height:26px;border-radius:50%;border:none;background:#0a84ff;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cb .mic svg{width:12px;height:12px}
+.toast{background:rgba(48,209,88,0.12);border:1px solid rgba(48,209,88,0.25);border-radius:10px;padding:10px 12px;margin:8px 0;display:flex;align-items:center;gap:8px;font-size:11px;color:#30d158}
+.toast svg{width:16px;height:16px;flex-shrink:0}
+.sec{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin:10px 0 6px;display:flex;align-items:center;gap:5px}
+.sec svg{width:12px;height:12px}
+</style>
+<style>
+/* DESKTOP - CloudWatch AI Investigation */
+.df{width:1050px;max-width:96vw;height:640px;border-radius:12px;background:#0d1117;border:1px solid #1e2a3a;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5);display:flex;flex-direction:column}
+.d-topbar{height:36px;background:#0d1117;display:flex;align-items:center;padding:0 14px;gap:8px;border-bottom:1px solid #1e2a3a;flex-shrink:0}
+.d-topbar .logo{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#0a84ff,#5e5ce6);display:flex;align-items:center;justify-content:center}
+.d-topbar .logo svg{width:12px;height:12px}
+.d-topbar .search{flex:1;max-width:220px;background:rgba(255,255,255,0.05);border:1px solid #1e2a3a;border-radius:6px;padding:4px 10px;font-size:11px;color:#666;margin-left:8px}
+.d-topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:10px;color:#666}
+.d-topbar .live{display:flex;align-items:center;gap:4px}
+.d-topbar .live .dot{width:6px;height:6px;border-radius:50%;background:#30d158}
+.d-body{display:flex;flex:1;overflow:hidden}
+.d-icons{width:160px;background:#0a0e14;border-right:1px solid #1e2a3a;display:flex;flex-direction:column;padding:12px 0;flex-shrink:0;overflow-y:auto}
+.d-icons .d-brand{display:flex;align-items:center;gap:8px;padding:0 14px 14px;border-bottom:1px solid #1e2a3a;margin-bottom:8px}
+.d-icons .d-brand .logo{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#0a84ff,#5e5ce6);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.d-icons .d-brand .logo svg{width:12px;height:12px}
+.d-icons .d-brand span{font-size:11px;font-weight:600;color:#ccc}
+.d-icons .di{display:flex;align-items:center;gap:10px;padding:7px 14px;border-radius:0;cursor:pointer;color:#666;transition:all 0.15s;font-size:12px;border-left:2px solid transparent}
+.d-icons .di:hover{background:rgba(255,255,255,0.03);color:#aaa}
+.d-icons .di.on{background:rgba(10,132,255,0.08);color:#0a84ff;border-left-color:#0a84ff}
+.d-icons .di svg{width:15px;height:15px;flex-shrink:0}
+.d-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.d-content{flex:1;overflow-y:auto;padding:20px 24px}
+.d-content::-webkit-scrollbar{width:3px}
+.d-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
+.d-chat{flex-shrink:0;padding:8px 24px 14px;border-top:1px solid #1e2a3a;background:#0d1117}
+.d-chat-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.d-chat-bar{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid #1e2a3a;border-radius:10px;padding:8px 14px}
+.d-chat-bar input{flex:1;background:none;border:none;color:#fff;font-size:13px;outline:none}
+.d-chat-bar input::placeholder{color:#444}
+.d-chat-bar button{background:#0a84ff;border:none;border-radius:6px;padding:6px 12px;color:#fff;font-size:11px;font-weight:600;cursor:pointer}
+/* Page title */
+.d-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.d-subtitle{font-size:12px;color:#888;margin-bottom:16px;line-height:1.5}
+/* Two column layout */
+.d-cols{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px}
+/* AI analysis card */
+.ai-card{background:rgba(10,132,255,0.04);border:1px solid rgba(10,132,255,0.12);border-radius:10px;padding:16px;margin-bottom:12px}
+.ai-label{font-size:10px;color:#0a84ff;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.ai-text{font-size:12px;color:#ccc;line-height:1.7}
+.ai-text strong{color:#fff}
+.ai-meta{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:10px}
+.ai-meta .conf{padding:2px 8px;border-radius:4px;font-weight:600}
+.ai-meta .conf-h{background:rgba(255,59,48,0.15);color:#ff6b6b}
+.ai-meta .rc{color:#888}
+.ai-meta .rc strong{color:#ff9500}
+/* Auto-remediation */
+.ai-remed{background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.15);border-radius:8px;padding:12px;margin-top:10px}
+.ai-remed .label{font-size:10px;color:#30d158;font-weight:600;margin-bottom:4px}
+.ai-remed .desc{font-size:11px;color:#ccc;line-height:1.5}
+.ai-remed .rbtn{display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:#30d158;color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer}
+.ai-remed .rbtn svg{width:12px;height:12px}
+/* Service map */
+.svc-card{background:rgba(255,255,255,0.03);border:1px solid #1e2a3a;border-radius:10px;padding:16px}
+.svc-card .label{font-size:11px;color:#888;font-weight:600;margin-bottom:12px}
+.svc-map-d{position:relative;height:180px}
+.svc-map-d .node{position:absolute;text-align:center}
+.svc-map-d .node .ring{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:12px;font-weight:700;color:#fff}
+.svc-map-d .node .nm{font-size:9px;color:#888}
+.svc-map-d .connector{position:absolute;height:1px;background:#333;transform-origin:left center}
+/* How AI reached conclusion */
+.ai-steps{margin-bottom:16px}
+.ai-steps .label{font-size:13px;font-weight:600;color:#fff;margin-bottom:12px}
+.ai-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.ai-step .dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.ai-step .dot-g{background:#30d158}
+.ai-step .dot-y{background:#ff9500}
+.ai-step .step-title{font-size:12px;font-weight:600;color:#ddd}
+.ai-step .step-desc{font-size:11px;color:#888;margin-top:1px}
+/* Timeline */
+.tl-card{background:rgba(255,255,255,0.03);border:1px solid #1e2a3a;border-radius:10px;padding:16px}
+.tl-card .label{font-size:11px;font-weight:600;color:#888;margin-bottom:12px}
+.tl-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;position:relative;padding-left:4px}
+.tl-item .tl-dot{width:8px;height:8px;border-radius:50%;margin-top:3px;flex-shrink:0}
+.tl-item .tl-time{font-size:9px;color:#ff9500;font-weight:600;min-width:42px;flex-shrink:0}
+.tl-item .tl-text{font-size:11px;color:#ccc;line-height:1.4}
+/* Suggested queries */
+.sq{margin-top:12px}
+.sq .label{font-size:12px;font-weight:600;color:#888;margin-bottom:8px}
+.sq-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sq-chip{background:rgba(255,255,255,0.04);border:1px solid #1e2a3a;border-radius:16px;padding:5px 12px;font-size:11px;color:#aaa;cursor:pointer;transition:all 0.15s}
+.sq-chip:hover{background:rgba(10,132,255,0.1);border-color:rgba(10,132,255,0.3);color:#0a84ff}
+/* Inner layout */
+.d-inner{display:flex;height:100%}
+.d-sidebar{width:190px;border-right:1px solid #1e2a3a;padding:12px;overflow-y:auto;flex-shrink:0}
+.d-sidebar::-webkit-scrollbar{width:2px}
+.d-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+.ss{margin-bottom:14px}
+.sst{font-size:9px;color:#666;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:6px}
+.si{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;font-size:11px;color:#aaa;cursor:pointer;transition:all 0.15s;margin-bottom:1px}
+.si:hover{background:rgba(255,255,255,0.05);color:#fff}
+.si.on{background:rgba(10,132,255,0.12);color:#0a84ff}
+.si .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.si svg{width:12px;height:12px;flex-shrink:0;opacity:0.6}
+.d-panels{flex:1;overflow-y:auto;padding:16px 20px}
+.d-panels::-webkit-scrollbar{width:3px}
+.d-panels::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px}
+.dh{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.dh h2{font-size:16px;font-weight:700;color:#fff}
+.dh-t{margin-left:auto;font-size:11px;color:#666}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.dc{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px}
+.dc.full{grid-column:1/-1}
+.dct{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.6px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.dct svg{width:12px;height:12px}
+.dab{border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:flex-start;gap:10px}
+.dab-b{background:rgba(10,132,255,0.06);border:1px solid rgba(10,132,255,0.15)}
+.dab-g{background:rgba(48,209,88,0.06);border:1px solid rgba(48,209,88,0.15)}
+.dab-c{flex:1}
+.dab-t{font-size:11px;font-weight:600;margin-bottom:4px}
+.dab-tb{color:#0a84ff}
+.dab-tg{color:#30d158}
+.dab-d{font-size:11px;color:#ccc;line-height:1.6}
+.d-chart{height:80px;background:rgba(255,255,255,0.02);border-radius:8px;overflow:hidden;margin:6px 0}
+.das{display:flex;gap:8px;margin:12px 0}
+.dbtn{padding:8px 16px;border-radius:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.dbtn-p{background:#0a84ff;color:#fff}
+.dbtn-s{background:rgba(255,255,255,0.06);color:#ccc;border:1px solid rgba(255,255,255,0.1)}
+.dbtn:hover{filter:brightness(1.15)}
+.tr{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.tr:last-child{border:none}
+.ts{font-size:11px;color:#ccc;width:120px;flex-shrink:0}
+.tbw{flex:1;height:16px;background:rgba(255,255,255,0.04);border-radius:4px;position:relative;overflow:hidden}
+.tb{height:100%;border-radius:4px;position:absolute;left:0;top:0}
+.tb-ok{background:rgba(48,209,88,0.4)}.tb-er{background:rgba(255,59,48,0.4)}
+.tms{font-size:10px;color:#888;width:50px;text-align:right;flex-shrink:0}
+.code{background:#0d0d12;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;font-family:'SF Mono',Menlo,monospace;font-size:10.5px;line-height:1.7;overflow-x:auto;margin:6px 0}
+.code .ln{color:#444;user-select:none;display:inline-block;width:28px}
+.code .hll{background:rgba(255,59,48,0.1);display:block;margin:0 -12px;padding:0 12px;border-left:2px solid #ff3b30}
+.kw{color:#c678dd}.str{color:#98c379}.fn{color:#61afef}.cm{color:#5c6370}
+.chain-n{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:11px;color:#ccc}
+.chain-n .num{color:#ff9500;font-weight:700;width:16px}
+.chain-n .num-r{color:#ff3b30}
+.err-box{font-size:10px;color:#ff6b6b;margin-top:8px;padding:6px 8px;background:rgba(255,59,48,0.08);border-radius:6px}
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ic-watch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="3" width="12" height="18" rx="4"/><line x1="12" y1="7" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="14"/></symbol>
+  <symbol id="ic-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></symbol>
+  <symbol id="ic-desktop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+  <symbol id="ic-agent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.5" fill="currentColor" stroke="none"/><path d="M9 15h6"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16" y1="16" x2="21" y2="21"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="ic-rewind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="11 19 2 12 11 5"/><polyline points="22 19 13 12 22 5"/></symbol>
+  <symbol id="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></symbol>
+  <symbol id="ic-pager" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h8"/><path d="M8 14h4"/></symbol>
+  <symbol id="ic-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></symbol>
+  <symbol id="ic-task" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></symbol>
+  <symbol id="ic-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></symbol>
+  <symbol id="ic-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></symbol>
+  <symbol id="ic-pay" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></symbol>
+  <symbol id="ic-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></symbol>
+  <symbol id="ic-gw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V5a2 2 0 012-2h14a2 2 0 012 2v16"/><path d="M3 10h18"/><rect x="7" y="14" width="3" height="4"/><rect x="14" y="14" width="3" height="4"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+  <symbol id="ic-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="ic-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></symbol>
+  <symbol id="ic-diff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="15" x2="15" y2="15"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+</svg>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="go('watch')"><svg><use href="#ic-watch"/></svg>Watch</button>
+  <button class="nav-btn" onclick="go('phone')"><svg><use href="#ic-phone"/></svg>Phone</button>
+  <button class="nav-btn" onclick="go('desktop')"><svg><use href="#ic-desktop"/></svg>Desktop</button>
+</nav>
+
+<!-- WATCH -->
+<section class="scene active" id="scene-watch">
+  <div class="ctx">
+    <span class="time">2:07 AM</span>
+    <span class="nar">Maya's wrist buzzes. The AI agent has already been investigating for 2 minutes.</span>
+  </div>
+  <div class="steps">
+    <button class="step on" onclick="ws(0)">Notification</button>
+    <button class="step" onclick="ws(1)">Alert</button>
+    <button class="step" onclick="ws(2)">Details</button>
+    <button class="step" onclick="ws(3)">Decide</button>
+  </div>
+  <div class="wrap">
+    <div class="watch-wrap">
+      <!-- SVG Apple Watch mockup -->
+      <svg class="watch-svg" viewBox="0 0 220 330" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Band top -->
+        <path d="M65,60 L65,8 Q65,0 75,0 L145,0 Q155,0 155,8 L155,60" fill="#1b2a4a"/>
+        <!-- Band bottom -->
+        <path d="M65,270 L65,322 Q65,330 75,330 L145,330 Q155,330 155,322 L155,270" fill="#1b2a4a"/>
+        <!-- Watch body shadow -->
+        <rect x="16" y="58" width="192" height="214" rx="42" fill="#0a1628" opacity="0.5"/>
+        <!-- Watch body -->
+        <rect x="14" y="56" width="192" height="214" rx="42" fill="#1b2a4a"/>
+        <!-- Body inner bevel highlight -->
+        <rect x="16" y="58" width="188" height="210" rx="40" fill="none" stroke="#2a3f6a" stroke-width="1" opacity="0.5"/>
+        <!-- Screen bezel (dark ring) -->
+        <rect x="22" y="64" width="176" height="198" rx="36" fill="#0a0e18"/>
+        <!-- Screen opening -->
+        <rect x="26" y="68" width="168" height="190" rx="22" fill="#000"/>
+        <!-- Crown button -->
+        <rect x="200" y="130" width="10" height="28" rx="4" fill="#1b2a4a"/>
+        <rect x="201" y="132" width="8" height="24" rx="3" fill="#243a64"/>
+        <!-- Crown knurling lines -->
+        <line x1="202" y1="136" x2="208" y2="136" stroke="#1b2a4a" stroke-width="0.8"/>
+        <line x1="202" y1="139" x2="208" y2="139" stroke="#1b2a4a" stroke-width="0.8"/>
+        <line x1="202" y1="142" x2="208" y2="142" stroke="#1b2a4a" stroke-width="0.8"/>
+        <line x1="202" y1="145" x2="208" y2="145" stroke="#1b2a4a" stroke-width="0.8"/>
+        <line x1="202" y1="148" x2="208" y2="148" stroke="#1b2a4a" stroke-width="0.8"/>
+        <line x1="202" y1="151" x2="208" y2="151" stroke="#1b2a4a" stroke-width="0.8"/>
+        <!-- Side button -->
+        <rect x="201" y="168" width="8" height="16" rx="3" fill="#1b2a4a"/>
+        <rect x="202" y="169" width="6" height="14" rx="2.5" fill="#243a64"/>
+        <!-- Top highlight -->
+        <path d="M56,58 Q110,52 164,58" stroke="#3a5a8a" stroke-width="0.5" fill="none" opacity="0.4"/>
+      </svg>
+      <div class="watch-screen">
+
+        <!-- W0: Notification on watch face -->
+        <div class="ws" id="w0">
+          <div class="wn-face">
+            <div class="wn-time">2:07</div>
+            <div class="wn-date">Thursday, Mar 26</div>
+            <div class="wn-banner" onclick="ws(1)">
+              <div class="wn-hdr">
+                <div class="wn-icon"><svg stroke="#fff"><use href="#ic-alert"/></svg></div>
+                <span class="wn-app">CloudWatch</span>
+                <span class="wn-when">now</span>
+              </div>
+              <div class="wn-title">Payments Service Down</div>
+              <div class="wn-body"><strong>12% error rate</strong> -- customers can't checkout. Agent found likely cause: bad deploy.</div>
+              <div class="wn-spark">
+                <svg width="100%" height="100%" viewBox="0 0 150 18" preserveAspectRatio="none">
+                  <path d="M0,16 L20,16 L35,16 L50,16 L60,15 L70,14 L80,8 L90,3 L100,4 L110,3 L120,5 L130,4 L140,3 L150,4" fill="none" stroke="#ff3b30" stroke-width="1.5" opacity="0.8"/>
+                  <path d="M0,16 L20,16 L35,16 L50,16 L60,15 L70,14 L80,8 L90,3 L100,4 L110,3 L120,5 L130,4 L140,3 L150,4 L150,18 L0,18Z" fill="url(#wg1)" opacity="0.4"/>
+                  <defs><linearGradient id="wg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- W1: Full alert with gauges -->
+        <div class="ws" id="w1" style="display:none">
+          <div class="wa-pad">
+            <div class="wa-top"><div class="dot"></div><span>HIGH SEVERITY</span></div>
+            <div class="wt">Payments Service</div>
+            <div class="w-gauge">
+              <div class="w-gr">
+                <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff3b30" stroke-dasharray="100.5" stroke-dashoffset="88.4"/></svg>
+                <div class="w-gv"><span class="n red">12%</span><span class="l">errors</span></div>
+              </div>
+              <div class="w-gr">
+                <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff9500" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg>
+                <div class="w-gv"><span class="n ylw" style="font-size:9px">800</span><span class="l">failed</span></div>
+              </div>
+              <div class="w-gr">
+                <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#30d158" stroke-dasharray="100.5" stroke-dashoffset="100.5"/></svg>
+                <div class="w-gv"><span class="n grn">0</span><span class="l">loss</span></div>
+              </div>
+            </div>
+            <div class="w-mc">
+              <svg width="100%" height="100%" viewBox="0 0 160 24" preserveAspectRatio="none">
+                <defs><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0,22 L20,22 L40,22 L55,22 L65,21 L75,18 L85,8 L95,3 L105,4 L115,3 L125,5 L135,4 L145,3 L160,4" fill="none" stroke="#ff3b30" stroke-width="1.5"/>
+                <path d="M0,22 L20,22 L40,22 L55,22 L65,21 L75,18 L85,8 L95,3 L105,4 L115,3 L125,5 L135,4 L145,3 L160,4 L160,24 L0,24Z" fill="url(#wg2)"/>
+                <line x1="60" y1="0" x2="60" y2="24" stroke="#ff9500" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.6"/>
+                <text x="62" y="6" fill="#ff9500" font-size="4" font-family="sans-serif">deploy</text>
+              </svg>
+            </div>
+            <div class="wc">
+              <div class="cl"><svg><use href="#ic-agent"/></svg> Agent Assessment</div>
+              <div class="ct">Deploy #847 landed 22 min ago. New code references a table that doesn't exist.</div>
+            </div>
+            <div class="wa-btns"><button class="btn btn-p" onclick="ws(2)">See full details</button></div>
+          </div>
+        </div>
+
+        <!-- W2: Root cause details -->
+        <div class="ws" id="w2" style="display:none">
+          <div class="wa-pad">
+            <div class="wa-top"><div class="dot"></div><span>INVESTIGATING</span></div>
+            <div class="wt" style="font-size:9.5px">Root Cause</div>
+            <div class="wm">Deploy <strong>#847</strong> calls <strong>PaymentsTable-v2</strong> -- that table hasn't been created yet.</div>
+            <div class="lbl">Service health</div>
+            <div class="w-svc"><div class="d" style="background:#ff3b30"></div>Payments<span class="s red">failing</span></div>
+            <div class="w-svc"><div class="d" style="background:#ff9500"></div>DynamoDB<span class="s ylw">slow</span></div>
+            <div class="w-svc"><div class="d" style="background:#30d158"></div>Gateway<span class="s grn">ok</span></div>
+            <div class="lbl" style="margin-top:4px">What's not broken</div>
+            <div class="ok">
+              <svg><use href="#ic-check"/></svg> No duplicate charges<br>
+              <svg><use href="#ic-check"/></svg> No data corruption<br>
+              <svg><use href="#ic-check"/></svg> Old table is fine
+            </div>
+            <div class="lbl" style="margin-top:4px">Who deployed</div>
+            <div class="wm">Raj Patel, 5:47 PM. Terraform not applied yet.</div>
+            <div class="wa-btns">
+              <button class="btn btn-p" onclick="ws(3)">What can I do?</button>
+              <button class="btn btn-s" onclick="ws(1)">Back</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- W3: Actions -->
+        <div class="ws" id="w3" style="display:none">
+          <div class="wa-pad">
+            <div class="wa-top"><div class="dot"></div><span>ACTION NEEDED</span></div>
+            <div class="wt" style="font-size:9.5px">Recommended</div>
+            <div class="wm" style="margin-bottom:6px">Agent suggests rolling back deploy #847.</div>
+            <div class="wa-btns" style="gap:3px">
+              <button class="btn btn-p" onclick="go('phone')">Continue on phone</button>
+              <button class="btn btn-s" onclick="alert('Paging Raj Patel...')">Page deploy author</button>
+              <button class="btn btn-s" onclick="alert('Escalating...')">Escalate to lead</button>
+              <button class="btn btn-s" onclick="ws(2)">Back</button>
+            </div>
+            <div style="font-size:6.5px;color:#555;text-align:center;margin-top:4px">Tap "Continue on phone" to roll back or notify team</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHONE -->
+<section class="scene" id="scene-phone">
+  <div class="ctx">
+    <span class="time">2:09 AM</span>
+    <span class="nar">Maya grabs her phone. The agent's full investigation is ready -- one continuous conversation.</span>
+  </div>
+  <div class="wrap">
+    <div class="pf"><div class="pn"></div>
+      <div class="ps" id="p1">
+        <div class="ph"><a class="bk" onclick="go('watch')">&#8249;</a><h2>Payments Service</h2><span class="pill pill-r" id="phone-pill">IN ALARM</span></div>
+
+        <!-- Agent investigation -->
+        <div class="ac fade-up">
+          <div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span><span class="at">2:07 AM</span></div>
+          <div class="ax">Your Payments service is returning <strong>500 errors</strong> on the <span class="er">/process-payment</span> endpoint. <span class="hl">12% error rate</span>, up from a baseline of 0.1%.</div>
+        </div>
+
+        <div class="sec"><svg><use href="#ic-map"/></svg> Service Health</div>
+        <div class="sm">
+          <div class="sn"><div class="sd sd-r"><svg stroke="#ff6b6b"><use href="#ic-pay"/></svg></div><div class="sl">Payments</div></div>
+          <span class="sa">&#8594;</span>
+          <div class="sn"><div class="sd sd-y"><svg stroke="#ff9500"><use href="#ic-db"/></svg></div><div class="sl">DynamoDB</div></div>
+          <span class="sa">&#8594;</span>
+          <div class="sn"><div class="sd sd-g"><svg stroke="#30d158"><use href="#ic-gw"/></svg></div><div class="sl">Gateway</div></div>
+        </div>
+        <div class="ir">
+          <div class="is"><div class="n red">12%</div><div class="d">Error Rate</div></div>
+          <div class="is"><div class="n ylw">~800</div><div class="d">Failed Payments</div></div>
+          <div class="is"><div class="n grn">0</div><div class="d">Data Corruption</div></div>
+        </div>
+
+        <!-- Root cause -->
+        <div class="ac">
+          <div class="ah"><div class="av"><svg><use href="#ic-search"/></svg></div><span class="an">Root Cause Analysis</span></div>
+          <div class="ax">
+            <strong>Deploy #847</strong> landed at 01:45 AM. The new code references a DynamoDB table called <span class="er">PaymentsTable-v2</span>. That table <strong>doesn't exist</strong> in this account.<br><br>
+            The old table <span class="hl">PaymentsTable</span> is healthy -- the new code just isn't pointing to it.<br><br>
+            <strong>Who deployed:</strong> Raj Patel merged at 5:47 PM yesterday. The commit changed the table reference as part of migration work, but the Terraform change to create the new table hasn't been applied yet.<br><br>
+            <strong>Customer impact:</strong> Customers hitting checkout see "payment failed, please retry." No money was taken incorrectly. All failures are retryable.
+          </div>
+        </div>
+
+        <!-- Conversation -->
+        <div class="ub">Are any customers actually affected right now?</div>
+        <div class="ac"><div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span></div>
+          <div class="ax">Yes. <strong>847 payment attempts</strong> failed in the last 18 minutes. No duplicate charges detected. All failures returned clean 500 errors -- <span class="hl">retryable on the client side</span>. No data corruption risk.</div></div>
+
+        <div class="ub">Is the v2 table supposed to exist?</div>
+        <div class="ac"><div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span></div>
+          <div class="ax">There's a <strong>Terraform change in the pipeline</strong> to create PaymentsTable-v2, but it hasn't been applied yet. The code change shipped before the infrastructure change. This is a sequencing issue -- not a bug in the code itself.</div></div>
+
+        <div class="ub">Should I roll back or wait for the table to be created?</div>
+        <div class="ac"><div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span></div>
+          <div class="ax">I recommend <strong>rolling back now</strong>. The Terraform apply requires approvals and could take 15+ minutes. Every minute the current deploy is live, ~45 more payments fail. Rolling back to deploy #846 will restore the working table reference immediately.</div></div>
+
+        <!-- Actions -->
+        <div class="sec"><svg><use href="#ic-agent"/></svg> Agent Recommended</div>
+        <div class="pa"><button class="pb" onclick="doRollback()"><div class="pi pi-b"><svg stroke="#0a84ff"><use href="#ic-rewind"/></svg></div><div><div class="pt">Roll back deploy #847</div><div class="pu" id="rb-status">Restore deploy #846 -- immediate fix</div></div></button></div>
+
+        <div class="sec">Notify &amp; Escalate</div>
+        <div class="pa">
+          <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- sent to #payments-eng'"><div class="pi pi-o"><svg stroke="#ff9500"><use href="#ic-chat"/></svg></div><div><div class="pt">Notify team on Slack</div><div class="pu">Agent drafts message for #payments-eng</div></div></button>
+          <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- Raj Patel paged'"><div class="pi pi-p"><svg stroke="#5e5ce6"><use href="#ic-pager"/></svg></div><div><div class="pt">Page deploy author</div><div class="pu">Raj Patel -- pushed the change at 5:47 PM</div></div></button>
+          <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- escalated'"><div class="pi pi-o"><svg stroke="#ff9500"><use href="#ic-up"/></svg></div><div><div class="pt">Escalate to engineering lead</div><div class="pu">Alert on-call manager chain</div></div></button>
+        </div>
+
+        <div class="sec">Follow Up</div>
+        <div class="pa">
+          <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- task created'"><div class="pi pi-t"><svg stroke="#64d2ff"><use href="#ic-task"/></svg></div><div><div class="pt">Create follow-up task</div><div class="pu">Agent drafts: "Coordinate PaymentsTable-v2 migration"</div></div></button>
+          <button class="pb" onclick="go('desktop')"><div class="pi pi-p"><svg stroke="#5e5ce6"><use href="#ic-desktop"/></svg></div><div><div class="pt">Open on desktop</div><div class="pu">Deep investigation -- traces, code, dependencies</div></div></button>
+        </div>
+
+        <!-- Resolution (hidden until rollback) -->
+        <div id="phone-resolved" style="display:none">
+          <div style="height:1px;background:rgba(255,255,255,0.06);margin:14px 0"></div>
+          <div class="toast fade-up"><svg stroke="#30d158"><use href="#ic-check"/></svg><div>Rollback complete. Deploy #846 restored. Errors dropping.</div></div>
+          <div class="ir" style="margin-top:12px">
+            <div class="is"><div class="n grn">0.2%</div><div class="d">Error Rate</div></div>
+            <div class="is"><div class="n ylw">847</div><div class="d">Total Failed</div></div>
+            <div class="is"><div class="n grn">0</div><div class="d">Data Loss</div></div>
+          </div>
+          <div class="ac fade-up">
+            <div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">Incident Summary</span><span class="at">2:14 AM</span></div>
+            <div class="ax"><strong>Duration:</strong> 18 minutes (alarm to clear)<br><strong>Impact:</strong> 847 failed payment attempts, 0 data corruption<br><strong>Root cause:</strong> Deploy #847 referenced PaymentsTable-v2 before table was created<br><strong>Resolution:</strong> Rolled back to deploy #846<br><br>I've posted a summary to <span class="hl">#payments-eng</span> and created a follow-up task assigned to you and Raj.</div>
+          </div>
+          <div class="ac">
+            <div class="ah"><div class="av" style="background:linear-gradient(135deg,#ff9500,#ffcc00)"><svg><use href="#ic-sun"/></svg></div><span class="an" style="color:#ff9500">Morning Briefing (Preview)</span></div>
+            <div class="ax"><strong>Suggested next step:</strong> The table migration is incomplete. The Terraform change in commit <span class="er">a3f7c2d</span> needs to be applied before redeploying. I'll have the full context ready on your desktop in the morning.</div>
+          </div>
+          <div style="text-align:center;padding:12px 0;font-size:11px;color:#555;display:flex;align-items:center;justify-content:center;gap:6px">
+            <svg style="width:12px;height:12px" stroke="#555" fill="none" stroke-width="2"><use href="#ic-moon"/></svg> Go back to sleep. I'll watch the service.
+          </div>
+        </div>
+
+        <!-- Chat input is now in p-bottom below -->
+      </div>
+      <div class="p-bottom">
+        <div class="cb"><input type="text" placeholder="Ask a follow-up question..."><button class="mic"><svg><use href="#ic-mic"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DESKTOP -->
+<section class="scene" id="scene-desktop">
+  <div class="ctx">
+    <span class="time">Next Morning -- 9:15 AM</span>
+    <span class="nar">Maya opens her laptop for follow-up. The agent has the full investigation ready -- traces, code, and a suggested fix.</span>
+  </div>
+  <div class="steps">
+    <button class="step on" onclick="ds(1)">Overview</button>
+    <button class="step" onclick="ds(2)">Traces &amp; Code</button>
+  </div>
+  <div class="wrap">
+    <div class="df">
+      <!-- Top bar -->
+      <div class="d-topbar">
+        <div class="logo"><svg stroke="#fff"><use href="#ic-agent"/></svg></div>
+        <div class="search">Search services, metrics, traces...</div>
+        <div class="right"><span class="live"><span class="dot"></span> Live</span></div>
+      </div>
+      <div class="d-body">
+        <!-- Icon sidebar -->
+        <div class="d-icons">
+          <div class="d-brand"><div class="logo"><svg stroke="#fff"><use href="#ic-agent"/></svg></div><span>CloudWatch Omni</span></div>
+          <div class="di"><svg><use href="#ic-chart"/></svg>Home</div>
+          <div class="di"><svg><use href="#ic-agent"/></svg>Agents</div>
+          <div class="di on"><svg><use href="#ic-alert"/></svg>Alarms</div>
+          <div class="di"><svg><use href="#ic-map"/></svg>Dashboards</div>
+          <div class="di"><svg><use href="#ic-search"/></svg>Application Map</div>
+          <div class="di"><svg><use href="#ic-clock"/></svg>Metrics</div>
+          <div class="di"><svg><use href="#ic-file"/></svg>Logs</div>
+          <div class="di" style="margin-top:auto"><svg><use href="#ic-link"/></svg>Settings</div>
+        </div>
+        <!-- Main area -->
+        <div class="d-main">
+          <div class="d-content">
+            <div class="d-inner">
+              <!-- Info sidebar -->
+              <div class="d-sidebar">
+                <div class="ss"><div class="sst">Incident Timeline</div>
+                  <div class="si on"><div class="dot" style="background:#ff3b30"></div> 01:52 -- Alarm fired</div>
+                  <div class="si"><div class="dot" style="background:#ff9500"></div> 01:45 -- Deploy #847</div>
+                  <div class="si"><div class="dot" style="background:#0a84ff"></div> 02:09 -- Rollback started</div>
+                  <div class="si"><div class="dot" style="background:#30d158"></div> 02:14 -- Alarm cleared</div>
+                </div>
+                <div class="ss"><div class="sst">Affected Resources</div>
+                  <div class="si"><div class="dot" style="background:#ff3b30"></div> PaymentsLambda</div>
+                  <div class="si"><div class="dot" style="background:#ff9500"></div> PaymentsTable (DDB)</div>
+                  <div class="si"><div class="dot" style="background:#30d158"></div> PaymentGateway API</div>
+                </div>
+                <div class="ss"><div class="sst">Related</div>
+                  <div class="si"><svg><use href="#ic-task"/></svg> Follow-up task</div>
+                  <div class="si"><svg><use href="#ic-chat"/></svg> Slack thread</div>
+                  <div class="si"><svg><use href="#ic-diff"/></svg> Deploy #847 diff</div>
+                </div>
+              </div>
+              <!-- Content panels -->
+              <div class="d-panels">
+                <div id="d1">
+                  <div class="dh"><h2>Payments Service Incident</h2><span class="pill pill-g">RESOLVED</span><span class="dh-t">01:52 AM -- 02:14 AM / 22 min</span></div>
+                  <div class="dab dab-b"><div class="av"><svg><use href="#ic-agent"/></svg></div><div class="dab-c"><div class="dab-t dab-tb">Agent Summary</div><div class="dab-d">Deploy #847 introduced a reference to <strong>PaymentsTable-v2</strong> which doesn't exist. The Terraform change to create the table hasn't been applied yet -- the code shipped before the infrastructure. Rolled back to deploy #846 at 02:09 AM. Service recovered by 02:14 AM. <strong>847 payment attempts failed</strong>, all retryable, no data corruption.</div></div></div>
+                  <div class="dg">
+                    <div class="dc"><div class="dct"><svg><use href="#ic-chart"/></svg> Error Rate</div>
+                      <div class="d-chart"><svg width="100%" height="100%" viewBox="0 0 400 80" preserveAspectRatio="none">
+                        <defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
+                        <path d="M0,78 L80,78 L100,78 L140,78 L160,75 L180,40 L200,15 L220,20 L240,18 L260,22 L280,35 L300,55 L320,70 L340,76 L360,78 L400,78" fill="url(#eg)" stroke="none"/>
+                        <path d="M0,78 L80,78 L100,78 L140,78 L160,75 L180,40 L200,15 L220,20 L240,18 L260,22 L280,35 L300,55 L320,70 L340,76 L360,78 L400,78" fill="none" stroke="#ff3b30" stroke-width="2"/>
+                        <line x1="130" y1="0" x2="130" y2="80" stroke="#ff9500" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+                        <text x="134" y="10" fill="#ff9500" font-size="7" font-family="sans-serif">Deploy #847</text>
+                        <line x1="290" y1="0" x2="290" y2="80" stroke="#30d158" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+                        <text x="294" y="10" fill="#30d158" font-size="7" font-family="sans-serif">Rollback</text>
+                      </svg></div>
+                    </div>
+                    <div class="dc"><div class="dct"><svg><use href="#ic-map"/></svg> Service Map</div>
+                      <div class="sm" style="padding:6px 0">
+                        <div class="sn"><div class="sd sd-r" style="width:30px;height:30px"><svg stroke="#ff6b6b" style="width:14px;height:14px"><use href="#ic-pay"/></svg></div><div class="sl">Payments</div></div>
+                        <span class="sa">&#8594;</span>
+                        <div class="sn"><div class="sd sd-y" style="width:30px;height:30px"><svg stroke="#ff9500" style="width:14px;height:14px"><use href="#ic-db"/></svg></div><div class="sl">DynamoDB</div></div>
+                        <span class="sa">&#8594;</span>
+                        <div class="sn"><div class="sd sd-g" style="width:30px;height:30px"><svg stroke="#30d158" style="width:14px;height:14px"><use href="#ic-gw"/></svg></div><div class="sl">Gateway</div></div>
+                      </div>
+                      <div style="font-size:10px;color:#888;text-align:center;margin-top:4px">DynamoDB latency was a consequence, not the cause</div>
+                    </div>
+                    <div class="dc"><div class="dct"><svg><use href="#ic-clock"/></svg> Impact Summary</div>
+                      <div class="ir" style="margin:4px 0"><div class="is"><div class="n red">847</div><div class="d">Failed Payments</div></div><div class="is"><div class="n ylw">22 min</div><div class="d">Duration</div></div><div class="is"><div class="n grn">0</div><div class="d">Data Loss</div></div></div>
+                      <div style="font-size:10px;color:#999;margin-top:6px;line-height:1.5">All 847 failures returned clean 500 errors. Customers saw "payment failed, please retry." No duplicate charges.</div>
+                    </div>
+                    <div class="dc"><div class="dct"><svg><use href="#ic-link"/></svg> Root Cause Chain</div>
+                      <div style="font-size:11px;color:#ccc;line-height:1.8">
+                        <div class="chain-n"><span class="num">1</span> Raj Patel merged commit <span class="er" style="font-size:10px">a3f7c2d</span> at 5:47 PM</div>
+                        <div class="chain-n"><span class="num">2</span> Code changed table ref: PaymentsTable &#8594; PaymentsTable-v2</div>
+                        <div class="chain-n"><span class="num">3</span> Terraform to create PaymentsTable-v2 not yet applied</div>
+                        <div class="chain-n"><span class="num">4</span> Deploy #847 went live at 01:45 AM</div>
+                        <div class="chain-n"><span class="num num-r">5</span> Every request to new code path &#8594; ResourceNotFoundException</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="dab dab-g"><div class="av" style="background:linear-gradient(135deg,#30d158,#34c759)"><svg><use href="#ic-bulb"/></svg></div><div class="dab-c"><div class="dab-t dab-tg">Suggested Next Steps</div><div class="dab-d">1. Apply the Terraform change to create PaymentsTable-v2 before redeploying<br>2. Add a deployment gate that validates referenced resources exist<br>3. Consider a feature flag for the table migration cutover</div></div></div>
+                </div>
+
+                <div id="d2" style="display:none">
+                  <div class="dh"><h2>Traces &amp; Code</h2><span class="pill pill-r">Root Cause</span><span class="dh-t">Deploy #847 / commit a3f7c2d</span></div>
+                  <div class="dab dab-b"><div class="av"><svg><use href="#ic-agent"/></svg></div><div class="dab-c"><div class="dab-t dab-tb">Agent Analysis</div><div class="dab-d">The trace below shows the exact call path. The Lambda function calls DynamoDB with table name "PaymentsTable-v2" -- which returns ResourceNotFoundException in 3ms. The code change is in <strong>payment-processor.ts:47</strong>.</div></div></div>
+                  <div class="dc full"><div class="dct"><svg><use href="#ic-search"/></svg> Distributed Trace -- Failed Payment Request</div>
+                    <div class="tr"><div class="ts" style="color:#fff;font-weight:600">API Gateway</div><div class="tbw"><div class="tb tb-ok" style="width:100%"></div></div><div class="tms">245ms</div></div>
+                    <div class="tr"><div class="ts" style="color:#fff;font-weight:600">&nbsp;&nbsp;&#8627; PaymentsLambda</div><div class="tbw"><div class="tb tb-er" style="width:85%;left:5%"></div></div><div class="tms" style="color:#ff3b30">210ms</div></div>
+                    <div class="tr"><div class="ts" style="color:#ff6b6b">&nbsp;&nbsp;&nbsp;&nbsp;&#8627; DynamoDB GetItem</div><div class="tbw"><div class="tb tb-er" style="width:3%;left:6%"></div></div><div class="tms" style="color:#ff3b30">3ms x</div></div>
+                    <div class="tr" style="border:none"><div class="ts" style="color:#666">&nbsp;&nbsp;&nbsp;&nbsp;&#8627; PaymentGateway</div><div class="tbw" style="opacity:0.3"></div><div class="tms" style="color:#666">-- skip</div></div>
+                    <div class="err-box">x ResourceNotFoundException: Requested resource not found: Table 'PaymentsTable-v2' does not exist</div>
+                  </div>
+                  <div class="dc full"><div class="dct"><svg><use href="#ic-file"/></svg> Code Change -- payment-processor.ts</div>
+                    <div class="code">
+<span class="ln">45</span>  <span class="kw">const</span> <span class="fn">processPayment</span> = <span class="kw">async</span> (event) =&gt; {
+<span class="ln">46</span>    <span class="kw">const</span> params = {
+<span class="hll"><span class="ln">47</span>      TableName: <span class="str">'PaymentsTable-v2'</span>,  <span class="cm">// &lt;-- was 'PaymentsTable'</span></span>
+<span class="ln">48</span>      Item: {
+<span class="ln">49</span>        paymentId: event.paymentId,
+<span class="ln">50</span>        amount: event.amount,
+<span class="ln">51</span>        status: <span class="str">'processing'</span>
+<span class="ln">52</span>      }
+<span class="ln">53</span>    };
+<span class="ln">54</span>    <span class="kw">await</span> dynamodb.<span class="fn">put</span>(params).<span class="fn">promise</span>();
+                    </div>
+                    <div style="font-size:10px;color:#999;margin-top:4px">Commit <span style="color:#0a84ff">a3f7c2d</span> by Raj Patel / "Migrate to PaymentsTable-v2 schema"</div>
+                  </div>
+                  <div class="dab dab-g"><div class="av" style="background:linear-gradient(135deg,#30d158,#34c759)"><svg><use href="#ic-bulb"/></svg></div><div class="dab-c"><div class="dab-t dab-tg">Suggested Fix</div><div class="dab-d">Change line 47 back to <strong>'PaymentsTable'</strong>, or apply the Terraform change in <strong>infra/dynamodb.tf</strong> to create PaymentsTable-v2 first. The migration should be gated behind a feature flag so the table reference only switches after the infrastructure is confirmed.</div></div></div>
+                  <div class="das"><button class="dbtn dbtn-p" onclick="ds(1)">Back to overview</button><button class="dbtn dbtn-s">Open in IDE</button><button class="dbtn dbtn-s">View full deploy diff</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Sticky chat -->
+          <div class="d-chat">
+            <div class="d-chat-pills">
+              <div class="sq-chip">Show me the deploy diff for #847</div>
+              <div class="sq-chip">What's the current error rate?</div>
+              <div class="sq-chip">Page Raj Patel</div>
+              <div class="sq-chip">Create a follow-up task</div>
+              <div class="sq-chip">Apply Terraform for PaymentsTable-v2</div>
+            </div>
+            <div class="d-chat-bar">
+              <input type="text" placeholder="Ask about this incident, request deeper analysis, or run a query...">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+function go(name){
+  document.querySelectorAll('.scene').forEach(function(s){s.classList.remove('active')});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+  document.getElementById('scene-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    if(b.textContent.toLowerCase().indexOf(name)!==-1) b.classList.add('active');
+  });
+}
+function ws(n){
+  for(var i=0;i<=3;i++){var e=document.getElementById('w'+i);if(e)e.style.display=i===n?'flex':'none'}
+  upd('watch',n);
+}
+function ps(n){
+  // no-op, single screen now
+}
+function doRollback(){
+  var el=document.getElementById('phone-resolved');
+  var pill=document.getElementById('phone-pill');
+  var st=document.getElementById('rb-status');
+  if(el){el.style.display='block';el.scrollIntoView({behavior:'smooth'})}
+  if(pill){pill.className='pill pill-g';pill.textContent='RESOLVED'}
+  if(st){st.textContent='Done -- rolled back to #846'}
+}
+function ds(n){
+  for(var i=1;i<=2;i++){var e=document.getElementById('d'+i);if(e)e.style.display=i===n?'block':'none'}
+  upd('desktop',n-1);
+}
+function upd(scene,active){
+  var el=document.getElementById('scene-'+scene);
+  if(!el)return;
+  var btns=el.querySelectorAll('.step');
+  for(var i=0;i<btns.length;i++){
+    if(i===active) btns[i].classList.add('on');
+    else btns[i].classList.remove('on');
+  }
+}
+</script>
+</body>
+</html>
