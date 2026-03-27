@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import {
   PaperPlaneRight, ShieldCheck, ChartBar, Crosshair, Link as LinkIcon,
-  Lightning, Bell, Clock, Sparkle, Robot, ArrowRight,
+  Lightning, Bell, Clock, Sparkle, Robot, ArrowRight, Play,
   WaveTriangle, Eye, Cpu, FileText, Path, Package,
-  Broadcast, Target, SignOut, CheckCircle, Circle,
-  Archive, CaretDown, CaretUp,
+  Broadcast, Target, SignOut, CheckCircle,
+  Archive, CaretDown, CaretUp, CaretRight,
 } from '@phosphor-icons/react'
 import { persona } from '../data/persona'
 
@@ -17,7 +17,7 @@ const tierIcons = {
 function Toggle({ on, onChange }) {
   return (
     <button
-      onClick={onChange}
+      onClick={(e) => { e.stopPropagation(); onChange() }}
       className={`w-9 h-5 rounded-full transition-colors flex items-center px-0.5 ${on ? 'bg-primary' : 'bg-foreground-disabled/30'}`}
     >
       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${on ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -25,51 +25,129 @@ function Toggle({ on, onChange }) {
   )
 }
 
+function DetailTable({ details }) {
+  if (!details || details.length === 0) return null
+  const keys = Object.keys(details[0])
+  return (
+    <div className="mt-2 rounded-lg bg-background/40 border border-border-muted/30 overflow-hidden">
+      <table className="w-full text-[10px]">
+        <thead>
+          <tr className="border-b border-border-muted/30">
+            {keys.map(k => (
+              <th key={k} className="text-left px-2.5 py-1.5 text-foreground-disabled font-medium uppercase tracking-wider">{k}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {details.map((row, i) => (
+            <tr key={i} className={i < details.length - 1 ? 'border-b border-border-muted/20' : ''}>
+              {keys.map(k => (
+                <td key={k} className="px-2.5 py-1.5 text-foreground-muted">{row[k]}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function RunButton({ onClick }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick?.() }}
+      className="flex items-center gap-1 text-[10px] text-primary hover:text-primary-hover px-2 py-1 rounded-md hover:bg-primary/10 transition-colors flex-shrink-0"
+    >
+      <Play size={10} weight="fill" />
+      Run
+    </button>
+  )
+}
+
 function Tier1Item({ item }) {
+  const [expanded, setExpanded] = useState(false)
   const Icon = tierIcons[item.icon] || Lightning
   return (
-    <div className="flex items-start gap-3 py-2">
-      <div className="w-7 h-7 rounded-lg bg-status-active/10 flex items-center justify-center text-status-active flex-shrink-0 mt-0.5">
-        <Icon size={14} />
+    <div className="py-2">
+      <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div className="w-7 h-7 rounded-lg bg-status-active/10 flex items-center justify-center text-status-active flex-shrink-0 mt-0.5">
+          <Icon size={14} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-body-s font-medium text-foreground">{item.title}</p>
+            {item.details && (
+              expanded
+                ? <CaretDown size={10} className="text-foreground-disabled" />
+                : <CaretRight size={10} className="text-foreground-disabled" />
+            )}
+          </div>
+          <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
+        </div>
+        <RunButton />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-body-s font-medium text-foreground">{item.title}</p>
-        <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
-      </div>
-      <CheckCircle size={16} weight="fill" className="text-status-active flex-shrink-0 mt-1" />
+      {expanded && <div className="ml-10"><DetailTable details={item.details} /></div>}
     </div>
   )
 }
 
 function Tier2Item({ item, enabled, onToggle }) {
+  const [expanded, setExpanded] = useState(false)
   const Icon = tierIcons[item.icon] || Lightning
   return (
-    <div className={`flex items-start gap-3 py-2 ${!enabled ? 'opacity-50' : ''}`}>
-      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
-        <Icon size={14} />
+    <div className={`py-2 ${!enabled ? 'opacity-50' : ''}`}>
+      <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+          <Icon size={14} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-body-s font-medium text-foreground">{item.title}</p>
+            {item.details && (
+              expanded
+                ? <CaretDown size={10} className="text-foreground-disabled" />
+                : <CaretRight size={10} className="text-foreground-disabled" />
+            )}
+          </div>
+          <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
+          {enabled && <p className="text-[10px] text-status-degraded/80 mt-1">⚡ {item.impact}</p>}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {enabled && <RunButton />}
+          <Toggle on={enabled} onChange={onToggle} />
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-body-s font-medium text-foreground">{item.title}</p>
-        <p className="text-[11px] text-foreground-muted mt-0.5">{item.description}</p>
-        {enabled && <p className="text-[10px] text-status-degraded/80 mt-1">⚡ {item.impact}</p>}
-      </div>
-      <Toggle on={enabled} onChange={onToggle} />
+      {expanded && enabled && <div className="ml-10"><DetailTable details={item.details} /></div>}
     </div>
   )
 }
 
 function Tier3Item({ item }) {
+  const [expanded, setExpanded] = useState(false)
   const Icon = tierIcons[item.icon] || Lightning
   return (
-    <div className="flex items-start gap-3 py-2 opacity-60">
-      <div className="w-7 h-7 rounded-lg bg-foreground-muted/10 flex items-center justify-center text-foreground-muted flex-shrink-0 mt-0.5">
-        <Icon size={14} />
+    <div className="py-2 opacity-60">
+      <div className="flex items-start gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <div className="w-7 h-7 rounded-lg bg-foreground-muted/10 flex items-center justify-center text-foreground-muted flex-shrink-0 mt-0.5">
+          <Icon size={14} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <p className="text-body-s font-medium text-foreground">{item.title}</p>
+            {expanded
+              ? <CaretDown size={10} className="text-foreground-disabled" />
+              : <CaretRight size={10} className="text-foreground-disabled" />
+            }
+          </div>
+          <p className="text-[11px] text-foreground-muted mt-0.5">{item.suggestion}</p>
+        </div>
+        <span className="text-[10px] text-foreground-disabled flex-shrink-0 mt-1">After setup</span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-body-s font-medium text-foreground">{item.title}</p>
-        <p className="text-[11px] text-foreground-muted mt-0.5">{item.suggestion}</p>
-      </div>
-      <span className="text-[10px] text-foreground-disabled flex-shrink-0 mt-1">After setup</span>
+      {expanded && (
+        <div className="ml-10 mt-2 rounded-lg bg-background/40 border border-border-muted/30 p-3">
+          <p className="text-[11px] text-foreground-muted"><span className="text-foreground font-medium">Question:</span> {item.question}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -93,13 +171,11 @@ export default function Day0Page() {
   const [input, setInput] = useState('')
   const { user, application, coverage, setup, agentActivity, services } = persona
 
-  // Tier 2 toggles
   const [tier2State, setTier2State] = useState(() =>
     Object.fromEntries(setup.tier2.items.map(i => [i.id, i.defaultOn]))
   )
   const toggleTier2 = (id) => setTier2State(prev => ({ ...prev, [id]: !prev[id] }))
 
-  // Collapsible sections
   const [showTier2, setShowTier2] = useState(true)
   const [showTier3, setShowTier3] = useState(false)
 
@@ -138,6 +214,7 @@ export default function Day0Page() {
               <div className="flex-1">
                 <h2 className="text-body-l font-semibold text-foreground">{setup.summary.headline}</h2>
                 <p className="text-body-s text-foreground-muted mt-1">{setup.summary.subtext}</p>
+                <p className="text-[11px] text-foreground-disabled mt-2">Click any item to see exactly what I'll do. Run individually or all at once.</p>
               </div>
             </div>
           </div>
@@ -210,7 +287,7 @@ export default function Day0Page() {
           {/* GO button */}
           <button className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-body-m flex items-center justify-center gap-2 transition-colors">
             <Sparkle size={18} weight="fill" />
-            Set up my monitoring
+            Set up everything
             <ArrowRight size={16} />
           </button>
 
