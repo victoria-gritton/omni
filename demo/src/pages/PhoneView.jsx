@@ -22,9 +22,10 @@ export default function PhoneView() {
     <div className="min-h-screen flex items-center justify-center py-8">
       <div className="gradient-bg-dark" />
       <div className="content-layer flex flex-col items-center gap-6">
-        <span className="text-[11px] text-foreground-muted">
-          iPhone · 2:05 AM
-        </span>
+        <div className="w-full flex items-center justify-between">
+          <span className="text-[11px] text-foreground-muted">iPhone · 2:05 AM</span>
+          <a href="/" className="text-[11px] text-link">← Demos</a>
+        </div>
 
         {/* Phone frame */}
         <div className="w-[390px] h-[844px] rounded-[44px] border-2 border-border bg-black overflow-hidden flex flex-col">

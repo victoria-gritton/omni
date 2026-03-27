@@ -17,9 +17,10 @@ export default function WatchView() {
       <div className="gradient-bg-dark" />
       <div className="content-layer flex flex-col items-center gap-6">
         {/* Label */}
-        <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">
-          Apple Watch · 45mm
-        </span>
+        <div className="w-full flex items-center justify-between">
+          <span className="text-[11px] text-foreground-muted">Apple Watch · 45mm</span>
+          <a href="/" className="text-[11px] text-link">← Demos</a>
+        </div>
 
         {/* Watch bezel */}
         <div className="relative">
