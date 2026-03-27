@@ -7,11 +7,11 @@ import {
 
 const navItems = [
   { icon: House, label: 'Home', subtitle: 'Overview & recommendations', path: '/home' },
-  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search & discovery' },
+  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search & discovery', path: '/explore' },
   { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/console' },
-  { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis' },
-  { icon: CodeBlock, label: 'Query Studio', subtitle: 'SQL & PromQL queries' },
-  { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources' },
+  { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate' },
+  { icon: CodeBlock, label: 'Query Studio', subtitle: 'SQL & PromQL queries', path: '/query' },
+  { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources', path: '/configure' },
 ]
 
 const favorites = [
