@@ -5,6 +5,7 @@ const flows = [
   {
     id: '2am-sre',
     title: '2AM Flow: SRE',
+    subtitle: 'Why is Payments timing out?',
     path: '/watch',
     ready: true,
     preview: 'watch',
@@ -12,6 +13,7 @@ const flows = [
   {
     id: '2am-devops',
     title: '2AM Flow: DevOps',
+    subtitle: 'Database failover in us-east-1',
     path: null,
     ready: false,
     preview: 'placeholder',
@@ -19,6 +21,7 @@ const flows = [
   {
     id: 'coffee',
     title: 'Coffee Flow',
+    subtitle: 'Morning health check and SLO review',
     path: null,
     ready: false,
     preview: 'placeholder',
@@ -26,6 +29,7 @@ const flows = [
   {
     id: 'home',
     title: 'Home Dashboard',
+    subtitle: 'Overview with AI assistant',
     path: '/home',
     ready: true,
     preview: 'home',
@@ -118,9 +122,9 @@ export default function LandingPage() {
                 {flow.preview === 'home' && <HomePreview />}
                 {flow.preview === 'placeholder' && <PlaceholderPreview />}
               </div>
-              <div className="p-3 flex items-center justify-between">
-                <span className="text-body-s font-semibold text-foreground">{flow.title}</span>
-                {flow.ready && <ArrowRight size={14} className="text-foreground-muted" />}
+              <div className="p-3">
+                <span className="text-body-s font-semibold text-foreground block">{flow.title}</span>
+                <span className="text-[11px] text-foreground-muted">{flow.subtitle}</span>
               </div>
             </button>
           ))}
