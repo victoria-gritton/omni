@@ -16,7 +16,7 @@ const flows = [
     subtitle: 'Database failover in us-east-1',
     path: '/devops',
     ready: true,
-    preview: 'placeholder',
+    preview: 'devops-watch',
   },
   {
     id: 'home',
@@ -108,6 +108,35 @@ function CoffeePreview() {
   )
 }
 
+
+function DevOpsWatchPreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[80px] h-[98px] rounded-[20px] border border-border-muted bg-black overflow-hidden flex flex-col p-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[5px] text-white/50">2:07</span>
+          <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse" />
+        </div>
+        <div className="flex flex-col items-center flex-1 justify-center gap-0.5">
+          <div className="w-full rounded-md bg-red-500/10 border border-red-500/20 p-1">
+            <div className="flex items-center gap-0.5 mb-0.5">
+              <div className="w-2 h-2 rounded-sm bg-gradient-to-br from-orange-500 to-orange-600" />
+              <span className="text-[4px] text-orange-400 font-bold">CLOUDWATCH</span>
+            </div>
+            <span className="text-[4.5px] text-white font-bold block">Payments Down</span>
+            <span className="text-[3.5px] text-red-400">12% error rate</span>
+            <div className="mt-0.5 h-[6px] w-full rounded-sm overflow-hidden bg-white/5">
+              <svg viewBox="0 0 60 6" className="w-full h-full">
+                <path d="M0,5 L10,5 L20,5 L25,4 L30,3 L35,1 L40,1.5 L45,1 L50,1.5 L55,1 L60,1.5" fill="none" stroke="#ef4444" strokeWidth="0.8" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PlaceholderPreview() {
   return (
     <div className="flex items-center justify-center h-full">
@@ -175,6 +204,7 @@ export default function LandingPage() {
                 {flow.preview === 'home' && <HomePreview />}
                 {flow.preview === 'day0' && <Day0Preview />}
                 {flow.preview === 'coffee' && <CoffeePreview />}
+                {flow.preview === 'devops-watch' && <DevOpsWatchPreview />}
                 {flow.preview === 'placeholder' && <PlaceholderPreview />}
               </div>
               <div className="p-3">
