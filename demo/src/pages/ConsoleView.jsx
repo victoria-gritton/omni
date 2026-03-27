@@ -308,7 +308,6 @@ export default function ConsoleView() {
             </div>
           </div>
         </main>
-      </div>
     </>
   )
 }
