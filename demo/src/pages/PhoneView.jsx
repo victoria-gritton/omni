@@ -59,13 +59,36 @@ export default function PhoneView() {
             <div className="ai-glass-card p-3 mb-3">
               <p className="text-[13px] leading-[19px] text-white/90">
                 <span className="text-orange-400 text-[12px] font-semibold mr-1">AI</span>
-                ECS tasks on payment-service-east-2 hit memory limits. Tasks are OOM-killed and restarting in a loop. ~2,400 failed checkouts in the last 10 minutes. No deploys in 6h.
+                ECS tasks on payment-service-east-2 hit memory limits. Tasks are being killed and restarting in a loop. ~2,400 failed checkouts in the last 10 minutes. No deploys in 6h.
               </p>
               <div className="flex items-center gap-2 mt-2 mb-3">
                 <span className="text-[10px] text-white/40">Confidence</span>
                 <span className="text-[10px] font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full">High</span>
                 <span className="text-[10px] text-white/40 ml-2">Root cause</span>
                 <span className="text-[10px] font-semibold text-white/70">ECS memory exhaustion</span>
+              </div>
+
+              {/* Sources */}
+              <div className="border-t border-white/10 pt-2 mb-3">
+                <span className="text-[10px] text-white/40 block mb-1.5">Sources</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                    <div className="w-1 h-1 rounded-full bg-red-500" />
+                    <span className="text-[10px] text-white/60">Memory at 98%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                    <div className="w-1 h-1 rounded-full bg-red-500" />
+                    <span className="text-[10px] text-white/60">6 out-of-memory kills</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                    <div className="w-1 h-1 rounded-full bg-amber-500" />
+                    <span className="text-[10px] text-white/60">p99 latency 2,400ms</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
+                    <div className="w-1 h-1 rounded-full bg-amber-500" />
+                    <span className="text-[10px] text-white/60">342 timeout errors</span>
+                  </div>
+                </div>
               </div>
 
               {/* Divider */}
