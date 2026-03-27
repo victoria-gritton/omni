@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { House, TrendUp, Stack, Globe, ChartBar, Triangle, Database, Gear, Bell, User, MagnifyingGlass } from '@phosphor-icons/react'
 
 const navItems = [
@@ -7,13 +7,14 @@ const navItems = [
   { icon: Stack, label: 'Services' },
   { icon: Globe, label: 'Map' },
   { icon: ChartBar, label: 'Metrics' },
-  { icon: Triangle, label: 'Alarms', active: true },
+  { icon: Triangle, label: 'Alarms', path: '/console' },
   { icon: Database, label: 'Logs' },
   { icon: Gear, label: 'Settings' },
 ]
 
 export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
+  const location = useLocation()
   return (
     <div className="h-screen flex overflow-hidden">
       <div className="gradient-bg-dark" />
@@ -30,7 +31,9 @@ export default function ConsoleLayout({ children }) {
               </rect>
             </svg>
           </div>
-          {navItems.map(({ icon: Icon, label, active, path }) => (
+          {navItems.map(({ icon: Icon, label, path }) => {
+            const active = path && location.pathname === path
+            return (
             <button
               key={label}
               onClick={() => path && navigate(path)}
@@ -42,7 +45,8 @@ export default function ConsoleLayout({ children }) {
                 {label}
               </span>
             </button>
-          ))}
+            )
+          })}
         </nav>
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
