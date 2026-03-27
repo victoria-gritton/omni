@@ -4,6 +4,7 @@
 
 body {
   margin: 0;
+  min-width: 1024px;
   background: #0a0e1a;
   color: #f1f5f9;
   font-family: 'DM Sans', system-ui, sans-serif;
