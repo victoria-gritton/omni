@@ -253,8 +253,9 @@ export default function Day0Page() {
               className="flex items-center gap-2 mb-1 w-full text-left"
             >
               <ShieldCheck size={16} className="text-status-degraded" />
-              <h3 className="text-body-s font-semibold text-foreground flex-1">{setup.tier2.label}</h3>
+              <h3 className="text-body-s font-semibold text-foreground">{setup.tier2.label}</h3>
               <BadgeWithTooltip text={setup.tier2.badge} tooltip={setup.tier2.badgeTooltip} colorClass="text-status-degraded" bgClass="bg-status-degraded/10" />
+              <span className="flex-1" />
               <span className="text-[11px] text-foreground-disabled mr-2">{tier2Count} of {setup.tier2.items.length} enabled</span>
               {showTier2 ? <CaretUp size={14} className="text-foreground-muted" /> : <CaretDown size={14} className="text-foreground-muted" />}
             </button>
@@ -282,8 +283,9 @@ export default function Day0Page() {
               className="flex items-center gap-2 mb-1 w-full text-left"
             >
               <Clock size={16} className="text-foreground-muted" />
-              <h3 className="text-body-s font-semibold text-foreground flex-1">{setup.tier3.label}</h3>
+              <h3 className="text-body-s font-semibold text-foreground">{setup.tier3.label}</h3>
               <BadgeWithTooltip text={setup.tier3.badge} tooltip={setup.tier3.badgeTooltip} colorClass="text-foreground-muted" bgClass="bg-foreground-muted/10" />
+              <span className="flex-1" />
               <span className="text-[11px] text-foreground-disabled mr-2">{setup.tier3.items.length} items</span>
               {showTier3 ? <CaretUp size={14} className="text-foreground-muted" /> : <CaretDown size={14} className="text-foreground-muted" />}
             </button>
