@@ -1,48 +1,95 @@
 import { useNavigate } from 'react-router-dom'
-import { Moon, Coffee, House, ArrowRight } from '@phosphor-icons/react'
+import { Warning, Moon, Coffee, House, ArrowRight, CheckCircle } from '@phosphor-icons/react'
 
 const flows = [
   {
     id: '2am-sre',
-    icon: Moon,
     title: '2AM Flow: SRE',
-    description: 'Watch → Phone → Console. Incident response from bed.',
     path: '/watch',
     ready: true,
+    preview: 'watch',
   },
   {
     id: '2am-devops',
-    icon: Moon,
     title: '2AM Flow: DevOps',
-    description: 'Coming soon.',
     path: null,
     ready: false,
+    preview: 'placeholder',
   },
   {
     id: 'coffee',
-    icon: Coffee,
     title: 'Coffee Flow',
-    description: 'Morning proactive review. Coming soon.',
     path: null,
     ready: false,
+    preview: 'placeholder',
   },
   {
     id: 'home',
-    icon: House,
     title: 'Home Dashboard',
-    description: 'Console overview with AI chat.',
     path: '/home',
     ready: true,
+    preview: 'home',
   },
 ]
+
+function WatchPreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[80px] h-[98px] rounded-[20px] border border-border-muted bg-black overflow-hidden flex flex-col p-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[5px] text-white/50">2:03</span>
+          <div className="w-1 h-1 rounded-full bg-red-500" />
+        </div>
+        <div className="flex flex-col items-center flex-1 justify-center">
+          <Warning size={12} weight="fill" className="text-red-500 mb-1" />
+          <span className="text-[5px] text-red-400 font-bold">CRITICAL</span>
+          <span className="text-[5px] text-white mt-0.5 text-center leading-tight">Payment 12× slower</span>
+        </div>
+        <div className="h-3 rounded-full bg-[#0a84ff] flex items-center justify-center">
+          <span className="text-[4px] text-white font-semibold">Acknowledge</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function HomePreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[120px] h-[80px] rounded-lg border border-border-muted bg-background overflow-hidden flex">
+        <div className="w-3 border-r border-border-muted flex flex-col items-center py-1 gap-0.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted" />
+          <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+          <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
+        </div>
+        <div className="flex-1 p-1.5">
+          <div className="h-1.5 w-12 bg-foreground-muted/20 rounded mb-1" />
+          <div className="h-2.5 w-full bg-background-surface-1 rounded border border-border-muted mb-1" />
+          <div className="flex gap-0.5">
+            <div className="h-3 flex-1 bg-background-surface-1 rounded border border-border-muted" />
+            <div className="h-3 flex-1 bg-background-surface-1 rounded border border-border-muted" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PlaceholderPreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <span className="text-body-s text-foreground-disabled">Coming soon</span>
+    </div>
+  )
+}
 
 export default function LandingPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex flex-col items-center justify-center">
       <div className="gradient-bg-dark" />
-      <div className="content-layer flex flex-col items-center gap-8 px-6">
+      <div className="content-layer flex flex-col items-center gap-8 px-6 w-full max-w-6xl">
         <div className="text-center">
           <svg width="48" height="56" viewBox="0 0 28 32" fill="none" className="mx-auto mb-4">
             <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
@@ -54,29 +101,29 @@ export default function LandingPage() {
           <p className="text-body-m text-foreground-muted mt-1">Select a flow to demo</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 max-w-xl w-full">
-          {flows.map((flow) => {
-            const Icon = flow.icon
-            return (
-              <button
-                key={flow.id}
-                onClick={() => flow.path && navigate(flow.path)}
-                disabled={!flow.ready}
-                className={`text-left p-4 rounded-xl border transition-all ${
-                  flow.ready
-                    ? 'border-border-muted hover:border-primary/40 hover:bg-primary/5 cursor-pointer'
-                    : 'border-border-muted/50 opacity-40 cursor-not-allowed'
-                } ${flow.id === '2am-sre' ? 'border-primary/30 bg-primary/5' : ''}`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <Icon size={20} className={flow.id === '2am-sre' ? 'text-primary' : 'text-foreground-muted'} />
-                  {flow.ready && <ArrowRight size={14} className="text-foreground-muted" />}
-                </div>
-                <span className="text-body-s font-semibold text-foreground block">{flow.title}</span>
-                <span className="text-body-s text-foreground-muted">{flow.description}</span>
-              </button>
-            )
-          })}
+        <div className="grid grid-cols-4 gap-3 w-full">
+          {flows.map((flow) => (
+            <button
+              key={flow.id}
+              onClick={() => flow.path && navigate(flow.path)}
+              disabled={!flow.ready}
+              className={`text-left rounded-xl border transition-all overflow-hidden ${
+                flow.ready
+                  ? 'border-border-muted hover:border-primary/40 cursor-pointer'
+                  : 'border-border-muted/50 opacity-40 cursor-not-allowed'
+              } ${flow.id === '2am-sre' ? 'border-primary/30' : ''}`}
+            >
+              <div className="h-40 bg-background-surface-1/30">
+                {flow.preview === 'watch' && <WatchPreview />}
+                {flow.preview === 'home' && <HomePreview />}
+                {flow.preview === 'placeholder' && <PlaceholderPreview />}
+              </div>
+              <div className="p-3 flex items-center justify-between">
+                <span className="text-body-s font-semibold text-foreground">{flow.title}</span>
+                {flow.ready && <ArrowRight size={14} className="text-foreground-muted" />}
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>
