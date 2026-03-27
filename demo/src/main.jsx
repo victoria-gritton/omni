@@ -4,7 +4,6 @@ import { HashRouter, Routes, Route } from 'react-router-dom'
 import WatchView from './pages/WatchView'
 import PhoneView from './pages/PhoneView'
 import ConsoleView from './pages/ConsoleView'
-import HomePage from './pages/HomePage'
 import Day0Page from './pages/Day0Page'
 import LandingPage from './pages/LandingPage'
 import CoffeeView from './pages/CoffeeView'
@@ -25,7 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/" element={<LandingPage />} />
           <Route path="/watch" element={<WatchView />} />
           <Route path="/phone" element={<PhoneView />} />
-          <Route path="/home" element={<ConsoleLayout><HomePage /></ConsoleLayout>} />
+          <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />
           <Route path="/day0" element={<ConsoleLayout><Day0Page /></ConsoleLayout>} />
