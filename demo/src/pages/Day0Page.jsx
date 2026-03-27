@@ -8,7 +8,7 @@ import {
   Archive, CaretDown, CaretUp, CaretRight, Info,
   CircleNotch, PushPin,
 } from '@phosphor-icons/react'
-import { persona } from '../data/persona'
+import { usePersona } from '../data/persona'
 
 const tierIcons = {
   bell: Bell, chart: ChartBar, wave: WaveTriangle, archive: Archive,
@@ -534,6 +534,7 @@ function ActivityItem({ item, isLast }) {
 export default function Day0Page() {
   const [input, setInput] = useState('')
   const navigate = useNavigate()
+  const { persona } = usePersona()
   const { user, application, coverage, setup, agentActivity, services } = persona
   const { states, progress, run } = useSimulation()
 
