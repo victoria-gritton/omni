@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/" element={<LandingPage />} />
         <Route path="/watch" element={<WatchView />} />
         <Route path="/phone" element={<PhoneView />} />
-        <Route path="/home" element={<ConsoleLayout><HomePage /></ConsoleLayout>} />
+        <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
         <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
         <Route path="/coffee" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
         <Route path="/explore" element={<ConsoleLayout><ExplorePage /></ConsoleLayout>} />
