@@ -72,7 +72,7 @@ export default function WatchView() {
                   3 services affected · No deploys
                 </p>
                 <p className="text-[9px] leading-[12px] text-orange-400/70 text-center italic mb-2">
-                  AI: likely connection pool exhaustion
+                  AI: likely ECS memory exhaustion
                 </p>
 
                 {/* Quick glance stats */}
