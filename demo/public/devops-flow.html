@@ -315,7 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
 <nav class="nav">
   <button class="nav-btn active" onclick="go('watch')"><svg><use href="#ic-watch"/></svg>Watch</button>
   <button class="nav-btn" onclick="go('phone')"><svg><use href="#ic-phone"/></svg>Phone</button>
-  <button class="nav-btn" onclick="go('desktop')"><svg><use href="#ic-desktop"/></svg>Desktop</button>
+  <button class="nav-btn" onclick="window.top.location.hash='#/devops-console'"><svg><use href="#ic-desktop"/></svg>Desktop</button>
 </nav>
 
 <!-- WATCH -->
@@ -541,7 +541,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
         <div class="sec">Follow Up</div>
         <div class="pa">
           <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- task created'"><div class="pi pi-t"><svg stroke="#64d2ff"><use href="#ic-task"/></svg></div><div><div class="pt">Create follow-up task</div><div class="pu">Agent drafts: "Coordinate PaymentsTable-v2 migration"</div></div></button>
-          <button class="pb" onclick="go('desktop')"><div class="pi pi-p"><svg stroke="#5e5ce6"><use href="#ic-desktop"/></svg></div><div><div class="pt">Open on desktop</div><div class="pu">Deep investigation -- traces, code, dependencies</div></div></button>
+          <button class="pb" onclick="window.top.location.hash='#/devops-console'"><div class="pi pi-p"><svg stroke="#5e5ce6"><use href="#ic-desktop"/></svg></div><div><div class="pt">Open on desktop</div><div class="pu">Deep investigation -- traces, code, dependencies</div></div></button>
         </div>
 
         <!-- Resolution (hidden until rollback) -->

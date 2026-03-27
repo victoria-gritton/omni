@@ -14,7 +14,7 @@ const flows = [
     id: '2am-devops',
     title: '2AM Flow: DevOps',
     subtitle: 'Database failover in us-east-1',
-    path: '/devops-console',
+    path: '/devops',
     ready: true,
     preview: 'devops-watch',
   },
