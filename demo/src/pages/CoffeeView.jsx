@@ -402,73 +402,71 @@ export default function CoffeeView() {
             </div>
 
             {/* Observability Feed + Right sidebar */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              {/* Observability Feed */}
-              <div className="glass-card p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
-                    <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length} issues</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-status-active animate-pulse" />
-                    <span className="text-[10px] text-foreground-muted">Agent monitoring</span>
-                  </div>
+            {/* Observability Feed — full width */}
+            <div className="glass-card p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
+                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length} issues</span>
                 </div>
-                <div className="space-y-0">
-                  {feedItems.map((item, i) => (
-                    <FeedItem key={i} {...item} expanded={expandedFeed === i} onToggle={() => setExpandedFeed(expandedFeed === i ? null : i)} />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-status-active animate-pulse" />
+                  <span className="text-[10px] text-foreground-muted">Agent monitoring</span>
+                </div>
+              </div>
+              <div className="space-y-0">
+                {feedItems.map((item, i) => (
+                  <FeedItem key={i} {...item} expanded={expandedFeed === i} onToggle={() => setExpandedFeed(expandedFeed === i ? null : i)} />
+                ))}
+              </div>
+            </div>
+
+            {/* Tasks + Investigations — 2 column */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              {/* Pending Tasks */}
+              <div className="glass-card p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <ListChecks size={14} className="text-foreground-muted" />
+                  <h3 className="text-heading-xs font-normal text-foreground">Pending Tasks</h3>
+                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {pendingTasks.map(task => (
+                    <div key={task.id} className="p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-body-s text-foreground font-medium">{task.title}</span>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
+                      </div>
+                      <p className="text-[10px] text-foreground-muted mb-2">{task.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] text-foreground-disabled">{task.source}</span>
+                        <button className="h-5 px-2 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              {/* Right sidebar: Tasks + Investigations */}
-              <div className="space-y-2">
-                {/* Pending Tasks */}
-                <div className="glass-card p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ListChecks size={14} className="text-foreground-muted" />
-                    <h3 className="text-heading-xs font-normal text-foreground">Pending Tasks</h3>
-                    <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
-                  </div>
-                  <div className="space-y-2">
-                    {pendingTasks.map(task => (
-                      <div key={task.id} className="p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-body-s text-foreground font-medium">{task.title}</span>
-                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
-                        </div>
-                        <p className="text-[10px] text-foreground-muted mb-2">{task.description}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-foreground-disabled">{task.source}</span>
-                          <button className="h-5 px-2 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              {/* Investigations */}
+              <div className="glass-card p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <MagnifyingGlassPlus size={14} className="text-foreground-muted" />
+                  <h3 className="text-heading-xs font-normal text-foreground">Investigations</h3>
                 </div>
-
-                {/* Investigations */}
-                <div className="glass-card p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MagnifyingGlassPlus size={14} className="text-foreground-muted" />
-                    <h3 className="text-heading-xs font-normal text-foreground">Investigations</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {investigations.map(inv => (
-                      <div key={inv.id} className="flex items-center gap-3 p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':'bg-foreground-disabled'}`} />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
-                            <span className="text-[10px] text-foreground-disabled">· {inv.started}</span>
-                          </div>
+                <div className="space-y-2">
+                  {investigations.map(inv => (
+                    <div key={inv.id} className="flex items-center gap-3 p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':'bg-foreground-disabled'}`} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
+                          <span className="text-[10px] text-foreground-disabled">· {inv.started}</span>
                         </div>
-                        <CaretRight size={12} className="text-foreground-disabled flex-shrink-0" />
                       </div>
-                    ))}
-                  </div>
+                      <CaretRight size={12} className="text-foreground-disabled flex-shrink-0" />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
