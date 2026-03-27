@@ -59,7 +59,7 @@ export default function PhoneView() {
             <div className="ai-glass-card p-3 mb-3">
               <p className="text-[13px] leading-[19px] text-white/90">
                 <span className="text-orange-400 text-[12px] font-semibold mr-1">AI</span>
-                ECS tasks on payment-service-east-2 hit memory limits. Tasks are OOM-killed and restarting in a loop. No deploys in 6h. Traffic normal.
+                ECS tasks on payment-service-east-2 hit memory limits. Tasks are OOM-killed and restarting in a loop. ~2,400 failed checkouts in the last 10 minutes. No deploys in 6h.
               </p>
               <div className="flex items-center gap-2 mt-2 mb-3">
                 <span className="text-[10px] text-white/40">Confidence</span>

@@ -69,7 +69,7 @@ export default function WatchView() {
                   Payment service 12× slower
                 </p>
                 <p className="text-[10px] leading-[13px] text-white/50 text-center mb-2">
-                  3 services affected · No deploys
+                  3 services affected · ~2.4K failed checkouts
                 </p>
                 <p className="text-[9px] leading-[12px] text-orange-400/70 text-center italic mb-2">
                   AI: likely ECS memory exhaustion
