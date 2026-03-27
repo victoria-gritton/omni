@@ -388,7 +388,6 @@ export default function CoffeeView() {
       <div className="px-6 py-6">
         <h1 className="text-display-l font-normal tracking-tighter text-primary mb-1">CloudWatch Omni</h1>
         <p className="text-body-m text-foreground-muted mb-6">{coffee.greeting}</p>
-        <ActIndicator current={act} total={4} />
 
         {/* ═══════ ACT 1: Homepage ═══════ */}
         {act === 0 && (
@@ -512,14 +511,14 @@ export default function CoffeeView() {
                 </div>
 
                 {/* Compact recommendation */}
-                <div className="mt-3 p-3 rounded-lg bg-background-surface-2/60 border border-primary/15 flex items-start gap-3">
-                  <Sparkle size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                <div className="mt-3 p-3 rounded-lg bg-purple-500/[0.06] border border-purple-400/20 flex items-start gap-3">
+                  <Sparkle size={16} className="text-purple-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <span className="text-body-s text-foreground font-medium block">Set up container memory monitoring</span>
                     <span className="text-[10px] text-foreground-muted">Weekend traffic spike expected — no memory alarms configured</span>
                   </div>
-                  <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-6 px-2.5 rounded-md text-[10px] font-medium bg-primary text-primary-foreground hover:bg-slate-200 transition-colors flex items-center gap-1 flex-shrink-0">
-                    <Lightning size={10} /> Set up
+                  <button onClick={() => setChatQuery('__setup_monitoring__')} className="h-6 px-2.5 rounded-md text-[10px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
+                    <Sparkle size={10} /> Set up
                   </button>
                 </div>
               </div>
