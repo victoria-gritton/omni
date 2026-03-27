@@ -66,7 +66,7 @@ export default function WatchView() {
 
                 {/* AI-generated summary — the AI wrote this, no sparkle needed */}
                 <p className="text-[12px] leading-[16px] text-white font-medium text-center mb-1">
-                  Payments-service is timing out
+                  payment-service is timing out
                 </p>
                 <p className="text-[10px] leading-[13px] text-white/50 text-center mb-2">
                   3 services affected · ~2.4K failed checkouts

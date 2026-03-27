@@ -50,7 +50,7 @@ export default function PhoneView() {
                   Critical · {incident.id}
                 </span>
                 <h1 className="text-[17px] leading-[22px] font-semibold text-white">
-                  Payments-service is timing out
+                  payment-service is timing out
                 </h1>
               </div>
             </div>
