@@ -83,7 +83,7 @@ function Toggle({ on, onChange }) {
   )
 }
 
-function DetailTable({ details }) {
+function DetailTable({ details, done }) {
   if (!details || details.length === 0) return null
   const keys = Object.keys(details[0])
   return (
@@ -94,6 +94,7 @@ function DetailTable({ details }) {
             {keys.map(k => (
               <th key={k} className="text-left px-2.5 py-1.5 text-foreground-disabled font-medium uppercase tracking-wider">{k}</th>
             ))}
+            {done && <th className="text-left px-2.5 py-1.5 text-foreground-disabled font-medium uppercase tracking-wider">Status</th>}
           </tr>
         </thead>
         <tbody>
@@ -102,6 +103,17 @@ function DetailTable({ details }) {
               {keys.map(k => (
                 <td key={k} className="px-2.5 py-1.5 text-foreground-muted">{row[k]}</td>
               ))}
+              {done && (
+                <td className="px-2.5 py-1.5">
+                  <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 text-status-active">
+                      <CheckCircle size={10} weight="fill" />
+                      Created
+                    </span>
+                    <button className="text-primary hover:text-primary-hover">View →</button>
+                  </span>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -196,7 +208,7 @@ function Tier1Item({ item, states, progress, onRun }) {
         </div>
         <ItemStatus id={item.id} item={item} states={states} progress={progress} onRun={onRun} />
       </div>
-      {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} /></div>}
+      {expanded && state !== 'running' && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} /></div>}
     </div>
   )
 }
@@ -256,7 +268,7 @@ function Tier2Item({ item, enabled, onToggle, states, progress, onRun }) {
           )}
         </div>
       </div>
-      {expanded && state !== 'running' && enabled && <div className="ml-10"><DetailTable details={item.details} /></div>}
+      {expanded && state !== 'running' && enabled && <div className="ml-10"><DetailTable details={item.details} done={state === 'done'} /></div>}
     </div>
   )
 }
