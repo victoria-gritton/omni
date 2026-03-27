@@ -404,7 +404,7 @@ export default function Day0Page() {
       </h1>
       <div className="mb-6" />
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         {/* Agent chat input */}
         <div className="relative mb-6">
@@ -444,7 +444,7 @@ export default function Day0Page() {
         </div>
 
         {/* Widget grid — empty states that fill in as user configures */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           {widgetConfig.map(w => {
             const isDone = states[w.id] === 'done'
             const FilledWidget = filledWidgets[w.id]
