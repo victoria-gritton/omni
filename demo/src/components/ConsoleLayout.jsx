@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, TrendUp, Stack, Globe, ChartBar, Triangle, Database, Gear, Bell, User, MagnifyingGlass } from '@phosphor-icons/react'
+import { House, Robot, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, MagnifyingGlass, User } from '@phosphor-icons/react'
 
 const navItems = [
   { icon: House, label: 'Home', path: '/home' },
-  { icon: TrendUp, label: 'Signals' },
-  { icon: Stack, label: 'Services' },
-  { icon: Globe, label: 'Map' },
-  { icon: ChartBar, label: 'Metrics' },
-  { icon: Triangle, label: 'Alarms', path: '/console' },
+  { icon: Robot, label: 'Agents' },
+  { icon: Bell, label: 'Alarms', path: '/console' },
+  { icon: ChartBar, label: 'Dashboards' },
+  { icon: Globe, label: 'Application Map' },
+  { icon: TrendUp, label: 'Metrics' },
   { icon: Database, label: 'Logs' },
   { icon: Gear, label: 'Settings' },
+  { icon: Lifebuoy, label: 'Getting Started' },
 ]
 
 export default function ConsoleLayout({ children }) {
