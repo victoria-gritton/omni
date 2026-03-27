@@ -15,6 +15,29 @@ export const persona = {
     lastLogin: null,
   },
 
+  // Demo-only metadata — shown in the persona card overlay
+  demo: {
+    observabilityMaturity: 'Beginner',
+    observabilityDetail: 'First time using CloudWatch beyond basic console checks. No prior alarm, dashboard, or tracing setup.',
+    spendingCohort: 'Mid-tier',
+    monthlyAWSSpend: '~$18,000/mo',
+    cloudWatchSpend: '$0 (default free tier only)',
+    teamSize: 5,
+    oncallRotation: true,
+    incidentTooling: 'PagerDuty (not yet integrated with CloudWatch)',
+    goals: [
+      'Get visibility into production health without manual log diving',
+      'Reduce MTTR — currently ~45 min to diagnose issues',
+      'Set up proactive alerting before customers notice problems',
+    ],
+    awsServiceBreakdown: {
+      compute: '6 ECS Fargate services (22 tasks), 2 Lambda functions',
+      data: '2 RDS PostgreSQL (Multi-AZ), 1 DynamoDB, 1 ElastiCache Redis',
+      networking: '1 API Gateway, 1 CloudFront, 1 S3',
+      messaging: '1 SNS/SQS event bus',
+    },
+  },
+
   application: {
     name: 'NovaMart Platform',
     description: 'E-commerce platform serving ~2M monthly active users across NA and EU',
