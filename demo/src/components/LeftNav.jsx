@@ -16,8 +16,8 @@ export default function LeftNav() {
     <nav className="w-14 border-r border-border-muted flex flex-col items-center py-3 gap-1 flex-shrink-0 bg-background">
       <div className="mb-4">
         <svg width="28" height="32" viewBox="0 0 28 32" fill="none">
-          <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
-          <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
+          <path d="M8 18C4 18 2 15 2 12.5C2 10 4 8 6.5 8C7 5 9.5 2 14 2C18.5 2 21 5 21.5 8C24 8.5 26 10.5 26 13C26 15.5 24 18 21 18" stroke="#475569" strokeWidth="2" strokeLinecap="round" fill="none" /><line x1="14" y1="10.5" x2="14" y2="15.5" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" /><line x1="11.5" y1="13" x2="16.5" y2="13" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
+          
         </svg>
       </div>
       {items.map(({ icon: Icon, label, active }) => (

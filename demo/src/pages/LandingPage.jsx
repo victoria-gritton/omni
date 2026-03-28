@@ -177,12 +177,8 @@ export default function LandingPage() {
       <div className="gradient-bg-dark" />
       <div className="content-layer flex flex-col items-center gap-8 px-6 w-full max-w-6xl">
         <div className="text-center">
-          <svg width="48" height="56" viewBox="0 0 28 32" fill="none" className="mx-auto mb-4">
-            <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
-            <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
-          </svg>
           <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-            CloudWatch Omni
+            CloudWatch<sup className="text-primary text-[18px]">+</sup>
           </h1>
           <p className="text-body-m text-foreground-muted mt-1">Select a flow to demo</p>
         </div>

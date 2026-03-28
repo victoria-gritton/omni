@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   House, MagnifyingGlass, Pulse, MagnifyingGlassPlus,
   CodeBlock, GearSix, Star, Clock, Sparkle, Bell, User,
-  ChatTeardropDots, X, PaperPlaneRight
+  ChatTeardropDots, X, PaperPlaneRight, List
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import AlarmRecommendations from './AlarmRecommendations'
@@ -310,7 +310,7 @@ function PersonaCard({ onClose }) {
         <Row label="On-call" value={demo.oncallRotation ? 'Yes — rotation active' : 'No'} />
         <Row label="Incident tooling" value={demo.incidentTooling} />
       </Section>
-      <Section title="Goals for CloudWatch Omni">
+      <Section title="Goals for CloudWatch+">
         <ul className="flex flex-col gap-1 mt-1">
           {demo.goals.map((g, i) => (<li key={i} className="text-[11px] text-foreground-muted flex gap-2"><span className="text-primary">•</span> {g}</li>))}
         </ul>
@@ -347,11 +347,10 @@ export default function ConsoleLayout({ children }) {
         {/* Sidebar */}
         <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
           <div className="px-3 pt-4 pb-3 flex items-center gap-2 cursor-pointer" onClick={() => setNavOpen(!navOpen)}>
-            <svg width="24" height="28" viewBox="0 0 28 32" fill="none" className="flex-shrink-0">
-              <circle cx="14" cy="12" r="9.5" stroke="#475569" strokeWidth="3.5" />
-              <rect x="3" y="25" width="22" height="4" rx="2" fill="#0ea5e9" />
-            </svg>
-            {navOpen && <span className="text-body-s font-semibold text-foreground">CloudWatch Omni</span>}
+            {navOpen
+              ? <span className="text-body-s font-semibold text-foreground">CloudWatch<sup className="text-primary text-[14px]">+</sup></span>
+              : <List size={20} className="text-foreground-muted mx-auto" />
+            }
           </div>
 
           <div className="px-3 pt-2">
@@ -424,7 +423,7 @@ export default function ConsoleLayout({ children }) {
             <ChatContext.Provider value={{ openChat, chatOpen }}>
               <div className="px-4 pt-2">
                 <nav className="flex items-center gap-1 text-[11px]">
-                  <span className="text-foreground-muted">Omni</span>
+                  <span className="text-foreground-muted">CW<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
                     {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
