@@ -8,7 +8,7 @@ export default function DevOpsFlowPage() {
           <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
         <iframe
-          src="/devops-flow.html"
+          src="devops-flow.html"
           className="flex-1 w-full border-0"
           style={{ minHeight: 'calc(100vh - 40px)' }}
           title="2AM DevOps Flow"
