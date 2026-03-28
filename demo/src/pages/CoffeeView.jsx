@@ -347,6 +347,7 @@ const pendingTasks = [
 
 const investigations = [
   { id: 'INC-2847', title: 'payment-service is timing out', status: 'active', progress: '3 findings', started: '35m ago', path: '/console' },
+  { id: 'INC-3102', title: 'Database failover in us-east-1', status: 'active', progress: '2 findings', started: '20m ago', path: '/devops-console' },
   { id: 'INV-1023', title: 'Lambda cold start increase after deploy', status: 'paused', progress: '5 findings', started: '2h ago' },
   { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', progress: '7 findings', started: 'Yesterday' },
 ]

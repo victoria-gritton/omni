@@ -15,7 +15,7 @@ const navItems = [
   { icon: House, label: 'Home', subtitle: 'Overview', path: '/home' },
   { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search', path: '/explore' },
   { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/monitor' },
-  { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate' },
+  { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate', also: ['/console', '/devops-console'] },
   { icon: CodeBlock, label: 'Query Studio', subtitle: 'SQL & PromQL queries', path: '/query' },
   { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources', path: '/configure' },
 ]
@@ -427,7 +427,7 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">Omni</span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>

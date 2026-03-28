@@ -6,6 +6,7 @@ import {
 
 const activeInvestigations = [
   { id: 'INC-2847', title: 'payment-service is timing out', status: 'in-progress', started: '35 min ago', findings: 3, severity: 'high', path: '/console' },
+  { id: 'INC-3102', title: 'Database failover in us-east-1', status: 'in-progress', started: '20 min ago', findings: 2, severity: 'high', path: '/devops-console' },
   { id: 'INV-1023', title: 'Lambda cold start increase after deploy', status: 'in-progress', started: '2h ago', findings: 5, severity: 'medium' },
   { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', started: 'Yesterday', findings: 7, severity: 'high' },
 ]
