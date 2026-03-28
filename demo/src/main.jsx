@@ -6,6 +6,8 @@ import PhoneView from './pages/PhoneView'
 import ConsoleView from './pages/ConsoleView'
 import Day0Page from './pages/Day0Page'
 import LandingPage from './pages/LandingPage'
+import DevOpsFlowPage from './pages/DevOpsFlowPage'
+import DevOpsConsoleView from './pages/DevOpsConsoleView'
 import CoffeeView from './pages/CoffeeView'
 import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
@@ -22,6 +24,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <HashRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/devops" element={<DevOpsFlowPage />} />
+          <Route path="/devops-console" element={<ConsoleLayout><DevOpsConsoleView /></ConsoleLayout>} />
           <Route path="/watch" element={<WatchView />} />
           <Route path="/phone" element={<PhoneView />} />
           <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
