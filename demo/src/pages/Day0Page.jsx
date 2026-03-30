@@ -383,23 +383,6 @@ export default function Day0Page() {
         {/* Left column */}
         <div className="flex flex-col gap-5">
 
-          {/* Agent-suggested use cases */}
-          <div>
-            <h2 className="text-body-s font-semibold text-foreground mb-3">Suggested by the agent</h2>
-            <div className="grid grid-cols-3 gap-3">
-              {useCases.slice(0, 3).map(uc => (
-                <UseCaseCard key={uc.id} useCase={uc} onSelect={selectUseCase} />
-              ))}
-            </div>
-            {useCases.length > 3 && (
-              <div className="grid grid-cols-3 gap-3 mt-3">
-                {useCases.slice(3).map(uc => (
-                  <UseCaseCard key={uc.id} useCase={uc} onSelect={selectUseCase} />
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Observability gaps */}
           <div>
             <div className="flex items-center justify-between mb-3">
