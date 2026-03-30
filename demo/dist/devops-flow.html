@@ -380,25 +380,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
           </div>
         </div>
 
-        <!-- W1: Full alert with gauges -->
+        <!-- W1: Full investigation -->
         <div class="ws" id="w1" style="display:none">
           <div class="wa-pad">
             <div class="wa-top"><div class="dot"></div><span>HIGH SEVERITY</span></div>
             <div class="wt">Payments Service</div>
-            <div class="w-gauge">
-              <div class="w-gr">
-                <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff3b30" stroke-dasharray="100.5" stroke-dashoffset="88.4"/></svg>
-                <div class="w-gv"><span class="n red">12%</span><span class="l">errors</span></div>
-              </div>
-              <div class="w-gr">
-                <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff9500" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg>
-                <div class="w-gv"><span class="n ylw" style="font-size:9px">800</span><span class="l">failed</span></div>
-              </div>
-              <div class="w-gr">
-                <svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#30d158" stroke-dasharray="100.5" stroke-dashoffset="100.5"/></svg>
-                <div class="w-gv"><span class="n grn">0</span><span class="l">loss</span></div>
-              </div>
-            </div>
+
+            <div class="lbl" style="color:#0a84ff;margin-top:4px">What happened</div>
+            <div class="wm">Deploy #847 landed at 01:45 AM. Code references <strong>PaymentsTable-v2</strong> which does not exist yet.</div>
             <div class="w-mc">
               <svg width="100%" height="100%" viewBox="0 0 160 24" preserveAspectRatio="none">
                 <defs><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
@@ -408,52 +397,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
                 <text x="62" y="6" fill="#ff9500" font-size="4" font-family="sans-serif">deploy</text>
               </svg>
             </div>
-            <div class="wc">
-              <div class="cl"><svg><use href="#ic-agent"/></svg> Agent Assessment</div>
-              <div class="ct">Deploy #847 landed 22 min ago. New code references a table that doesn't exist.</div>
-            </div>
-            <div class="wa-btns"><button class="btn btn-p" onclick="go('phone')">Continue on phone</button></div>
-          </div>
-        </div>
 
-        <!-- W2: Root cause details -->
-        <div class="ws" id="w2" style="display:none">
-          <div class="wa-pad">
-            <div class="wa-top"><div class="dot"></div><span>INVESTIGATING</span></div>
-            <div class="wt" style="font-size:9.5px">Root Cause</div>
-            <div class="wm">Deploy <strong>#847</strong> calls <strong>PaymentsTable-v2</strong> -- that table hasn't been created yet.</div>
-            <div class="lbl">Service health</div>
+            <div class="lbl" style="color:#ff9500">Impact</div>
+            <div class="w-gauge">
+              <div class="w-gr"><svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff3b30" stroke-dasharray="100.5" stroke-dashoffset="88.4"/></svg><div class="w-gv"><span class="n red">12%</span><span class="l">errors</span></div></div>
+              <div class="w-gr"><svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff9500" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg><div class="w-gv"><span class="n ylw" style="font-size:9px">800</span><span class="l">failed</span></div></div>
+              <div class="w-gr"><svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#30d158" stroke-dasharray="100.5" stroke-dashoffset="100.5"/></svg><div class="w-gv"><span class="n grn">0</span><span class="l">loss</span></div></div>
+            </div>
             <div class="w-svc"><div class="d" style="background:#ff3b30"></div>Payments<span class="s red">failing</span></div>
             <div class="w-svc"><div class="d" style="background:#ff9500"></div>DynamoDB<span class="s ylw">slow</span></div>
             <div class="w-svc"><div class="d" style="background:#30d158"></div>Gateway<span class="s grn">ok</span></div>
-            <div class="lbl" style="margin-top:4px">What's not broken</div>
-            <div class="ok">
-              <svg><use href="#ic-check"/></svg> No duplicate charges<br>
-              <svg><use href="#ic-check"/></svg> No data corruption<br>
-              <svg><use href="#ic-check"/></svg> Old table is fine
-            </div>
-            <div class="lbl" style="margin-top:4px">Who deployed</div>
-            <div class="wm">Raj Patel, 5:47 PM. Terraform not applied yet.</div>
-            <div class="wa-btns">
-              <button class="btn btn-p" onclick="ws(3)">What can I do?</button>
-              <button class="btn btn-s" onclick="ws(1)">Back</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- W3: Actions -->
-        <div class="ws" id="w3" style="display:none">
-          <div class="wa-pad">
-            <div class="wa-top"><div class="dot"></div><span>ACTION NEEDED</span></div>
-            <div class="wt" style="font-size:9.5px">Recommended</div>
-            <div class="wm" style="margin-bottom:6px">Agent suggests rolling back deploy #847.</div>
-            <div class="wa-btns" style="gap:3px">
-              <button class="btn btn-p" onclick="go('phone')">Continue on phone</button>
-              <button class="btn btn-s" onclick="alert('Paging Raj Patel...')">Page deploy author</button>
-              <button class="btn btn-s" onclick="alert('Escalating...')">Escalate to lead</button>
-              <button class="btn btn-s" onclick="ws(2)">Back</button>
-            </div>
-            <div style="font-size:6.5px;color:#555;text-align:center;margin-top:4px">Tap "Continue on phone" to roll back or notify team</div>
+            <div class="lbl" style="color:#ff3b30;margin-top:5px">Root cause</div>
+            <div class="wm">Raj Patel merged at 5:47 PM. Table ref changed to <strong>PaymentsTable-v2</strong> but Terraform not applied yet.</div>
+            <div class="ok" style="margin-bottom:4px"><svg><use href="#ic-check"/></svg> No duplicate charges<br><svg><use href="#ic-check"/></svg> No data corruption</div>
+
+            <div class="lbl" style="color:#30d158;margin-top:3px">Next steps</div>
+            <div class="wm" style="margin-bottom:0">Roll back deploy #847 to restore working table reference. Apply Terraform before redeploying.</div>
           </div>
         </div>
 
