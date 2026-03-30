@@ -149,35 +149,61 @@ function UseCaseCard({ useCase, onSelect }) {
 }
 
 // ─── Cost Breakdown ───────────────────────────────────────────────
-function CostBreakdown({ cost }) {
-  const [showProjected, setShowProjected] = useState(false)
-  const data = showProjected ? cost.projected : cost.current
+function CostBreakdown({ cost, selectedGapIds }) {
+  const selectedProjected = cost.projected.filter(p => selectedGapIds.has(p.gapId))
+  const projectedDelta = selectedProjected.reduce((sum, p) => sum + p.amount, 0)
+  const projectedTotal = cost.current.total + projectedDelta
+
   return (
     <div className="glass-card p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-body-s font-semibold text-foreground">CloudWatch Cost</h3>
-        <div className="flex gap-1 text-[10px]">
-          <button onClick={() => setShowProjected(false)} className={`px-2 py-0.5 rounded ${!showProjected ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>Current</button>
-          <button onClick={() => setShowProjected(true)} className={`px-2 py-0.5 rounded ${showProjected ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>Projected</button>
-        </div>
+      <h3 className="text-body-s font-semibold text-foreground mb-3">CloudWatch Cost</h3>
+
+      {/* Current */}
+      <div className="flex items-baseline justify-between mb-1">
+        <span className="text-[10px] text-foreground-disabled uppercase tracking-wider">Current</span>
+        <span className="text-body-m font-semibold text-foreground">${cost.current.total.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span></span>
       </div>
-      <p className="text-heading-m font-semibold text-foreground mb-3">${data.total.toLocaleString()}<span className="text-body-s text-foreground-muted font-normal">/mo</span></p>
-      {data.breakdown.map((item, i) => (
-        <div key={i} className="flex items-center justify-between py-1">
-          <span className="text-[11px] text-foreground-muted">{item.category}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-foreground">${item.amount.toLocaleString()}</span>
-            {item.note && <span className="text-[9px] text-foreground-disabled">{item.note}</span>}
-          </div>
+      {cost.current.breakdown.map((item, i) => (
+        <div key={i} className="flex items-center justify-between py-0.5">
+          <span className="text-[10px] text-foreground-muted">{item.category}</span>
+          <span className="text-[10px] text-foreground">${item.amount.toLocaleString()}</span>
         </div>
       ))}
-      {showProjected && cost.savings && cost.savings.length > 0 && (
+
+      {/* Projected — only if gaps selected */}
+      {selectedGapIds.size > 0 && (
+        <div className="mt-3 pt-3 border-t border-border-muted/30">
+          <div className="flex items-baseline justify-between mb-1">
+            <span className="text-[10px] text-foreground-disabled uppercase tracking-wider">With selected fixes</span>
+            <span className="text-body-m font-semibold text-foreground">
+              ${projectedTotal.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span>
+              <span className={`text-[10px] ml-1 ${projectedDelta >= 0 ? 'text-status-degraded' : 'text-status-active'}`}>
+                {projectedDelta >= 0 ? '+' : ''}${projectedDelta.toLocaleString()}
+              </span>
+            </span>
+          </div>
+          {selectedProjected.map((item, i) => (
+            <div key={i} className="flex items-center justify-between py-0.5">
+              <span className="text-[10px] text-foreground-muted">{item.category}</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] ${item.amount >= 0 ? 'text-foreground' : 'text-status-active'}`}>
+                  {item.amount >= 0 ? '+' : ''}${item.amount.toLocaleString()}
+                </span>
+                <span className="text-[9px] text-foreground-disabled">{item.note}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Savings */}
+      {cost.savings && cost.savings.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border-muted/30">
           <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Potential savings</p>
           {cost.savings.map((s, i) => (
             <div key={i} className="flex items-center justify-between py-0.5">
-              <span className="text-[11px] text-foreground-muted">{s.description}</span>
-              <span className="text-[11px] text-status-active">-${s.amount.toLocaleString()}/mo</span>
+              <span className="text-[10px] text-foreground-muted">{s.description}</span>
+              <span className="text-[10px] text-status-active">-${s.amount.toLocaleString()}/mo</span>
             </div>
           ))}
         </div>
@@ -397,7 +423,7 @@ export default function Day0Page() {
           <PostureSummary applications={applications} activeApp={activeApp} />
 
           {/* Cost breakdown */}
-          <CostBreakdown cost={cost} />
+          <CostBreakdown cost={cost} selectedGapIds={selectedGaps} />
 
           {/* Agent chat */}
           <div className="glass-card p-4">

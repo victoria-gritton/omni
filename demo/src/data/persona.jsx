@@ -84,13 +84,13 @@ const maria = {
   // Cost data
   cost: {
     current: { total: 0, breakdown: [{ category: 'Metrics (auto-collected)', amount: 0, note: 'Free tier' }] },
-    projected: { total: 48, breakdown: [
-      { category: 'Alarms', amount: 4.20, note: '42 alarms × $0.10/alarm' },
-      { category: 'Dashboards', amount: 3, note: '1 dashboard × $3/mo' },
-      { category: 'Logs ingestion', amount: 28, note: '~56 GB/mo estimated' },
-      { category: 'X-Ray traces', amount: 8, note: '~1.6M traces/mo' },
-      { category: 'Anomaly detection', amount: 5, note: '5 detectors' },
-    ]},
+    projected: [
+      { gapId: 'g-alarms', category: 'Alarms', amount: 4.20, note: '$0.10/alarm' },
+      { gapId: 'g-dashboards', category: 'Dashboards', amount: 3, note: '$3/dashboard' },
+      { gapId: 'g-logs', category: 'Logs ingestion', amount: 28, note: '~56 GB/mo' },
+      { gapId: 'g-traces', category: 'X-Ray traces', amount: 8, note: '~1.6M traces/mo' },
+      { gapId: 'g-anomaly', category: 'Anomaly detection', amount: 5, note: '5 detectors' },
+    ],
   },
 
   // Agent-suggested use cases based on discovered infrastructure
@@ -211,18 +211,18 @@ const james = {
       { category: 'Logs storage', amount: 520, note: '~17 TB retained' },
       { category: 'Other', amount: 36, note: 'API calls, contributor insights' },
     ]},
-    projected: { total: 3400, breakdown: [
-      { category: 'Metrics', amount: 1100, note: '+Container Insights, CW Agent metrics' },
-      { category: 'Alarms', amount: 23.80, note: '238 alarms × $0.10' },
-      { category: 'Dashboards', amount: 21, note: '7 dashboards × $3' },
-      { category: 'Logs ingestion', amount: 1500, note: '+EKS pod logs, Aurora audit logs' },
-      { category: 'Logs storage', amount: 480, note: 'Optimized with IA class' },
-      { category: 'X-Ray traces', amount: 180, note: '~36M traces/mo' },
-      { category: 'Anomaly detection', amount: 84, note: '28 detectors' },
-    ]},
+    projected: [
+      { gapId: 'g-stale', category: 'Fix stale alarms', amount: -5.20, note: 'Remove 52 orphaned alarms' },
+      { gapId: 'g-alarms', category: 'New alarms', amount: 9.10, note: '91 alarms × $0.10' },
+      { gapId: 'g-logs', category: 'Log ingestion', amount: 100, note: '+EKS pod logs, Aurora audit logs' },
+      { gapId: 'g-traces', category: 'X-Ray traces', amount: 180, note: '~36M traces/mo' },
+      { gapId: 'g-dashboards', category: 'Dashboards', amount: 12, note: '4 new × $3' },
+      { gapId: 'g-anomaly', category: 'Anomaly detection', amount: 84, note: '28 detectors' },
+      { gapId: 'g-slos', category: 'SLOs', amount: 0, note: 'Included with Application Signals' },
+      { gapId: 'g-cross-account', category: 'Cross-account', amount: 0, note: 'No additional cost' },
+    ],
     savings: [
       { description: 'Move low-query logs to Infrequent Access', amount: 340 },
-      { description: 'Remove 52 stale alarms', amount: 5.20 },
       { description: 'Consolidate Datadog (estimated)', amount: 8000 },
     ],
   },
