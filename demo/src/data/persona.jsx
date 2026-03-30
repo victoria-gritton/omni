@@ -73,12 +73,12 @@ const maria = {
 
   // Observability gaps — selectable items for batch IaC generation
   gaps: [
-    { id: 'g-alarms', category: 'alarms', title: 'No alarms configured', description: '0 of 16 services have alarms. Recommended: 42 alarms across all services.', severity: 'critical', services: 16, fixCount: 42, fixLabel: '42 alarms' },
-    { id: 'g-logs', category: 'logs', title: 'Logging missing on 14 services', description: 'Only Lambda functions have auto-created log groups. ECS, RDS, API Gateway, and others need log delivery enabled.', severity: 'high', services: 14, fixCount: 14, fixLabel: '14 log configurations' },
-    { id: 'g-traces', category: 'traces', title: 'No distributed tracing', description: 'X-Ray is not enabled on any service. You have no visibility into request flows across services.', severity: 'high', services: 16, fixCount: 16, fixLabel: '16 trace configurations' },
-    { id: 'g-dashboards', category: 'dashboards', title: 'No dashboards', description: 'No custom dashboards exist. Recommended: 1 production overview dashboard.', severity: 'medium', services: 16, fixCount: 1, fixLabel: '1 dashboard' },
-    { id: 'g-anomaly', category: 'anomaly', title: 'No anomaly detection', description: 'Baselines exist from 14 days of auto-collected metrics but no anomaly detectors are configured.', severity: 'medium', services: 0, fixCount: 5, fixLabel: '5 anomaly detectors' },
-    { id: 'g-slos', category: 'slos', title: 'No SLOs defined', description: 'No Service Level Objectives configured. Recommended for the checkout critical path.', severity: 'low', services: 0, fixCount: 3, fixLabel: '3 SLOs' },
+    { id: 'g-alarms', category: 'alarms', appIds: ['all'], title: 'No alarms configured', description: '0 of 16 services have alarms. Recommended: 42 alarms across all services.', severity: 'critical', services: 16, fixCount: 42, fixLabel: '42 alarms' },
+    { id: 'g-logs', category: 'logs', appIds: ['all'], title: 'Logging missing on 14 services', description: 'Only Lambda functions have auto-created log groups. ECS, RDS, API Gateway, and others need log delivery enabled.', severity: 'high', services: 14, fixCount: 14, fixLabel: '14 log configurations' },
+    { id: 'g-traces', category: 'traces', appIds: ['all'], title: 'No distributed tracing', description: 'X-Ray is not enabled on any service. You have no visibility into request flows across services.', severity: 'high', services: 16, fixCount: 16, fixLabel: '16 trace configurations' },
+    { id: 'g-dashboards', category: 'dashboards', appIds: ['all'], title: 'No dashboards', description: 'No custom dashboards exist. Recommended: 1 production overview dashboard.', severity: 'medium', services: 16, fixCount: 1, fixLabel: '1 dashboard' },
+    { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Baselines exist from 14 days of auto-collected metrics but no anomaly detectors are configured.', severity: 'medium', services: 0, fixCount: 5, fixLabel: '5 anomaly detectors' },
+    { id: 'g-slos', category: 'slos', appIds: ['novamart-checkout'], title: 'No SLOs defined', description: 'No Service Level Objectives configured. Recommended for the checkout critical path.', severity: 'low', services: 0, fixCount: 3, fixLabel: '3 SLOs' },
   ],
 
   // Cost data
@@ -192,14 +192,14 @@ const james = {
   ],
 
   gaps: [
-    { id: 'g-stale', category: 'alarms', title: '52 stale/misconfigured alarms', description: 'Orphaned alarms for deleted resources, outdated thresholds, and duplicate alarms across accounts.', severity: 'critical', services: 8, fixCount: 52, fixLabel: '52 alarms to fix' },
-    { id: 'g-alarms', category: 'alarms', title: '14 services have no alarms', description: 'EKS clusters, Lambda functions, Kinesis, MSK, and SageMaker endpoints have no alarm coverage.', severity: 'critical', services: 14, fixCount: 91, fixLabel: '91 new alarms' },
-    { id: 'g-logs', category: 'logs', title: '13 services missing logs', description: 'EKS pod logs, remaining ECS services, Aurora audit logs, and API Gateway access logs not configured.', severity: 'high', services: 13, fixCount: 13, fixLabel: '13 log configurations' },
-    { id: 'g-traces', category: 'traces', title: 'No distributed tracing', description: 'X-Ray/ADOT not enabled. No visibility into request flows across 22 services and 12 accounts.', severity: 'high', services: 22, fixCount: 22, fixLabel: '22 trace configurations' },
-    { id: 'g-dashboards', category: 'dashboards', title: '3 stale dashboards + 4 missing', description: 'Existing dashboards last updated 4 months ago. Missing: EKS Ops, Data Pipeline, ML Models, Cross-Region.', severity: 'medium', services: 22, fixCount: 7, fixLabel: '3 rebuilt + 4 new dashboards' },
-    { id: 'g-anomaly', category: 'anomaly', title: 'No anomaly detection', description: 'Historical data available but no anomaly detectors configured across any service.', severity: 'medium', services: 0, fixCount: 28, fixLabel: '28 anomaly detectors' },
-    { id: 'g-slos', category: 'slos', title: 'No SLOs (PCI-DSS gap)', description: 'PCI-DSS compliance requires documented SLOs on payment processing. None configured.', severity: 'critical', services: 0, fixCount: 5, fixLabel: '5 SLOs' },
-    { id: 'g-cross-account', category: 'cross-account', title: 'No cross-account observability', description: '12 accounts operate in silos. No unified view of metrics, logs, or traces across accounts.', severity: 'high', services: 22, fixCount: 1, fixLabel: '1 observability access manager config' },
+    { id: 'g-stale', category: 'alarms', appIds: ['all'], title: '52 stale/misconfigured alarms', description: 'Orphaned alarms for deleted resources, outdated thresholds, and duplicate alarms across accounts.', severity: 'critical', services: 8, fixCount: 52, fixLabel: '52 alarms to fix' },
+    { id: 'g-alarms', category: 'alarms', appIds: ['meridian-trading', 'meridian-compliance'], title: '14 services have no alarms', description: 'EKS clusters, Lambda functions, Kinesis, MSK, and SageMaker endpoints have no alarm coverage.', severity: 'critical', services: 14, fixCount: 91, fixLabel: '91 new alarms' },
+    { id: 'g-logs', category: 'logs', appIds: ['all'], title: '13 services missing logs', description: 'EKS pod logs, remaining ECS services, Aurora audit logs, and API Gateway access logs not configured.', severity: 'high', services: 13, fixCount: 13, fixLabel: '13 log configurations' },
+    { id: 'g-traces', category: 'traces', appIds: ['all'], title: 'No distributed tracing', description: 'X-Ray/ADOT not enabled. No visibility into request flows across 22 services and 12 accounts.', severity: 'high', services: 22, fixCount: 22, fixLabel: '22 trace configurations' },
+    { id: 'g-dashboards', category: 'dashboards', appIds: ['all'], title: '3 stale dashboards + 4 missing', description: 'Existing dashboards last updated 4 months ago. Missing: EKS Ops, Data Pipeline, ML Models, Cross-Region.', severity: 'medium', services: 22, fixCount: 7, fixLabel: '3 rebuilt + 4 new dashboards' },
+    { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Historical data available but no anomaly detectors configured across any service.', severity: 'medium', services: 0, fixCount: 28, fixLabel: '28 anomaly detectors' },
+    { id: 'g-slos', category: 'slos', appIds: ['meridian-payments'], title: 'No SLOs (PCI-DSS gap)', description: 'PCI-DSS compliance requires documented SLOs on payment processing. None configured.', severity: 'critical', services: 0, fixCount: 5, fixLabel: '5 SLOs' },
+    { id: 'g-cross-account', category: 'cross-account', appIds: ['all'], title: 'No cross-account observability', description: '12 accounts operate in silos. No unified view of metrics, logs, or traces across accounts.', severity: 'high', services: 22, fixCount: 1, fixLabel: '1 observability access manager config' },
   ],
 
   cost: {

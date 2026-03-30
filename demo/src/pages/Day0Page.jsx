@@ -262,15 +262,20 @@ export default function Day0Page() {
   }
 
   const selectAll = () => {
-    if (selectedGaps.size === gaps.length) {
+    if (selectedGaps.size === filteredGaps.length) {
       setSelectedGaps(new Set())
     } else {
-      setSelectedGaps(new Set(gaps.map(g => g.id)))
+      setSelectedGaps(new Set(filteredGaps.map(g => g.id)))
     }
   }
 
   const selectedGapObjects = gaps.filter(g => selectedGaps.has(g.id))
   const totalFixes = selectedGapObjects.reduce((sum, g) => sum + g.fixCount, 0)
+
+  // Filter gaps by active application
+  const filteredGaps = activeApp === 'all'
+    ? gaps
+    : gaps.filter(g => g.appIds?.includes('all') || g.appIds?.includes(activeApp))
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
@@ -336,11 +341,11 @@ export default function Day0Page() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-body-s font-semibold text-foreground">Observability Gaps</h2>
               <button onClick={selectAll} className="text-[10px] text-primary hover:text-primary-hover">
-                {selectedGaps.size === gaps.length ? 'Deselect all' : 'Select all'}
+                {selectedGaps.size === filteredGaps.length ? 'Deselect all' : 'Select all'}
               </button>
             </div>
             <div className="flex flex-col gap-2">
-              {gaps.map(gap => (
+              {filteredGaps.map(gap => (
                 <GapCard key={gap.id} gap={gap} selected={selectedGaps.has(gap.id)} onToggle={toggleGap} />
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { House, Atom, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, MagnifyingGlass, User, X, ArrowsClockwise } from '@phosphor-icons/react'
+import { House, Atom, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 
 const navItems = [
@@ -17,7 +17,7 @@ const navItems = [
 
 function PersonaCard({ onClose }) {
   const { persona, activeId, setActiveId, personaList } = usePersona()
-  const { user, demo, application, services, coverage } = persona
+  const { user, demo, applications, gaps, cost } = persona
   const ref = useRef(null)
 
   useEffect(() => {
@@ -26,36 +26,24 @@ function PersonaCard({ onClose }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [onClose])
 
-  const serviceTypes = [...new Set(services.map(s => s.aws))]
-  const otherPersonas = personaList.filter(p => p.id !== activeId)
+  const allServices = applications.flatMap(a => a.services)
+  const withAlarms = allServices.filter(s => s.hasAlarms).length
+  const withLogs = allServices.filter(s => s.hasLogs).length
+  const withTraces = allServices.filter(s => s.hasTraces).length
 
   return (
     <div ref={ref} className="absolute right-0 top-10 w-[420px] glass-card p-5 z-50 shadow-2xl max-h-[80vh] overflow-y-auto">
-      {/* Persona switcher */}
       <div className="flex items-center gap-2 mb-4">
         {personaList.map(p => (
-          <button
-            key={p.id}
-            onClick={() => setActiveId(p.id)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${
-              p.id === activeId
-                ? 'bg-primary/15 text-primary border border-primary/30'
-                : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'
-            }`}
-          >
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-semibold text-primary">
-              {p.user.name.split(' ').map(n => n[0]).join('')}
-            </div>
+          <button key={p.id} onClick={() => setActiveId(p.id)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${p.id === activeId ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-semibold text-primary">{p.user.name.split(' ').map(n => n[0]).join('')}</div>
             {p.user.name.split(' ')[0]}
           </button>
         ))}
       </div>
-
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-semibold text-body-s">
-            {user.name.split(' ').map(n => n[0]).join('')}
-          </div>
+          <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-semibold text-body-s">{user.name.split(' ').map(n => n[0]).join('')}</div>
           <div>
             <p className="text-body-s font-semibold text-foreground">{user.name}</p>
             <p className="text-[11px] text-foreground-muted">{user.role} · {user.team}</p>
@@ -64,53 +52,48 @@ function PersonaCard({ onClose }) {
         </div>
         <button onClick={onClose} className="p-1 rounded-lg hover:bg-background-surface-2 text-foreground-muted"><X size={14} /></button>
       </div>
-
-      <div className="text-[10px] text-primary bg-primary/10 rounded-md px-2 py-1 mb-4 text-center font-medium">
-        Demo persona — this card explains who this user is and why the page shows what it shows
-      </div>
-
-      <Section title="Application">
-        <Row label="Name" value={application.name} />
-        <Row label="Scale" value={application.description} />
-        <Row label="Regions" value={application.regions.join(', ')} />
-        <Row label="Accounts" value={`${application.accounts.length} accounts`} />
-      </Section>
-      <Section title="AWS Services">
+      <div className="text-[10px] text-primary bg-primary/10 rounded-md px-2 py-1 mb-4 text-center font-medium">Demo persona — explains who this user is and why the page shows what it shows</div>
+      <Sec title="Applications">
+        {applications.map(app => <Row key={app.id} label={app.name} value={`${app.services.length} services`} />)}
+        <Row label="Total" value={`${allServices.length} services across ${applications.length} apps`} />
+      </Sec>
+      <Sec title="AWS Services">
         <Row label="Compute" value={demo.awsServiceBreakdown.compute} />
         <Row label="Data" value={demo.awsServiceBreakdown.data} />
         <Row label="Networking" value={demo.awsServiceBreakdown.networking} />
         <Row label="Messaging" value={demo.awsServiceBreakdown.messaging} />
         {demo.awsServiceBreakdown.ai && <Row label="AI/ML" value={demo.awsServiceBreakdown.ai} />}
         {demo.awsServiceBreakdown.storage && <Row label="Storage" value={demo.awsServiceBreakdown.storage} />}
-        <Row label="Total" value={`${services.length} services using ${serviceTypes.length} AWS service types`} />
-      </Section>
-      <Section title="Observability Maturity">
+      </Sec>
+      <Sec title="Observability Posture">
         <Row label="Level" value={demo.observabilityMaturity} />
         <Row label="Detail" value={demo.observabilityDetail} />
-        <Row label="Current state" value={`${coverage.withAlarms} alarms, ${coverage.withDashboards} dashboards, ${coverage.withTraces} traces`} />
-      </Section>
-      <Section title="Spending">
+        <Row label="Alarms" value={`${withAlarms} of ${allServices.length} services`} />
+        <Row label="Logs" value={`${withLogs} of ${allServices.length} services`} />
+        <Row label="Traces" value={`${withTraces} of ${allServices.length} services`} />
+        <Row label="Gaps" value={`${gaps.length} identified`} />
+      </Sec>
+      <Sec title="Spending">
         <Row label="Cohort" value={demo.spendingCohort} />
         <Row label="AWS spend" value={demo.monthlyAWSSpend} />
-        <Row label="CW spend" value={demo.cloudWatchSpend} />
-      </Section>
-      <Section title="Team & Operations">
+        <Row label="CW current" value={`$${cost.current.total.toLocaleString()}/mo`} />
+        <Row label="CW projected" value={`$${cost.projected.total.toLocaleString()}/mo`} />
+      </Sec>
+      <Sec title="Team & Operations">
         <Row label="Team size" value={`${demo.teamSize} engineers`} />
-        <Row label="On-call" value={demo.oncallRotation ? 'Yes — rotation active' : 'No'} />
+        <Row label="On-call" value={demo.oncallRotation ? 'Yes' : 'No'} />
         <Row label="Incident tooling" value={demo.incidentTooling} />
-      </Section>
-      <Section title="Goals for CloudWatch Omni">
+      </Sec>
+      <Sec title="Goals">
         <ul className="flex flex-col gap-1 mt-1">
-          {demo.goals.map((g, i) => (
-            <li key={i} className="text-[11px] text-foreground-muted flex gap-2"><span className="text-primary">•</span> {g}</li>
-          ))}
+          {demo.goals.map((g, i) => <li key={i} className="text-[11px] text-foreground-muted flex gap-2"><span className="text-primary">•</span> {g}</li>)}
         </ul>
-      </Section>
+      </Sec>
     </div>
   )
 }
 
-function Section({ title, children }) {
+function Sec({ title, children }) {
   return <div className="mb-4"><h4 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">{title}</h4><div className="flex flex-col gap-1.5">{children}</div></div>
 }
 function Row({ label, value }) {
