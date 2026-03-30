@@ -15,6 +15,13 @@ const navItems = [
   { icon: Lifebuoy, label: 'Getting Started' },
 ]
 
+function Sec({ title, children }) {
+  return <div className="mb-4"><h4 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">{title}</h4><div className="flex flex-col gap-1.5">{children}</div></div>
+}
+function Row({ label, value }) {
+  return <div className="flex gap-2"><span className="text-[11px] text-foreground-muted w-24 flex-shrink-0">{label}</span><span className="text-[11px] text-foreground">{value}</span></div>
+}
+
 function PersonaCard({ onClose }) {
   const { persona, activeId, setActiveId, personaList } = usePersona()
   const { user, demo, applications, gaps, cost } = persona
@@ -30,6 +37,7 @@ function PersonaCard({ onClose }) {
   const withAlarms = allServices.filter(s => s.hasAlarms).length
   const withLogs = allServices.filter(s => s.hasLogs).length
   const withTraces = allServices.filter(s => s.hasTraces).length
+  const projectedDelta = cost.projected.reduce((s, p) => s + p.amount, 0)
 
   return (
     <div ref={ref} className="absolute right-0 top-10 w-[420px] glass-card p-5 z-50 shadow-2xl max-h-[80vh] overflow-y-auto">
@@ -77,7 +85,7 @@ function PersonaCard({ onClose }) {
         <Row label="Cohort" value={demo.spendingCohort} />
         <Row label="AWS spend" value={demo.monthlyAWSSpend} />
         <Row label="CW current" value={`$${cost.current.total.toLocaleString()}/mo`} />
-        <Row label="CW projected" value={`$${cost.projected.total.toLocaleString()}/mo`} />
+        <Row label="CW projected" value={`$${(cost.current.total + projectedDelta).toLocaleString()}/mo`} />
       </Sec>
       <Sec title="Team & Operations">
         <Row label="Team size" value={`${demo.teamSize} engineers`} />
@@ -91,13 +99,6 @@ function PersonaCard({ onClose }) {
       </Sec>
     </div>
   )
-}
-
-function Sec({ title, children }) {
-  return <div className="mb-4"><h4 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">{title}</h4><div className="flex flex-col gap-1.5">{children}</div></div>
-}
-function Row({ label, value }) {
-  return <div className="flex gap-2"><span className="text-[11px] text-foreground-muted w-24 flex-shrink-0">{label}</span><span className="text-[11px] text-foreground">{value}</span></div>
 }
 
 export default function ConsoleLayout({ children }) {

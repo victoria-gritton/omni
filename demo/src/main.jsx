@@ -6,6 +6,7 @@ import PhoneView from './pages/PhoneView'
 import ConsoleView from './pages/ConsoleView'
 import HomePage from './pages/HomePage'
 import Day0Page from './pages/Day0Page'
+import GapAnalysisPage from './pages/GapAnalysisPage'
 import LandingPage from './pages/LandingPage'
 import ConsoleLayout from './components/ConsoleLayout'
 import { PersonaProvider } from './data/persona'
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/home" element={<ConsoleLayout><HomePage /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/day0" element={<ConsoleLayout><Day0Page /></ConsoleLayout>} />
+          <Route path="/gaps" element={<ConsoleLayout><GapAnalysisPage /></ConsoleLayout>} />
         </Routes>
       </HashRouter>
     </PersonaProvider>
