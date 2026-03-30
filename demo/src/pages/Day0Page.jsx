@@ -1,117 +1,97 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  PaperPlaneRight, Bell, ChartBar, Sparkle, Robot, ArrowRight, Play,
-  WaveTriangle, Cpu, FileText, Path, Package, Broadcast,
-  CheckCircle, CircleNotch, Globe, Gauge, Lightning,
-  Download, Rocket, Info, CaretRight,
+  PaperPlaneRight, Bell, ChartBar, Sparkle, Robot, ArrowRight,
+  WaveTriangle, FileText, Path, Broadcast,
+  CheckCircle, Globe, Lightning, Gauge,
+  Download, Rocket, Info, CaretRight, CaretDown,
+  CheckSquare, Square, Code, Play, X,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 
-// ─── Sparkline ────────────────────────────────────────────────────
-function Sparkline({ color = '#0ea5e9', height = 24, points = 12 }) {
-  const data = useRef(Array.from({ length: points }, () => 20 + Math.random() * 60)).current
-  const max = Math.max(...data)
-  const w = 100
-  const path = data.map((v, i) => `${(i / (points - 1)) * w},${height - (v / max) * height}`).join(' ')
+const severityColors = {
+  critical: 'text-red-400 bg-red-400/10',
+  high: 'text-status-degraded bg-status-degraded/10',
+  medium: 'text-primary bg-primary/10',
+  low: 'text-foreground-muted bg-foreground-muted/10',
+}
+
+const categoryIcons = {
+  alarms: Bell, logs: FileText, traces: Path, dashboards: ChartBar,
+  anomaly: WaveTriangle, slos: Gauge, 'cross-account': Globe,
+}
+
+const useCaseIcons = {
+  rocket: Rocket, bell: Bell, download: Download, globe: Globe, gauge: Gauge,
+}
+
+// ─── IaC Modal ────────────────────────────────────────────────────
+function IaCModal({ onClose, selectedGaps, persona }) {
+  const [format, setFormat] = useState('cloudformation')
+  const formats = [
+    { id: 'cloudformation', label: 'CloudFormation' },
+    { id: 'terraform', label: 'Terraform' },
+    { id: 'json', label: 'JSON' },
+  ]
+
+  const resourceCount = selectedGaps.reduce((sum, g) => sum + g.fixCount, 0)
+
   return (
-    <svg width={w} height={height} viewBox={`0 0 ${w} ${height}`} className="overflow-visible">
-      <polyline points={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-// ─── Simulation ───────────────────────────────────────────────────
-const simConfig = {
-  'cw-agent': { steps: 6, label: (n, t) => `Deploying to service ${n} of ${t}...`, done: 'Agent deployed' },
-  'alarms': { steps: 42, label: (n, t) => `Creating alarm ${n} of ${t}...`, done: 'Alarms created' },
-  'dashboard': { steps: 4, label: (n, t) => `Adding widget ${n} of ${t}...`, done: 'Dashboard created' },
-  'logs': { steps: 6, label: (n, t) => `Enabling logs on ${n} of ${t}...`, done: 'Logs enabled' },
-  'traces': { steps: 3, label: (n, t) => `Enabling tracing on ${n} of ${t}...`, done: 'Tracing enabled' },
-  'anomaly': { steps: 5, label: (n, t) => `Configuring detector ${n} of ${t}...`, done: 'Anomaly detection enabled' },
-  'service-map': { steps: 3, label: (n, t) => `Mapping dependencies ${n} of ${t}...`, done: 'Service map generated' },
-  'slos': { steps: 3, label: (n, t) => `Creating SLO ${n} of ${t}...`, done: 'SLOs configured' },
-  'container-insights': { steps: 3, label: (n, t) => `Updating cluster ${n} of ${t}...`, done: 'Container Insights enabled' },
-}
-
-function useSimulation() {
-  const [states, setStates] = useState({})
-  const [progress, setProgress] = useState({})
-  const timers = useRef({})
-  const run = useCallback((id) => {
-    const config = simConfig[id]
-    if (!config) return
-    setStates(s => ({ ...s, [id]: 'running' }))
-    setProgress(p => ({ ...p, [id]: 0 }))
-    let step = 0
-    timers.current[id] = setInterval(() => {
-      step++
-      if (step >= config.steps) {
-        clearInterval(timers.current[id])
-        setStates(s => ({ ...s, [id]: 'done' }))
-        setProgress(p => ({ ...p, [id]: config.steps }))
-      } else {
-        setProgress(p => ({ ...p, [id]: step }))
-      }
-    }, 80)
-  }, [])
-  useEffect(() => () => Object.values(timers.current).forEach(clearInterval), [])
-  return { states, progress, run }
-}
-
-// ─── CW Agent Banner ──────────────────────────────────────────────
-function AgentBanner({ state, progress, onInstall }) {
-  if (state === 'done') {
-    return (
-      <div className="glass-card p-4 border-l-2 border-l-status-active/50 flex items-center gap-3 animate-fadeIn">
-        <CheckCircle size={20} weight="fill" className="text-status-active" />
-        <div className="flex-1">
-          <p className="text-body-s font-medium text-foreground">CloudWatch Agent installed</p>
-          <p className="text-[11px] text-foreground-muted">Collecting memory, disk, and custom metrics from all services.</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (state === 'running') {
-    const config = simConfig['cw-agent']
-    const step = progress['cw-agent'] || 0
-    return (
-      <div className="ai-glass-card p-5">
-        <div className="flex items-center gap-3 mb-3">
-          <CircleNotch size={20} className="text-primary animate-spin" />
-          <div className="flex-1">
-            <p className="text-body-s font-medium text-foreground">Installing CloudWatch Agent...</p>
-            <p className="text-[11px] text-foreground-muted">{config.label(step, config.steps)}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="glass-card w-[640px] max-h-[80vh] flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-border-muted">
+          <div>
+            <h2 className="text-body-m font-semibold text-foreground">Export as Code</h2>
+            <p className="text-[11px] text-foreground-muted">{selectedGaps.length} gaps selected · {resourceCount} resources</p>
           </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted"><X size={16} /></button>
         </div>
-        <div className="w-full h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
-          <div className="h-full bg-primary rounded-full transition-all duration-100" style={{ width: `${(step / config.steps) * 100}%` }} />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="ai-glass-card p-5">
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-          <Download size={22} />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-body-m font-semibold text-foreground">Install CloudWatch Agent</h2>
-          <p className="text-[11px] text-foreground-muted mt-1">
-            The CloudWatch Agent unlocks memory, disk, and custom metrics for your services. This is the foundation for full observability.
-          </p>
-          <div className="flex items-center gap-3 mt-3">
-            <button
-              onClick={onInstall}
-              className="h-8 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium flex items-center gap-2 transition-colors"
-            >
-              <Rocket size={14} />
-              Install now
+        <div className="flex gap-2 px-4 pt-3">
+          {formats.map(f => (
+            <button key={f.id} onClick={() => setFormat(f.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${format === f.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
+              {f.label}
             </button>
-            <span className="text-[10px] text-foreground-disabled">Deploys as sidecar/DaemonSet. Zero downtime. ~2 min.</span>
+          ))}
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <pre className="text-[10px] text-foreground-muted bg-background/60 rounded-lg p-4 border border-border-muted/30 overflow-x-auto leading-relaxed">
+            {format === 'cloudformation' && `AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudWatch observability setup for ${persona.applications?.[0]?.name || 'application'}
+  Generated by CloudWatch Omni Agent
+
+Resources:
+${selectedGaps.map(g => `  # ${g.title}
+  # ${g.fixLabel}
+  ${g.id.replace('g-', '')}Setup:
+    Type: AWS::CloudWatch::CompositeAlarm
+    Properties:
+      AlarmName: omni-${g.id.replace('g-', '')}-setup
+      # ... ${g.fixCount} resources configured`).join('\n\n')}`}
+
+            {format === 'terraform' && `# CloudWatch observability setup
+# Generated by CloudWatch Omni Agent
+
+${selectedGaps.map(g => `# ${g.title} — ${g.fixLabel}
+resource "aws_cloudwatch_metric_alarm" "${g.id.replace('g-', '').replace('-', '_')}" {
+  # ... ${g.fixCount} resources configured
+}`).join('\n\n')}`}
+
+            {format === 'json' && JSON.stringify({
+              description: `CloudWatch observability setup - ${selectedGaps.length} gaps`,
+              resources: selectedGaps.map(g => ({ id: g.id, title: g.title, count: g.fixCount, label: g.fixLabel })),
+              totalResources: resourceCount,
+            }, null, 2)}
+          </pre>
+        </div>
+        <div className="flex items-center justify-between p-4 border-t border-border-muted">
+          <span className="text-[10px] text-foreground-disabled">Preview only — full template generated on export</span>
+          <div className="flex gap-2">
+            <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
+              Copy to clipboard
+            </button>
+            <button className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors flex items-center gap-1.5">
+              <Download size={14} /> Download
+            </button>
           </div>
         </div>
       </div>
@@ -119,383 +99,314 @@ function AgentBanner({ state, progress, onInstall }) {
   )
 }
 
-// ─── Empty State Widget ───────────────────────────────────────────
-function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state, progress, simId, onAction, requiresAgent, agentInstalled }) {
-  const config = simConfig[simId]
-  const needsAgent = requiresAgent && !agentInstalled
-
-  if (state === 'done') return null
-
-  if (state === 'running') {
-    const step = progress[simId] || 0
-    return (
-      <div className="glass-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <CircleNotch size={16} className="text-primary animate-spin" />
-          <h3 className="text-body-s font-semibold text-foreground">{title}</h3>
-        </div>
-        <p className="text-[11px] text-foreground-muted mb-2">{config?.label(step, config.steps)}</p>
-        <div className="w-full h-1 rounded-full bg-border-muted/30 overflow-hidden">
-          <div className="h-full bg-primary rounded-full transition-all duration-100" style={{ width: `${(step / config.steps) * 100}%` }} />
-        </div>
-      </div>
-    )
-  }
+// ─── Gap Card ─────────────────────────────────────────────────────
+function GapCard({ gap, selected, onToggle }) {
+  const Icon = categoryIcons[gap.category] || Lightning
+  const [expanded, setExpanded] = useState(false)
+  const colorClass = severityColors[gap.severity] || severityColors.medium
 
   return (
-    <div className="glass-card p-4 border border-dashed border-border-muted/50">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon size={16} className={color} style={{ opacity: 0.5 }} />
-        <h3 className="text-body-s font-semibold text-foreground/50">{title}</h3>
-        {needsAgent && (
-          <span className="text-[8px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
-            <Cpu size={8} /> Requires CW Agent
-          </span>
-        )}
-      </div>
-      <p className="text-[11px] text-foreground-disabled mb-3">{description}</p>
-      <button
-        onClick={onAction}
-        className={`h-7 px-3 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
-          needsAgent
-            ? 'bg-foreground-muted/10 text-foreground-disabled cursor-not-allowed'
-            : 'bg-primary/10 hover:bg-primary/20 text-primary'
-        }`}
-        disabled={needsAgent}
-      >
-        <Sparkle size={12} weight="fill" />
-        {needsAgent ? 'Install CW Agent first' : actionLabel}
-      </button>
-    </div>
-  )
-}
-
-// ─── Filled Widgets (shown after setup) ───────────────────────────
-
-function FilledAlarmWidget({ data }) {
-  const d = data.alarms
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><Bell size={16} className="text-status-active" /><h3 className="text-body-s font-semibold text-foreground">Alarms</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{d.total} configured</span>
-      </div>
-      <div className="flex gap-2 mb-3">
-        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center"><p className="text-body-l font-semibold text-status-active">{d.ok}</p><p className="text-[9px] text-foreground-muted">OK</p></div>
-        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center"><p className="text-body-l font-semibold text-status-degraded">{d.alarm}</p><p className="text-[9px] text-foreground-muted">In alarm</p></div>
-        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">{d.insufficient}</p><p className="text-[9px] text-foreground-muted">Insufficient</p></div>
-      </div>
-      <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Closest to threshold</p>
-      {d.nearThreshold.slice(0, 3).map(a => (
-        <div key={a.name} className="flex items-center gap-2 py-1">
-          <span className="text-[10px] text-foreground w-28 truncate">{a.name}</span>
-          <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-status-degraded/60" style={{ width: `${(a.value / a.threshold) * 100}%` }} /></div>
-          <span className="text-[9px] text-foreground-muted w-16 text-right">{a.value}/{a.threshold}{a.unit}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FilledDashboardWidget({ data }) {
-  const metrics = data.dashboard.metrics
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><ChartBar size={16} className="text-primary" /><h3 className="text-body-s font-semibold text-foreground">Production Dashboard</h3></div>
-        <span className="text-[10px] text-primary cursor-pointer hover:text-primary-hover">Open →</span>
-      </div>
-      <div className={`grid gap-2 ${metrics.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        {metrics.map(m => (
-          <div key={m.name} className="rounded-lg bg-background/40 border border-border-muted/30 p-2">
-            <p className="text-[9px] text-foreground-muted mb-1">{m.name}</p>
-            <Sparkline color={m.color} height={20} />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function FilledLogsWidget({ data }) {
-  const d = data.logs
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><FileText size={16} className="text-green-400" /><h3 className="text-body-s font-semibold text-foreground">Logs</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{d.total} services</span>
-      </div>
-      <div className="flex gap-2 mb-2 text-[9px]">
-        <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400">Standard: {d.standard}</span>
-        <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">IA: {d.ia}</span>
-      </div>
-      <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1">Top by volume</p>
-      {d.topByVolume.slice(0, 3).map(g => (
-        <div key={g.name} className="flex items-center justify-between py-0.5">
-          <span className="text-[10px] text-foreground">{g.name}</span>
-          <span className="text-[9px] text-foreground-muted">{g.volume}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FilledTracesWidget({ data }) {
-  const latency = data.traces.latency
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><Path size={16} className="text-orange-400" /><h3 className="text-body-s font-semibold text-foreground">Traces</h3></div>
-        <span className="text-[10px] text-foreground-disabled">X-Ray active</span>
-      </div>
-      <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Critical path latency</p>
-      <div className="flex gap-3">
-        {latency.map(p => (
-          <div key={p.label} className="flex-1 text-center"><p className="text-body-s font-semibold text-foreground">{p.value}</p><p className="text-[9px] text-foreground-muted">{p.label}</p></div>
-        ))}
-      </div>
-      <div className="mt-2"><Sparkline color="#fb923c" height={16} /></div>
-    </div>
-  )
-}
-
-function FilledAnomalyWidget({ data }) {
-  const detectors = data.anomaly.detectors
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><WaveTriangle size={16} className="text-purple-400" /><h3 className="text-body-s font-semibold text-foreground">Anomaly Detection</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{detectors.length} active</span>
-      </div>
-      {detectors.slice(0, 5).map(d => (
-        <div key={d.metric} className="flex items-center gap-2 py-0.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-status-active" />
-          <span className="text-[10px] text-foreground flex-1">{d.metric}</span>
-          <span className="text-[9px] text-foreground-disabled">{d.distance} from band</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FilledServiceMapWidget() {
-  const nodes = ['API GW', 'Checkout', 'Payment', 'Orders DB', 'Inventory', 'Cache']
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><Globe size={16} className="text-cyan-400" /><h3 className="text-body-s font-semibold text-foreground">Service Map</h3></div>
-        <span className="text-[10px] text-cyan-400 cursor-pointer hover:text-cyan-300">Open full map →</span>
-      </div>
-      <div className="flex items-center justify-center gap-1 py-2">
-        {nodes.map((n, i) => (
-          <div key={n} className="flex items-center gap-1">
-            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[8px] text-foreground-muted">{n}</div>
-            {i < nodes.length - 1 && <div className="w-3 h-px bg-cyan-400/40" />}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function FilledSLOWidget() {
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><Gauge size={16} className="text-emerald-400" /><h3 className="text-body-s font-semibold text-foreground">SLOs</h3></div>
-        <span className="text-[10px] text-foreground-disabled">3 objectives</span>
-      </div>
-      {[
-        { name: 'Checkout availability', target: '99.9%', current: '99.94%', ok: true },
-        { name: 'Payment latency p99', target: '< 500ms', current: '320ms', ok: true },
-        { name: 'API error rate', target: '< 0.5%', current: '0.12%', ok: true },
-      ].map(s => (
-        <div key={s.name} className="flex items-center gap-2 py-1">
-          <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-status-active' : 'bg-status-outage'}`} />
-          <span className="text-[10px] text-foreground flex-1">{s.name}</span>
-          <span className="text-[9px] text-foreground-muted">{s.current}</span>
-          <span className="text-[9px] text-foreground-disabled">/ {s.target}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FilledContainerInsightsWidget({ data }) {
-  const clusters = data.containerInsights.clusters
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><Package size={16} className="text-teal-400" /><h3 className="text-body-s font-semibold text-foreground">Container Insights</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{clusters.length} clusters</span>
-      </div>
-      <div className="flex gap-2">
-        {clusters.map(c => (
-          <div key={c.name} className="flex-1 rounded-lg bg-background/40 border border-border-muted/30 p-2 text-center">
-            <p className="text-body-s font-semibold text-foreground">{c.tasks}</p>
-            <p className="text-[9px] text-foreground-muted">{c.name}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Playground Card ──────────────────────────────────────────────
-function PlaygroundCard() {
-  const navigate = useNavigate()
-  return (
-    <div className="glass-card p-4 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => navigate('/watch')}>
+    <div className={`glass-card p-4 transition-all ${selected ? 'border-primary/40' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 flex-shrink-0">
-          <Rocket size={18} />
+        <button onClick={() => onToggle(gap.id)} className="mt-0.5 flex-shrink-0">
+          {selected
+            ? <CheckSquare size={18} weight="fill" className="text-primary" />
+            : <Square size={18} className="text-foreground-disabled hover:text-foreground-muted" />
+          }
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${colorClass}`}>{gap.severity}</span>
+            <Icon size={14} className="text-foreground-muted" />
+            <span className="text-body-s font-medium text-foreground">{gap.title}</span>
+          </div>
+          <p className="text-[11px] text-foreground-muted">{gap.description}</p>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-[10px] text-foreground-disabled">Fix: {gap.fixLabel}</span>
+            {gap.services > 0 && <span className="text-[10px] text-foreground-disabled">· {gap.services} services affected</span>}
+          </div>
         </div>
-        <div className="flex-1">
-          <h3 className="text-body-s font-semibold text-foreground">Explore CloudWatch Playground</h3>
-          <p className="text-[11px] text-foreground-muted mt-0.5">See what CloudWatch can do with sample data — dashboards, alarms, traces, and AI-powered troubleshooting.</p>
-          <span className="text-[11px] text-purple-400 mt-2 inline-flex items-center gap-1">
-            Try the 2AM SRE demo <CaretRight size={10} />
-          </span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Use Case Card ────────────────────────────────────────────────
+function UseCaseCard({ useCase, onSelect }) {
+  const Icon = useCaseIcons[useCase.icon] || Rocket
+  return (
+    <button onClick={() => onSelect(useCase)} className="glass-card p-4 text-left hover:border-primary/30 transition-all group">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/20 transition-colors">
+          <Icon size={16} />
         </div>
+      </div>
+      <p className="text-body-s font-medium text-foreground">{useCase.title}</p>
+      <p className="text-[11px] text-foreground-muted mt-1">{useCase.description}</p>
+      <p className="text-[10px] text-primary mt-2">{useCase.gapIds.length} gaps addressed →</p>
+    </button>
+  )
+}
+
+// ─── Cost Breakdown ───────────────────────────────────────────────
+function CostBreakdown({ cost }) {
+  const [showProjected, setShowProjected] = useState(false)
+  const data = showProjected ? cost.projected : cost.current
+  return (
+    <div className="glass-card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-body-s font-semibold text-foreground">CloudWatch Cost</h3>
+        <div className="flex gap-1 text-[10px]">
+          <button onClick={() => setShowProjected(false)} className={`px-2 py-0.5 rounded ${!showProjected ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>Current</button>
+          <button onClick={() => setShowProjected(true)} className={`px-2 py-0.5 rounded ${showProjected ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>Projected</button>
+        </div>
+      </div>
+      <p className="text-heading-m font-semibold text-foreground mb-3">${data.total.toLocaleString()}<span className="text-body-s text-foreground-muted font-normal">/mo</span></p>
+      {data.breakdown.map((item, i) => (
+        <div key={i} className="flex items-center justify-between py-1">
+          <span className="text-[11px] text-foreground-muted">{item.category}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-foreground">${item.amount.toLocaleString()}</span>
+            {item.note && <span className="text-[9px] text-foreground-disabled">{item.note}</span>}
+          </div>
+        </div>
+      ))}
+      {showProjected && cost.savings && cost.savings.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border-muted/30">
+          <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Potential savings</p>
+          {cost.savings.map((s, i) => (
+            <div key={i} className="flex items-center justify-between py-0.5">
+              <span className="text-[11px] text-foreground-muted">{s.description}</span>
+              <span className="text-[11px] text-status-active">-${s.amount.toLocaleString()}/mo</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Posture Summary ──────────────────────────────────────────────
+function PostureSummary({ applications, activeApp }) {
+  const apps = activeApp === 'all' ? applications : applications.filter(a => a.id === activeApp)
+  const allServices = apps.flatMap(a => a.services)
+  const total = allServices.length
+  const withAlarms = allServices.filter(s => s.hasAlarms).length
+  const withLogs = allServices.filter(s => s.hasLogs).length
+  const withTraces = allServices.filter(s => s.hasTraces).length
+
+  const bars = [
+    { label: 'Alarms', have: withAlarms, total, color: 'bg-status-degraded' },
+    { label: 'Logs', have: withLogs, total, color: 'bg-green-400' },
+    { label: 'Traces', have: withTraces, total, color: 'bg-purple-400' },
+  ]
+
+  return (
+    <div className="glass-card p-4">
+      <h3 className="text-body-s font-semibold text-foreground mb-3">Observability Posture</h3>
+      <div className="flex flex-col gap-3">
+        {bars.map(b => (
+          <div key={b.label}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] text-foreground-muted">{b.label}</span>
+              <span className="text-[11px] text-foreground">{b.have} / {b.total} services</span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-border-muted/30 overflow-hidden">
+              <div className={`h-full rounded-full ${b.color}`} style={{ width: `${total > 0 ? (b.have / total) * 100 : 0}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ActivityItem({ item, isLast }) {
+  return (
+    <div className="flex gap-3 items-start">
+      <div className="flex flex-col items-center">
+        <div className="w-1.5 h-1.5 rounded-full bg-primary/60 mt-1.5" />
+        {!isLast && <div className="w-px flex-1 bg-border-muted mt-1" />}
+      </div>
+      <div className={isLast ? '' : 'pb-3'}>
+        <p className="text-[11px] text-foreground-muted">{item.action}</p>
+        <p className="text-[10px] text-foreground-disabled mt-0.5">{item.time}</p>
       </div>
     </div>
   )
 }
 
 // ─── Main Page ────────────────────────────────────────────────────
-
-const widgetConfig = [
-  { id: 'alarms', icon: Bell, title: 'Alarms', color: 'text-status-active', description: 'No alarms configured yet. The agent can create recommended alarms based on your infrastructure.', actionLabel: 'Auto-configure alarms', requiresAgent: false },
-  { id: 'dashboard', icon: ChartBar, title: 'Dashboard', color: 'text-primary', description: 'No dashboards yet. The agent can generate a production overview with key metrics.', actionLabel: 'Generate dashboard', requiresAgent: false },
-  { id: 'logs', icon: FileText, title: 'Logs', color: 'text-green-400', description: 'Most services aren\'t sending logs to CloudWatch yet. Enable log delivery to start querying.', actionLabel: 'Enable logging', requiresAgent: false },
-  { id: 'traces', icon: Path, title: 'Traces', color: 'text-orange-400', description: 'No distributed tracing enabled. X-Ray tracing shows the full request path across services.', actionLabel: 'Enable tracing', requiresAgent: false },
-  { id: 'service-map', icon: Globe, title: 'Service Map', color: 'text-cyan-400', description: 'See how your services connect. Enable tracing first to generate the dependency map.', actionLabel: 'Generate service map', requiresAgent: false },
-  { id: 'anomaly', icon: WaveTriangle, title: 'Anomaly Detection', color: 'text-purple-400', description: 'CloudWatch has 14 days of metric history. Enable anomaly detection to catch unusual patterns.', actionLabel: 'Enable anomaly detection', requiresAgent: false },
-  { id: 'slos', icon: Gauge, title: 'SLOs', color: 'text-emerald-400', description: 'Define Service Level Objectives for your critical path. Requires Application Signals.', actionLabel: 'Define SLOs', requiresAgent: true },
-  { id: 'container-insights', icon: Package, title: 'Container Insights', color: 'text-teal-400', description: 'Cluster, node, and pod-level metrics for your ECS/EKS workloads.', actionLabel: 'Enable Container Insights', requiresAgent: true },
-]
-
-const filledWidgets = {
-  alarms: FilledAlarmWidget,
-  dashboard: FilledDashboardWidget,
-  logs: FilledLogsWidget,
-  traces: FilledTracesWidget,
-  'service-map': FilledServiceMapWidget,
-  anomaly: FilledAnomalyWidget,
-  slos: FilledSLOWidget,
-  'container-insights': FilledContainerInsightsWidget,
-}
-
 export default function Day0Page() {
   const [input, setInput] = useState('')
-  const navigate = useNavigate()
   const { persona } = usePersona()
-  const { user, application, coverage, services } = persona
-  const { states, progress, run } = useSimulation()
+  const { user, applications, gaps, cost, useCases, agentActivity } = persona
+
+  const [activeApp, setActiveApp] = useState('all')
+  const [selectedGaps, setSelectedGaps] = useState(new Set())
+  const [showIaCModal, setShowIaCModal] = useState(false)
 
   const firstName = user.name.split(' ')[0]
+  const allServices = applications.flatMap(a => a.services)
 
-  const agentInstalled = states['cw-agent'] === 'done'
+  const toggleGap = (id) => {
+    setSelectedGaps(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const selectUseCase = (uc) => {
+    setSelectedGaps(new Set(uc.gapIds))
+  }
+
+  const selectAll = () => {
+    if (selectedGaps.size === gaps.length) {
+      setSelectedGaps(new Set())
+    } else {
+      setSelectedGaps(new Set(gaps.map(g => g.id)))
+    }
+  }
+
+  const selectedGapObjects = gaps.filter(g => selectedGaps.has(g.id))
+  const totalFixes = selectedGapObjects.reduce((sum, g) => sum + g.fixCount, 0)
 
   return (
-    <div className="px-6 py-6">
-      <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-        Home
-      </h1>
-      <div className="mb-6" />
+    <div className="px-6 py-6 max-w-[1400px] mx-auto">
 
-      <div className="max-w-6xl mx-auto">
-
-        {/* Agent chat input */}
-        <div className="relative mb-6">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your services, metrics, or alarms..."
-            className="w-full h-12 rounded-xl bg-background-surface-1 border border-border-muted px-4 pr-12 text-body-m text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 transition-colors"
-          />
-          <button className="absolute right-2 top-2 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors">
-            <PaperPlaneRight size={16} />
-          </button>
-        </div>
-
-        {/* Welcome + discovery summary */}
-        <div className="glass-card p-4 mb-4 flex items-center gap-3">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-1">
           <Sparkle size={16} className="text-primary" weight="fill" />
-          <p className="text-body-s text-foreground">
-            Welcome, {firstName}. I found <span className="text-primary font-medium">{coverage.totalServices} services</span> across <span className="text-primary font-medium">{application.regions.length} regions</span>.
-            {coverage.withAlarms === 0 ? ' No monitoring is configured yet — let\'s get started.' : ` You have partial monitoring — ${coverage.withAlarms} services with alarms.`}
-          </p>
+          <span className="text-[11px] text-primary font-medium">Agent active</span>
         </div>
+        <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
+          Welcome, {firstName}
+        </h1>
+        <p className="text-body-m text-foreground-muted mt-1">
+          I found {allServices.length} services across {applications.length} applications. Here's your observability posture.
+        </p>
+      </div>
 
-        {/* CW Agent Banner — first priority */}
-        <div className="mb-4">
-          <AgentBanner
-            state={states['cw-agent'] || 'idle'}
-            progress={progress}
-            onInstall={() => run('cw-agent')}
-          />
-        </div>
+      {/* Application tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveApp('all')}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${activeApp === 'all' ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}
+        >
+          All ({allServices.length})
+        </button>
+        {applications.map(app => (
+          <button
+            key={app.id}
+            onClick={() => setActiveApp(app.id)}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${activeApp === app.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}
+          >
+            {app.name} ({app.services.length})
+          </button>
+        ))}
+      </div>
 
-        {/* Playground card */}
-        <div className="mb-6">
-          <PlaygroundCard />
-        </div>
+      {/* Main grid */}
+      <div className="grid grid-cols-[1fr_320px] gap-6">
 
-        {/* Widget grid — empty states that fill in as user configures */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {widgetConfig.map(w => {
-            const isDone = states[w.id] === 'done'
-            const FilledWidget = filledWidgets[w.id]
+        {/* Left column */}
+        <div className="flex flex-col gap-5">
 
-            if (isDone && FilledWidget) {
-              return <FilledWidget key={w.id} data={persona.widgetData} />
-            }
-
-            return (
-              <EmptyWidget
-                key={w.id}
-                icon={w.icon}
-                title={w.title}
-                description={w.description}
-                actionLabel={w.actionLabel}
-                color={w.color}
-                state={states[w.id] || 'idle'}
-                progress={progress}
-                simId={w.id}
-                onAction={() => run(w.id)}
-                requiresAgent={w.requiresAgent}
-                agentInstalled={agentInstalled}
-              />
-            )
-          })}
-        </div>
-
-        {/* Discovered services */}
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-body-s font-semibold text-foreground">Discovered Services</h3>
-            <span className="text-[10px] text-foreground-disabled">{services.length} services</span>
-          </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-            {services.slice(0, 10).map(svc => (
-              <div key={svc.name} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
-                  <span className="text-[11px] text-foreground">{svc.name}</span>
-                </div>
-                <span className="text-[10px] text-foreground-disabled">{svc.type}</span>
+          {/* Agent-suggested use cases */}
+          <div>
+            <h2 className="text-body-s font-semibold text-foreground mb-3">Suggested by the agent</h2>
+            <div className="grid grid-cols-3 gap-3">
+              {useCases.slice(0, 3).map(uc => (
+                <UseCaseCard key={uc.id} useCase={uc} onSelect={selectUseCase} />
+              ))}
+            </div>
+            {useCases.length > 3 && (
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                {useCases.slice(3).map(uc => (
+                  <UseCaseCard key={uc.id} useCase={uc} onSelect={selectUseCase} />
+                ))}
               </div>
-            ))}
+            )}
           </div>
-          {services.length > 10 && (
-            <button className="text-[11px] text-primary hover:text-primary-hover mt-2 text-left">
-              View all {services.length} services →
-            </button>
-          )}
+
+          {/* Observability gaps */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-body-s font-semibold text-foreground">Observability Gaps</h2>
+              <button onClick={selectAll} className="text-[10px] text-primary hover:text-primary-hover">
+                {selectedGaps.size === gaps.length ? 'Deselect all' : 'Select all'}
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {gaps.map(gap => (
+                <GapCard key={gap.id} gap={gap} selected={selectedGaps.has(gap.id)} onToggle={toggleGap} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right sidebar */}
+        <div className="flex flex-col gap-4">
+
+          {/* Posture summary */}
+          <PostureSummary applications={applications} activeApp={activeApp} />
+
+          {/* Cost breakdown */}
+          <CostBreakdown cost={cost} />
+
+          {/* Agent chat */}
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Robot size={16} className="text-primary" />
+              <h3 className="text-body-s font-semibold text-foreground">Ask the agent</h3>
+            </div>
+            <div className="relative">
+              <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. 'Why no tracing?'" className="w-full h-9 rounded-lg bg-background-surface-1 border border-border-muted px-3 pr-9 text-[12px] text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 transition-colors" />
+              <button className="absolute right-1.5 top-1.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"><PaperPlaneRight size={12} /></button>
+            </div>
+          </div>
+
+          {/* Agent activity */}
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkle size={14} className="text-primary" weight="fill" />
+              <h3 className="text-body-s font-semibold text-foreground">Agent Activity</h3>
+            </div>
+            <div className="flex flex-col">
+              {agentActivity.map((item, i) => <ActivityItem key={i} item={item} isLast={i === agentActivity.length - 1} />)}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Sticky action bar */}
+      {selectedGaps.size > 0 && (
+        <div className="fixed bottom-0 left-14 right-0 z-40 border-t border-border-muted bg-background/90 backdrop-blur-lg px-6 py-3">
+          <div className="max-w-[1400px] mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle size={16} className="text-primary" />
+              <span className="text-body-s text-foreground">{selectedGaps.size} gaps selected</span>
+              <span className="text-[11px] text-foreground-muted">· {totalFixes} resources to configure</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setSelectedGaps(new Set())} className="text-[11px] text-foreground-muted hover:text-foreground">Clear</button>
+              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+                <Play size={14} /> Apply now
+              </button>
+              <button onClick={() => setShowIaCModal(true)} className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors flex items-center gap-1.5">
+                <Code size={14} /> Export as code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* IaC Modal */}
+      {showIaCModal && (
+        <IaCModal onClose={() => setShowIaCModal(false)} selectedGaps={selectedGapObjects} persona={persona} />
+      )}
     </div>
   )
 }
