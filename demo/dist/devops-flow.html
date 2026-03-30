@@ -6,7 +6,7 @@
 <title>Maya 2AM Incident - CloudWatch AI Experience</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;background:#0a0e1a;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;padding:14px 24px;gap:6px}
 .nav-btn{padding:10px 22px;border-radius:24px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.3s;background:transparent;color:#888;display:inline-flex;align-items:center;gap:6px}
 .nav-btn:hover{color:#fff;background:rgba(255,255,255,0.06)}
@@ -312,7 +312,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
   <symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
 </svg>
 
-<nav class="nav">
+<nav class="nav" style="display:none">
   <button class="nav-btn active" onclick="go('watch')"><svg><use href="#ic-watch"/></svg>Watch</button>
   <button class="nav-btn" onclick="go('phone')"><svg><use href="#ic-phone"/></svg>Phone</button>
   <button class="nav-btn" onclick="window.top.location.hash='#/devops-console'"><svg><use href="#ic-desktop"/></svg>Desktop</button>
@@ -380,44 +380,63 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
           </div>
         </div>
 
-        <!-- W1: Full investigation -->
-        <div class="ws" id="w1" style="display:none">
-          <div class="wa-pad">
-            <div class="wa-top"><div class="dot"></div><span>HIGH SEVERITY</span></div>
-            <div class="wt">Payments Service</div>
+        <div class="ws" id="w1" style="display:none;cursor:pointer" onclick="window.top.location.hash='#/devops-console'">
+          <div style="padding:10px 12px 16px">
 
-            <div class="lbl" style="color:#0a84ff;margin-top:4px">What happened</div>
-            <div class="wm">Deploy #847 landed at 01:45 AM. Code references <strong>PaymentsTable-v2</strong> which does not exist yet.</div>
-            <div class="w-mc">
-              <svg width="100%" height="100%" viewBox="0 0 160 24" preserveAspectRatio="none">
+            <!-- Header -->
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <div style="width:8px;height:8px;border-radius:50%;background:#ff3b30;animation:pulse 1.5s infinite"></div>
+              <span style="font-size:11px;font-weight:600;color:#ff6b6b">HIGH SEVERITY</span>
+            </div>
+            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:12px">Payments Service</div>
+
+            <!-- What happened -->
+            <div style="font-size:11px;font-weight:600;color:#0a84ff;margin-bottom:4px">What happened</div>
+            <div style="font-size:13px;color:#ccc;line-height:1.45;margin-bottom:6px">Deploy <strong style="color:#fff">#847</strong> landed at 01:45 AM. New code references <strong style="color:#ff9500">PaymentsTable-v2</strong> which does not exist.</div>
+            <div style="height:32px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.03);margin-bottom:16px">
+              <svg width="100%" height="100%" viewBox="0 0 160 28" preserveAspectRatio="none">
                 <defs><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0,22 L20,22 L40,22 L55,22 L65,21 L75,18 L85,8 L95,3 L105,4 L115,3 L125,5 L135,4 L145,3 L160,4" fill="none" stroke="#ff3b30" stroke-width="1.5"/>
-                <path d="M0,22 L20,22 L40,22 L55,22 L65,21 L75,18 L85,8 L95,3 L105,4 L115,3 L125,5 L135,4 L145,3 L160,4 L160,24 L0,24Z" fill="url(#wg2)"/>
-                <line x1="60" y1="0" x2="60" y2="24" stroke="#ff9500" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.6"/>
-                <text x="62" y="6" fill="#ff9500" font-size="4" font-family="sans-serif">deploy</text>
+                <path d="M0,26 L20,26 L40,26 L55,26 L65,24 L75,20 L85,8 L95,3 L105,5 L115,3 L125,6 L135,4 L145,3 L160,5" fill="none" stroke="#ff3b30" stroke-width="1.5"/>
+                <path d="M0,26 L20,26 L40,26 L55,26 L65,24 L75,20 L85,8 L95,3 L105,5 L115,3 L125,6 L135,4 L145,3 L160,5 L160,28 L0,28Z" fill="url(#wg2)"/>
+                <line x1="58" y1="0" x2="58" y2="28" stroke="#ff9500" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.6"/>
+                <text x="60" y="7" fill="#ff9500" font-size="5" font-family="sans-serif">deploy</text>
               </svg>
             </div>
 
-            <div class="lbl" style="color:#ff9500">Impact</div>
-            <div class="w-gauge">
-              <div class="w-gr"><svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff3b30" stroke-dasharray="100.5" stroke-dashoffset="88.4"/></svg><div class="w-gv"><span class="n red">12%</span><span class="l">errors</span></div></div>
-              <div class="w-gr"><svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#ff9500" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg><div class="w-gv"><span class="n ylw" style="font-size:9px">800</span><span class="l">failed</span></div></div>
-              <div class="w-gr"><svg viewBox="0 0 42 42"><circle class="bg" cx="21" cy="21" r="16"/><circle class="fg" cx="21" cy="21" r="16" stroke="#30d158" stroke-dasharray="100.5" stroke-dashoffset="100.5"/></svg><div class="w-gv"><span class="n grn">0</span><span class="l">loss</span></div></div>
+            <!-- Impact -->
+            <div style="font-size:11px;font-weight:600;color:#ff9500;margin-bottom:8px">Impact</div>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <div style="flex:1;text-align:center;background:rgba(255,59,48,0.1);border-radius:8px;padding:8px 4px">
+                <div style="font-size:18px;font-weight:700;color:#ff3b30">12%</div>
+                <div style="font-size:9px;color:#999;margin-top:2px">error rate</div>
+              </div>
+              <div style="flex:1;text-align:center;background:rgba(255,149,0,0.1);border-radius:8px;padding:8px 4px">
+                <div style="font-size:18px;font-weight:700;color:#ff9500">800</div>
+                <div style="font-size:9px;color:#999;margin-top:2px">failed</div>
+              </div>
+              <div style="flex:1;text-align:center;background:rgba(48,209,88,0.1);border-radius:8px;padding:8px 4px">
+                <div style="font-size:18px;font-weight:700;color:#30d158">0</div>
+                <div style="font-size:9px;color:#999;margin-top:2px">data loss</div>
+              </div>
             </div>
-            <div class="w-svc"><div class="d" style="background:#ff3b30"></div>Payments<span class="s red">failing</span></div>
-            <div class="w-svc"><div class="d" style="background:#ff9500"></div>DynamoDB<span class="s ylw">slow</span></div>
-            <div class="w-svc"><div class="d" style="background:#30d158"></div>Gateway<span class="s grn">ok</span></div>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#ff3b30;display:inline-block"></span>Payments</span><span style="font-size:11px;font-weight:600;color:#ff3b30">down</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#ff9500;display:inline-block"></span>DynamoDB</span><span style="font-size:11px;font-weight:600;color:#ff9500">slow</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#30d158;display:inline-block"></span>Gateway</span><span style="font-size:11px;font-weight:600;color:#30d158">ok</span></div>
+            </div>
 
-            <div class="lbl" style="color:#ff3b30;margin-top:5px">Root cause</div>
-            <div class="wm">Raj Patel merged at 5:47 PM. Table ref changed to <strong>PaymentsTable-v2</strong> but Terraform not applied yet.</div>
-            <div class="ok" style="margin-bottom:4px"><svg><use href="#ic-check"/></svg> No duplicate charges<br><svg><use href="#ic-check"/></svg> No data corruption</div>
+            <!-- Root cause -->
+            <div style="font-size:11px;font-weight:600;color:#ff3b30;margin-bottom:4px">Root cause</div>
+            <div style="font-size:13px;color:#ccc;line-height:1.45;margin-bottom:16px">Raj Patel merged at 5:47 PM. Table ref changed to <strong style="color:#ff9500">PaymentsTable-v2</strong> but Terraform not yet applied. No duplicate charges. No data corruption.</div>
 
-            <div class="lbl" style="color:#30d158;margin-top:3px">Next steps</div>
-            <div class="wm" style="margin-bottom:0">Roll back deploy #847 to restore working table reference. Apply Terraform before redeploying.</div>
+            <!-- Next steps -->
+            <div style="background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);border-radius:8px;padding:10px">
+              <div style="font-size:11px;font-weight:600;color:#30d158;margin-bottom:4px">Recommended action</div>
+              <div style="font-size:13px;color:#ddd;line-height:1.45">Roll back deploy #847 to restore working table reference. Apply Terraform before redeploying.</div>
+            </div>
+
           </div>
         </div>
-
-      </div>
     </div>
   </div>
 </section>
