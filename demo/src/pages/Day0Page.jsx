@@ -249,6 +249,49 @@ export default function Day0Page() {
   const firstName = user.name.split(' ')[0]
   const allServices = applications.flatMap(a => a.services)
 
+  // Compute scoped services based on active app tab
+  const scopedServices = activeApp === 'all'
+    ? allServices
+    : (applications.find(a => a.id === activeApp)?.services || [])
+
+  // Dynamically compute gaps from scoped services
+  const computedGaps = (() => {
+    const total = scopedServices.length
+    const noAlarms = scopedServices.filter(s => !s.hasAlarms).length
+    const noLogs = scopedServices.filter(s => !s.hasLogs).length
+    const noTraces = scopedServices.filter(s => !s.hasTraces).length
+    const alarmsPerService = 2.6 // average recommended alarms per service
+    const result = []
+
+    // Check for stale alarms (only from persona-level gaps, not computable from services)
+    const staleGap = gaps.find(g => g.id === 'g-stale')
+    if (staleGap && (activeApp === 'all' || staleGap.appIds?.includes('all') || staleGap.appIds?.includes(activeApp))) {
+      result.push(staleGap)
+    }
+
+    if (noAlarms > 0) {
+      const fixCount = Math.round(noAlarms * alarmsPerService)
+      result.push({ id: 'g-alarms', category: 'alarms', title: `${noAlarms} service${noAlarms > 1 ? 's' : ''} have no alarms`, description: `Recommended: ~${fixCount} alarms for ${noAlarms} unmonitored services (CPU, memory, errors, latency).`, severity: 'critical', services: noAlarms, fixCount, fixLabel: `${fixCount} alarms` })
+    }
+    if (noLogs > 0) {
+      result.push({ id: 'g-logs', category: 'logs', title: `Logging missing on ${noLogs} service${noLogs > 1 ? 's' : ''}`, description: `${noLogs} of ${total} services are not sending logs to CloudWatch.`, severity: 'high', services: noLogs, fixCount: noLogs, fixLabel: `${noLogs} log configurations` })
+    }
+    if (noTraces > 0) {
+      result.push({ id: 'g-traces', category: 'traces', title: `No tracing on ${noTraces} service${noTraces > 1 ? 's' : ''}`, description: `${noTraces} of ${total} services have no X-Ray tracing enabled.`, severity: 'high', services: noTraces, fixCount: noTraces, fixLabel: `${noTraces} trace configurations` })
+    }
+
+    // Add non-service-count gaps (dashboards, anomaly, SLOs, cross-account) from persona data
+    const extraGapIds = ['g-dashboards', 'g-anomaly', 'g-slos', 'g-cross-account']
+    for (const g of gaps) {
+      if (!extraGapIds.includes(g.id)) continue
+      if (activeApp === 'all' || g.appIds?.includes('all') || g.appIds?.includes(activeApp)) {
+        result.push(g)
+      }
+    }
+
+    return result
+  })()
+
   const toggleGap = (id) => {
     setSelectedGaps(prev => {
       const next = new Set(prev)
@@ -258,24 +301,19 @@ export default function Day0Page() {
   }
 
   const selectUseCase = (uc) => {
-    setSelectedGaps(new Set(uc.gapIds))
+    setSelectedGaps(new Set(uc.gapIds.filter(id => computedGaps.some(g => g.id === id))))
   }
 
   const selectAll = () => {
-    if (selectedGaps.size === filteredGaps.length) {
+    if (selectedGaps.size === computedGaps.length) {
       setSelectedGaps(new Set())
     } else {
-      setSelectedGaps(new Set(filteredGaps.map(g => g.id)))
+      setSelectedGaps(new Set(computedGaps.map(g => g.id)))
     }
   }
 
-  const selectedGapObjects = gaps.filter(g => selectedGaps.has(g.id))
+  const selectedGapObjects = computedGaps.filter(g => selectedGaps.has(g.id))
   const totalFixes = selectedGapObjects.reduce((sum, g) => sum + g.fixCount, 0)
-
-  // Filter gaps by active application
-  const filteredGaps = activeApp === 'all'
-    ? gaps
-    : gaps.filter(g => g.appIds?.includes('all') || g.appIds?.includes(activeApp))
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
@@ -341,11 +379,11 @@ export default function Day0Page() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-body-s font-semibold text-foreground">Observability Gaps</h2>
               <button onClick={selectAll} className="text-[10px] text-primary hover:text-primary-hover">
-                {selectedGaps.size === filteredGaps.length ? 'Deselect all' : 'Select all'}
+                {selectedGaps.size === computedGaps.length ? 'Deselect all' : 'Select all'}
               </button>
             </div>
             <div className="flex flex-col gap-2">
-              {filteredGaps.map(gap => (
+              {computedGaps.map(gap => (
                 <GapCard key={gap.id} gap={gap} selected={selectedGaps.has(gap.id)} onToggle={toggleGap} />
               ))}
             </div>
