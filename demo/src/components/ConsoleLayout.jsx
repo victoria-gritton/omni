@@ -142,6 +142,11 @@ const PAGE_CONTEXT = {
     prompts: ['Find high-error services', 'Show unused metrics', 'Search OOM events', 'List active alarms'],
     placeholder: 'Search or ask a question...',
   },
+  '/devops-console': {
+    greeting: "I'm investigating the Payments service failure. Deploy #847 referenced PaymentsTable-v2 which doesn't exist. 847 payments failed. What would you like to know?",
+    prompts: ['Show me the deploy diff', 'What is the blast radius?', 'Generate post-mortem', 'Apply Terraform for v2 table'],
+    placeholder: 'Ask about this incident...',
+  },
   '/monitor': {
     greeting: "I can help you review active alarms, set up new monitors, or analyze alert patterns.",
     prompts: ['Show active alarms', 'Which alarms are noisy?', 'Set up a new alarm', 'Alert trends this week'],
@@ -330,7 +335,8 @@ export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [navOpen, setNavOpen] = useState(false)
-  const [chatOpen, setChatOpen] = useState(false)
+  const location_init = typeof window !== 'undefined' ? window.location.hash : ''
+  const [chatOpen, setChatOpen] = useState(location_init.includes('devops-console'))
   const [pendingQuery, setPendingQuery] = useState(null)
   const [showPersona, setShowPersona] = useState(false)
   const { persona } = usePersona()
@@ -394,6 +400,14 @@ export default function ConsoleLayout({ children }) {
         </nav>
 
 
+
+        {chatOpen && pendingQuery === '__alarms__' && (
+          <div className="w-[340px] flex-shrink-0 border-r border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
+            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
+          </div>
+        )}
+        {chatOpen && pendingQuery !== '__alarms__' && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
+
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
@@ -426,7 +440,7 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">CW<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / payments-service','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>
@@ -435,12 +449,6 @@ export default function ConsoleLayout({ children }) {
           </div>
         </div>
 
-        {chatOpen && pendingQuery === '__alarms__' && (
-          <div className="w-[340px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
-            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
-          </div>
-        )}
-        {chatOpen && pendingQuery !== '__alarms__' && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
       </div>
     </div>
   )
