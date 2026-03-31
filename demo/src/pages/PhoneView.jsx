@@ -56,7 +56,7 @@ export default function PhoneView() {
             <div className="ai-glass-card p-3 mb-3">
               <p className="text-[13px] leading-[19px] text-foreground">
                 <span className="text-orange-400 text-[12px] font-semibold mr-1">AI</span>
-                Memory exhaustion — 6 OOM kills, ~2,400 failed checkouts, no deploys in 6h. Tasks stuck in restart loop at 512 MB limit.
+                Memory exhaustion — 6 OOM kills, ~2,400 failed orders, no deploys in 6h. Tasks stuck in restart loop at 512 MB limit.
               </p>
             </div>
 
@@ -65,7 +65,7 @@ export default function PhoneView() {
               <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
                 <span className="text-[9px] text-foreground-disabled uppercase tracking-wider block">Impact</span>
                 <span className="text-[16px] font-semibold text-foreground">2.4K</span>
-                <span className="text-[8px] text-foreground-disabled block">failed txns</span>
+                <span className="text-[8px] text-foreground-disabled block">failed orders</span>
               </div>
               <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
                 <span className="text-[9px] text-foreground-disabled uppercase tracking-wider block">p99</span>
@@ -96,15 +96,21 @@ export default function PhoneView() {
               </div>
             </details>
 
-            {/* Recommended action + CTA */}
+            {/* Agent action — pre-authorized, needs approval */}
             <div className="mb-3">
-              <div className="px-3 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted mb-3">
-                <span className="text-[10px] text-foreground-disabled uppercase tracking-wider block mb-1">Recommended action</span>
-                <span className="text-[13px] text-foreground font-medium">Scale memory from 512 MB → 1 GB</span>
-                <span className="text-[10px] text-foreground-muted block mt-0.5">Rolling restart, no downtime</span>
+              <div className="px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/20 mb-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-status-active" />
+                  <span className="text-[10px] text-status-active">Pre-authorized action</span>
+                </div>
+                <span className="text-[13px] text-foreground font-medium block">Scale memory from 512 MB → 1 GB</span>
+                <span className="text-[10px] text-foreground-muted block mt-0.5">Rolling restart, no downtime · matches your ECS scaling policy</span>
+                <button className="w-full h-9 mt-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-body-s font-medium text-foreground flex items-center justify-center">
+                  Approve agent action
+                </button>
               </div>
-              <button onClick={() => navigate('/console')} className="w-full h-10 rounded-lg bg-primary text-body-s font-semibold text-primary-foreground flex items-center justify-center">
-                View investigation
+              <button onClick={() => navigate('/console')} className="w-full h-10 rounded-lg bg-background-surface-1 border border-border-muted text-body-s font-medium text-foreground flex items-center justify-center">
+                View investigation in CloudWatch+
               </button>
             </div>
 

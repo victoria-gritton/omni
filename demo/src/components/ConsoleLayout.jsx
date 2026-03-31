@@ -32,7 +32,7 @@ const recents = [
 
 const CHAT_RESPONSES = {
   default: {
-    text: <><p>I'm monitoring the incident.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-status-outage">●</span>payment-service east-2 — memory exhaustion</li><li className="flex gap-2"><span className="text-status-blocked">●</span>Restart loop active since 1:52 AM</li><li className="flex gap-2"><span className="text-foreground-muted">●</span>No deploys in 6h</li></ul></>,
+    text: <><p>I'm monitoring the incident.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-status-outage">●</span>order-service east-2 — memory exhaustion</li><li className="flex gap-2"><span className="text-status-blocked">●</span>Restart loop active since 1:52 AM</li><li className="flex gap-2"><span className="text-foreground-muted">●</span>No deploys in 6h</li></ul></>,
     followUps: ['What caused this?', 'How many users affected?', 'Show the timeline'],
   },
   'what caused': {
@@ -123,8 +123,8 @@ function getAIResponse(input) {
 
 const PAGE_CONTEXT = {
   '/console': {
-    greeting: "You acknowledged INC-2847 from your phone. I've been investigating since 2:03 AM — here's what I found. The investigation is loaded on the left. What would you like to dig into?",
-    prompts: ['Show me the OOM kill logs', 'What are the memory limits set to?', 'How do I scale up the tasks?', 'Who else is on-call tonight?'],
+    greeting: <><p className="font-medium">INC-2847 · order-service-memory-high</p><p className="mt-1.5">You acknowledged from your phone. I've been investigating since 2:03 AM — here's what I found. The investigation is loaded on the left.</p><p className="mt-1.5 text-foreground-muted">What would you like to dig into?</p></>,
+    prompts: ['Show me the OOM kill logs', 'What are the memory limits set to?', 'Post update to Slack'],
     placeholder: 'Ask about this incident...',
   },
   '/home': {
@@ -330,7 +330,7 @@ export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [navOpen, setNavOpen] = useState(false)
-  const [chatOpen, setChatOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(location.pathname === '/console')
   const [pendingQuery, setPendingQuery] = useState(null)
   const [showPersona, setShowPersona] = useState(false)
   const { persona } = usePersona()
@@ -426,7 +426,7 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>

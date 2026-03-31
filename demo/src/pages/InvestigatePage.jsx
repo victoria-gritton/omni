@@ -4,8 +4,8 @@ import {
 } from '@phosphor-icons/react'
 
 const activeInvestigations = [
-  { id: 'INC-2847', title: 'payment-service is timing out', severity: 'critical', started: '35 min ago', findings: 3, path: '/console', acknowledgedBy: [{ initials: 'MK', name: 'You', color: 'bg-emerald-700' }, { initials: 'AK', name: 'Alex K.', color: 'bg-purple-700' }] },
-  { id: 'INC-3102', title: 'Database failover in us-east-1', severity: 'critical', started: '20 min ago', findings: 2, path: '/devops-console', acknowledgedBy: [{ initials: 'SR', name: 'Sam R.', color: 'bg-sky-700' }] },
+  { id: 'INC-2847', title: 'order-service is timing out', severity: 'critical', started: '35 min ago', findings: 3, path: '/console', acknowledgedBy: [{ initials: 'MK', name: 'You', color: 'bg-emerald-700' }, { initials: 'AK', name: 'Alex K.', color: 'bg-purple-700' }] },
+  { id: 'INC-3102', title: 'Payments service down', severity: 'critical', started: '20 min ago', findings: 2, path: '/devops-console', acknowledgedBy: [{ initials: 'SR', name: 'Sam R.', color: 'bg-sky-700' }] },
   { id: 'INV-1023', title: 'Lambda cold start increase after deploy', severity: 'warning', started: '2h ago', findings: 5, acknowledgedBy: [] },
   { id: 'INV-1021', title: 'DynamoDB throttling in order-service', severity: 'warning', started: 'Yesterday', findings: 7, acknowledgedBy: [] },
 ]

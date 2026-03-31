@@ -14,7 +14,7 @@ const THREAD_MESSAGES = [
     content: null,
     blocks: [
       { type: 'alert', severity: 'Critical', id: 'INC-2847' },
-      { type: 'text', value: 'payment-service is timing out' },
+      { type: 'text', value: 'order-service is timing out' },
       { type: 'brief', lines: [
         { label: 'Root cause', value: 'ECS memory exhaustion — tasks OOM-killed 6× since 1:52am' },
         { label: 'Impact', value: '~2,400 failed checkouts in 10 min' },

@@ -67,7 +67,7 @@ export default function WatchView() {
 
                 {/* AI-generated summary — the AI wrote this, no sparkle needed */}
                 <p className="text-[12px] leading-[16px] text-white font-medium text-center mb-1">
-                  payment-service is timing out
+                  order-service is timing out
                 </p>
                 <p className="text-[9px] leading-[12px] text-orange-400/70 text-center italic mb-2">
                   AI: likely ECS memory exhaustion

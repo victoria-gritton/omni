@@ -10,7 +10,6 @@ import DevOpsFlowPage from './pages/DevOpsFlowPage'
 import DevOpsConsoleView from './pages/DevOpsConsoleView'
 import DevOpsIDEView from './pages/DevOpsIDEView'
 import CoffeeView from './pages/CoffeeView'
-import BitchatView from './pages/BitchatView'
 import SlackView from './pages/SlackView'
 import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
@@ -32,7 +31,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/devops-ide" element={<DevOpsIDEView />} />
           <Route path="/watch" element={<WatchView />} />
           <Route path="/phone" element={<PhoneView />} />
-          <Route path="/bitchat" element={<BitchatView />} />
           <Route path="/slack" element={<SlackView />} />
           <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />

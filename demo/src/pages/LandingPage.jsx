@@ -5,7 +5,7 @@ const flows = [
   {
     id: '2am-sre',
     title: '2AM Flow: SRE',
-    subtitle: 'Why is Payments timing out?',
+    subtitle: 'Why is order-service timing out?',
     path: '/watch',
     ready: true,
     preview: 'watch',
@@ -33,14 +33,6 @@ const flows = [
     path: '/day0',
     ready: true,
     preview: 'day0',
-  },
-  {
-    id: 'bitchat',
-    title: '2AM Flow: Mesh Fallback',
-    subtitle: 'Push failed, alert arrived anyway',
-    path: '/bitchat',
-    ready: true,
-    preview: 'bitchat',
   },
   {
     id: 'slack',
@@ -269,7 +261,6 @@ export default function LandingPage() {
                 {flow.preview === 'day0' && <Day0Preview />}
                 {flow.preview === 'coffee' && <CoffeePreview />}
                 {flow.preview === 'devops-watch' && <DevOpsWatchPreview />}
-                {flow.preview === 'bitchat' && <BitchatPreview />}
                 {flow.preview === 'slack' && <SlackPreview />}
                 {flow.preview === 'placeholder' && <PlaceholderPreview />}
               </div>
