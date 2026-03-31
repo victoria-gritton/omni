@@ -203,7 +203,7 @@ function ChatPanel({ onClose, path, pendingQuery, onQueryConsumed }) {
   }
 
   return (
-    <div className="w-[320px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col">
+    <div className="w-[320px] flex-shrink-0 border-r border-border-muted bg-background-surface-1 flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-muted flex-shrink-0">
         <div className="flex items-center gap-2">
           <Sparkle size={16} className="text-orange-400" />
@@ -399,6 +399,14 @@ export default function ConsoleLayout({ children }) {
         </nav>
 
 
+
+        {chatOpen && pendingQuery === "__alarms__" && (
+          <div className="w-[340px] flex-shrink-0 border-r border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
+            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
+          </div>
+        )}
+        {chatOpen && pendingQuery !== "__alarms__" && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
+
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
@@ -440,12 +448,6 @@ export default function ConsoleLayout({ children }) {
           </div>
         </div>
 
-        {chatOpen && pendingQuery === '__alarms__' && (
-          <div className="w-[340px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
-            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
-          </div>
-        )}
-        {chatOpen && pendingQuery !== '__alarms__' && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
       </div>
     </div>
   )
