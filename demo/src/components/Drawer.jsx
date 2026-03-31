@@ -1,6 +1,49 @@
 import { useState, useEffect } from 'react'
 import { X, Sparkle, PaperPlaneRight, Code, Play, CaretRight, CaretDown, CheckSquare, Square } from '@phosphor-icons/react'
 import { LineChart, mockTimeSeries } from './Chart'
+import { AlarmConfigModal } from './AlarmConfigModal'
+
+// Inline config editor for alarm items
+function ConfigEditor({ config }) {
+  if (!config) return null
+  const [threshold, setThreshold] = useState(config.threshold ?? '')
+  const [period, setPeriod] = useState(config.period || 300)
+  const [evalPeriods, setEvalPeriods] = useState(config.evalPeriods || 1)
+  const [missingData, setMissingData] = useState(config.missingData || 'missing')
+
+  const periodOptions = [{ v: 60, l: '1 min' }, { v: 300, l: '5 min' }, { v: 900, l: '15 min' }, { v: 3600, l: '1 hour' }]
+  const missingOptions = [{ v: 'breaching', l: 'Treat as breaching' }, { v: 'notBreaching', l: 'Treat as not breaching' }, { v: 'missing', l: 'Treat as missing' }]
+
+  return (
+    <div className="mt-1.5 mb-1 ml-6 p-2.5 rounded-lg bg-background/40 border border-border-muted/20" onClick={(e) => e.stopPropagation()}>
+      <div className="grid grid-cols-2 gap-2">
+        {config.threshold !== null && (
+          <div>
+            <label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Threshold ({config.unit})</label>
+            <input type="number" value={threshold} onChange={(e) => setThreshold(e.target.value)} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40" />
+          </div>
+        )}
+        <div>
+          <label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Period</label>
+          <select value={period} onChange={(e) => setPeriod(+e.target.value)} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40">
+            {periodOptions.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Eval periods</label>
+          <input type="number" value={evalPeriods} onChange={(e) => setEvalPeriods(+e.target.value)} min={1} max={10} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40" />
+        </div>
+        <div>
+          <label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Missing data</label>
+          <select value={missingData} onChange={(e) => setMissingData(e.target.value)} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40">
+            {missingOptions.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+          </select>
+        </div>
+      </div>
+      <p className="text-[8px] text-foreground-disabled mt-1.5">Metric: {config.metric} · Comparison: {config.comparison}</p>
+    </div>
+  )
+}
 
 // Group items by service name (text before " — ")
 function groupByService(items) {
@@ -14,10 +57,12 @@ function groupByService(items) {
   return groups
 }
 
-export function AgentDrawer({ investigation, onClose }) {
+export function AgentDrawer({ investigation, onClose, onExportCode }) {
   const [input, setInput] = useState('')
   const [selected, setSelected] = useState(new Set())
   const [expanded, setExpanded] = useState(new Set())
+  const [configOpen, setConfigOpen] = useState(new Set())
+  const [alarmConfigItem, setAlarmConfigItem] = useState(null)
 
   useEffect(() => {
     if (investigation?.selectableItems) {
@@ -70,7 +115,7 @@ export function AgentDrawer({ investigation, onClose }) {
             {msg.type === 'text' && <div className="flex gap-3"><div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkle size={10} className="text-primary" weight="fill" /></div><p className="text-[12px] text-foreground leading-relaxed">{msg.content}</p></div>}
             {msg.type === 'chart' && <div className="glass-card p-3 my-2"><p className="text-[9px] text-foreground-disabled mb-2">{msg.label}</p><LineChart data={mockTimeSeries(24, msg.base || 50, msg.variance || 20)} color={msg.color || '#0ea5e9'} height={64} unit={msg.unit || ''} thresholdValue={msg.threshold} thresholdLabel={msg.thresholdLabel} /></div>}
             {msg.type === 'finding' && <div className={`rounded-lg p-3 my-2 border-l-2 ${msg.severity === 'critical' ? 'border-l-red-400 bg-red-400/5' : msg.severity === 'warning' ? 'border-l-status-degraded bg-status-degraded/5' : 'border-l-primary bg-primary/5'}`}><p className="text-[11px] font-medium text-foreground">{msg.title}</p><p className="text-[10px] text-foreground-muted mt-1">{msg.content}</p></div>}
-            {msg.type === 'actions' && !hasSelectable && <div className="flex gap-2 my-3"><button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium"><Play size={12} /> Apply now</button><button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2"><Code size={12} /> Export as code</button></div>}
+            {msg.type === 'actions' && !hasSelectable && <div className="flex gap-2 my-3"><button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium"><Play size={12} /> Apply now</button><button onClick={() => onExportCode?.()} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2"><Code size={12} /> Export as code</button></div>}
             {msg.type === 'steps' && <div className="my-2">{msg.steps.map((step, si) => <div key={si} className="flex gap-2 py-1.5"><div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${step.status === 'found' ? 'bg-red-400/20 text-red-400' : 'bg-status-active/20 text-status-active'}`}>{si + 1}</div><div><p className="text-[11px] text-foreground">{step.action}</p><p className="text-[10px] text-foreground-muted">{step.result}</p></div></div>)}</div>}
 
             {msg.type === 'selectable' && hasSelectable && (
@@ -105,10 +150,14 @@ export function AgentDrawer({ investigation, onClose }) {
                           {isExpanded && (
                             <div className="border-t border-border-muted/10 bg-background/20">
                               {grp.map(item => (
-                                <div key={item.id} onClick={() => toggle(item.id)} className={`flex items-center gap-2 py-1.5 px-3 pl-9 cursor-pointer transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-background-surface-2/30'}`}>
-                                  {selected.has(item.id) ? <CheckSquare size={12} weight="fill" className="text-primary flex-shrink-0" /> : <Square size={12} className="text-foreground-disabled flex-shrink-0" />}
-                                  <span className="text-[10px] text-foreground flex-1">{item.shortName}</span>
-                                  <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}</span>
+                                <div key={item.id}>
+                                  <div onClick={() => toggle(item.id)} className={`flex items-center gap-2 py-1.5 px-3 pl-9 cursor-pointer transition-colors ${selected.has(item.id) ? 'bg-primary/5' : 'hover:bg-background-surface-2/30'}`}>
+                                    {selected.has(item.id) ? <CheckSquare size={12} weight="fill" className="text-primary flex-shrink-0" /> : <Square size={12} className="text-foreground-disabled flex-shrink-0" />}
+                                    <span className="text-[10px] text-foreground flex-1">{item.shortName}</span>
+                                    {item.config && <button onClick={(e) => { e.stopPropagation(); setAlarmConfigItem(item) }} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}
+                                    <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}</span>
+                                  </div>
+                                  {configOpen.has(item.id) && null}
                                 </div>
                               ))}
                             </div>
@@ -121,13 +170,17 @@ export function AgentDrawer({ investigation, onClose }) {
                   /* Flat view — for small lists */
                   <div className="flex flex-col gap-1">
                     {items.map(item => (
-                      <div key={item.id} onClick={() => toggle(item.id)} className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer transition-colors ${selected.has(item.id) ? 'bg-primary/5 border border-primary/20' : 'border border-transparent hover:bg-background-surface-2/50'}`}>
-                        {selected.has(item.id) ? <CheckSquare size={14} weight="fill" className="text-primary flex-shrink-0" /> : <Square size={14} className="text-foreground-disabled flex-shrink-0" />}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-foreground">{item.name}</p>
-                          {item.description && <p className="text-[9px] text-foreground-muted">{item.description}</p>}
+                      <div key={item.id}>
+                        <div onClick={() => toggle(item.id)} className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer transition-colors ${selected.has(item.id) ? 'bg-primary/5 border border-primary/20' : 'border border-transparent hover:bg-background-surface-2/50'}`}>
+                          {selected.has(item.id) ? <CheckSquare size={14} weight="fill" className="text-primary flex-shrink-0" /> : <Square size={14} className="text-foreground-disabled flex-shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-foreground">{item.name}</p>
+                            {item.description && <p className="text-[9px] text-foreground-muted">{item.description}</p>}
+                          </div>
+                          {item.config && <button onClick={(e) => { e.stopPropagation(); setAlarmConfigItem(item) }} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}
+                          <span className="text-[10px] text-foreground-muted flex-shrink-0">{item.cost >= 0 ? '+' : ''}${item.cost.toFixed(2)}/mo</span>
                         </div>
-                        <span className="text-[10px] text-foreground-muted flex-shrink-0">{item.cost >= 0 ? '+' : ''}${item.cost.toFixed(2)}/mo</span>
+                        {configOpen.has(item.id) && null}
                       </div>
                     ))}
                   </div>
@@ -154,7 +207,7 @@ export function AgentDrawer({ investigation, onClose }) {
           </div>
           <div className="flex gap-2">
             <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium transition-colors"><Play size={12} /> Apply now</button>
-            <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2 transition-colors"><Code size={12} /> Export as code</button>
+            <button onClick={() => onExportCode?.(selectedItems)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2 transition-colors"><Code size={12} /> Export as code</button>
           </div>
         </div>
       )}
@@ -166,6 +219,11 @@ export function AgentDrawer({ investigation, onClose }) {
           <button className="absolute right-2 top-2 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20"><PaperPlaneRight size={12} /></button>
         </div>
       </div>
+
+      {/* Alarm Config Modal */}
+      {alarmConfigItem && (
+        <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => setAlarmConfigItem(null)} />
+      )}
     </div>
   )
 }

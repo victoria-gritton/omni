@@ -2,21 +2,21 @@
 // Investigations with selectableItems get the sticky cost/action bar in the drawer
 
 const alarmConfigs = {
-  'API Gateway': [{ name: '5xx Error Rate > 1%', cost: 0.10 }, { name: 'Latency p99 > 1s', cost: 0.10 }, { name: 'Request count anomaly', cost: 0.10 }],
-  'ECS Fargate': [{ name: 'CPU > 90%', cost: 0.10 }, { name: 'Memory > 85%', cost: 0.10 }, { name: 'Task count < desired', cost: 0.10 }],
-  'Lambda': [{ name: 'Error rate > 1%', cost: 0.10 }, { name: 'Duration p99 > 10s', cost: 0.10 }, { name: 'Throttles > 0', cost: 0.10 }],
-  'RDS PostgreSQL': [{ name: 'CPU > 80%', cost: 0.10 }, { name: 'Freeable memory < 500MB', cost: 0.10 }, { name: 'Read latency > 20ms', cost: 0.10 }],
-  'Aurora PostgreSQL': [{ name: 'CPU > 80%', cost: 0.10 }, { name: 'Replica lag > 100ms', cost: 0.10 }, { name: 'Deadlocks > 0', cost: 0.10 }],
-  'DynamoDB': [{ name: 'Throttled requests > 0', cost: 0.10 }, { name: 'System errors > 0', cost: 0.10 }],
-  'ElastiCache Redis': [{ name: 'CPU > 75%', cost: 0.10 }, { name: 'Engine CPU > 80%', cost: 0.10 }],
-  'CloudFront': [{ name: '5xx error rate > 1%', cost: 0.10 }, { name: 'Origin latency > 2s', cost: 0.10 }],
-  'SNS + SQS': [{ name: 'Message age > 300s', cost: 0.10 }, { name: 'Publish count anomaly', cost: 0.10 }],
-  'S3': [{ name: '4xx error rate > 5%', cost: 0.10 }],
-  'EKS': [{ name: 'Pod restart rate > 5/hr', cost: 0.10 }, { name: 'Node CPU > 85%', cost: 0.10 }, { name: 'Pending pods > 0', cost: 0.10 }],
-  'SageMaker': [{ name: 'Model latency p99 > 300ms', cost: 0.10 }, { name: 'Invocation 5xx > 0', cost: 0.10 }],
-  'Kinesis': [{ name: 'Iterator age > 60s', cost: 0.10 }, { name: 'Throughput exceeded', cost: 0.10 }],
-  'MSK': [{ name: 'Consumer lag > 1000', cost: 0.10 }, { name: 'Disk usage > 85%', cost: 0.10 }],
-  'Bedrock Agent': [{ name: 'Invocation latency > 5s', cost: 0.10 }, { name: 'Invocation errors > 0', cost: 0.10 }],
+  'API Gateway': [{ name: '5xx Error Rate > 1%', cost: 0.10, metric: '5XXError', threshold: 1, unit: '%', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }, { name: 'Latency p99 > 1s', cost: 0.10, metric: 'Latency', threshold: 1000, unit: 'ms', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'missing' }, { name: 'Request count anomaly', cost: 0.10, metric: 'Count', threshold: null, unit: 'requests', period: 300, evalPeriods: 2, comparison: 'LessThanLowerOrGreaterThanUpperThreshold', missingData: 'breaching' }],
+  'ECS Fargate': [{ name: 'CPU > 90%', cost: 0.10, metric: 'CPUUtilization', threshold: 90, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Memory > 85%', cost: 0.10, metric: 'MemoryUtilization', threshold: 85, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Task count < desired', cost: 0.10, metric: 'RunningTaskCount', threshold: null, unit: 'tasks', period: 60, evalPeriods: 3, comparison: 'LessThanThreshold', missingData: 'breaching' }],
+  'Lambda': [{ name: 'Error rate > 1%', cost: 0.10, metric: 'Errors', threshold: 1, unit: '%', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }, { name: 'Duration p99 > 10s', cost: 0.10, metric: 'Duration', threshold: 10000, unit: 'ms', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'missing' }, { name: 'Throttles > 0', cost: 0.10, metric: 'Throttles', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'RDS PostgreSQL': [{ name: 'CPU > 80%', cost: 0.10, metric: 'CPUUtilization', threshold: 80, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Freeable memory < 500MB', cost: 0.10, metric: 'FreeableMemory', threshold: 500000000, unit: 'bytes', period: 300, evalPeriods: 2, comparison: 'LessThanThreshold', missingData: 'breaching' }, { name: 'Read latency > 20ms', cost: 0.10, metric: 'ReadLatency', threshold: 0.02, unit: 's', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'missing' }],
+  'Aurora PostgreSQL': [{ name: 'CPU > 80%', cost: 0.10, metric: 'CPUUtilization', threshold: 80, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Replica lag > 100ms', cost: 0.10, metric: 'AuroraReplicaLag', threshold: 100, unit: 'ms', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Deadlocks > 0', cost: 0.10, metric: 'Deadlocks', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'DynamoDB': [{ name: 'Throttled requests > 0', cost: 0.10, metric: 'ThrottledRequests', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }, { name: 'System errors > 0', cost: 0.10, metric: 'SystemErrors', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'ElastiCache Redis': [{ name: 'CPU > 75%', cost: 0.10, metric: 'CPUUtilization', threshold: 75, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Engine CPU > 80%', cost: 0.10, metric: 'EngineCPUUtilization', threshold: 80, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }],
+  'CloudFront': [{ name: '5xx error rate > 1%', cost: 0.10, metric: '5xxErrorRate', threshold: 1, unit: '%', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }, { name: 'Origin latency > 2s', cost: 0.10, metric: 'OriginLatency', threshold: 2000, unit: 'ms', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'missing' }],
+  'SNS + SQS': [{ name: 'Message age > 300s', cost: 0.10, metric: 'ApproximateAgeOfOldestMessage', threshold: 300, unit: 's', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }, { name: 'Publish count anomaly', cost: 0.10, metric: 'NumberOfMessagesPublished', threshold: null, unit: 'count', period: 300, evalPeriods: 2, comparison: 'LessThanLowerOrGreaterThanUpperThreshold', missingData: 'breaching' }],
+  'S3': [{ name: '4xx error rate > 5%', cost: 0.10, metric: '4xxErrors', threshold: 5, unit: '%', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'EKS': [{ name: 'Pod restart rate > 5/hr', cost: 0.10, metric: 'pod_restart_count', threshold: 5, unit: '/hr', period: 3600, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }, { name: 'Node CPU > 85%', cost: 0.10, metric: 'node_cpu_utilization', threshold: 85, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Pending pods > 0', cost: 0.10, metric: 'pending_pods', threshold: 0, unit: 'count', period: 300, evalPeriods: 3, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'SageMaker': [{ name: 'Model latency p99 > 300ms', cost: 0.10, metric: 'ModelLatency', threshold: 300, unit: 'ms', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'missing' }, { name: 'Invocation 5xx > 0', cost: 0.10, metric: 'Invocation5XXErrors', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'Kinesis': [{ name: 'Iterator age > 60s', cost: 0.10, metric: 'GetRecords.IteratorAgeMilliseconds', threshold: 60000, unit: 'ms', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Throughput exceeded', cost: 0.10, metric: 'ReadProvisionedThroughputExceeded', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
+  'MSK': [{ name: 'Consumer lag > 1000', cost: 0.10, metric: 'EstimatedMaxTimeLag', threshold: 1000, unit: 'ms', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }, { name: 'Disk usage > 85%', cost: 0.10, metric: 'KafkaDataLogsDiskUsed', threshold: 85, unit: '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' }],
+  'Bedrock Agent': [{ name: 'Invocation latency > 5s', cost: 0.10, metric: 'InvocationLatency', threshold: 5000, unit: 'ms', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'missing' }, { name: 'Invocation errors > 0', cost: 0.10, metric: 'InvocationErrors', threshold: 0, unit: 'count', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' }],
 }
 
 const logConfigs = {
@@ -50,7 +50,7 @@ export function getInvestigation(widgetType, context = {}) {
       const noAlarms = svcs.filter(s => !s.hasAlarms)
       const items = noAlarms.flatMap(s => {
         const cfgs = alarmConfigs[s.type] || [{ name: 'Basic health alarm', cost: 0.10 }]
-        return cfgs.map((c, i) => ({ id: `alarm-${s.name}-${i}`, name: `${s.name} — ${c.name}`, description: s.type, cost: c.cost, defaultOn: true }))
+        return cfgs.map((c, i) => ({ id: `alarm-${s.name}-${i}`, name: `${s.name} — ${c.name}`, description: s.type, cost: c.cost, defaultOn: true, config: { metric: c.metric, threshold: c.threshold, unit: c.unit, period: c.period, evalPeriods: c.evalPeriods, comparison: c.comparison, missingData: c.missingData } }))
       })
       return {
         title: 'Create Recommended Alarms',
@@ -226,6 +226,27 @@ export function getInvestigation(widgetType, context = {}) {
         ],
         selectableItems: items,
         followUps: ['Which logs do I query most?', 'Can I switch back to Standard later?', 'What about retention policies?'],
+      }
+    })(),
+
+    // ─── Insight (analysis + specific action CTA) ─────────────────
+    'insight': (() => {
+      const label = context.label || context.title || 'Metric insight'
+      return {
+        title: label,
+        subtitle: `Analysis for ${appName}`,
+        messages: [
+          { type: 'text', content: `I noticed something worth investigating in ${appName}. Here's what I found:` },
+          { type: 'chart', label: `${label} (24h)`, base: context.base || 65, variance: context.variance || 25, color: context.color || '#0ea5e9', unit: context.unit || '' },
+          { type: 'steps', steps: [
+            { action: 'Analyzed metric trend', result: 'Detected a pattern that deviates from the baseline', status: 'found' },
+            { action: 'Checked correlated metrics', result: 'No matching deployment or config change', status: 'clear' },
+            { action: 'Evaluated impact', result: 'Could affect availability if trend continues', status: 'found' },
+          ]},
+          { type: 'finding', severity: 'warning', title: 'Proactive action recommended', content: 'This metric is trending in a direction that could become problematic. Consider creating an alarm to catch it early.' },
+          { type: 'actions' },
+        ],
+        followUps: ['Create an alarm for this metric', 'Show me the raw data', 'What could be causing this?', 'Compare with last week'],
       }
     })(),
 

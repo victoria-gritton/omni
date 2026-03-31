@@ -5,9 +5,10 @@ import {
   WaveTriangle, FileText, Path, Broadcast, Cpu,
   CheckCircle, Globe, Lightning, Gauge,
   Download, Rocket, Info, CaretRight, CaretDown,
-  CheckSquare, Square, Code, Play, X,
+  CheckSquare, Square, Code, Play, X, Gear,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
+import { AlarmConfigModal } from '../components/AlarmConfigModal'
 import { getAllRecommendedItems } from '../data/recommendations'
 
 const severityColors = {
@@ -19,7 +20,7 @@ const severityColors = {
 
 const categoryIcons = {
   alarms: Bell, logs: FileText, traces: Path, dashboards: ChartBar,
-  anomaly: WaveTriangle, slos: Gauge, 'cross-account': Globe, 'cw-agent': Cpu,
+  anomaly: WaveTriangle, slos: Gauge, 'cross-account': Globe, 'cw-agent': Cpu, 'alarm-actions': Bell,
 }
 
 const useCaseIcons = {
@@ -29,10 +30,19 @@ const useCaseIcons = {
 // ─── IaC Modal ────────────────────────────────────────────────────
 function IaCModal({ onClose, selectedGaps, persona }) {
   const [format, setFormat] = useState('cloudformation')
+  const [showShare, setShowShare] = useState(false)
+  const [shareMethod, setShareMethod] = useState('slack')
+  const [shareDestination, setShareDestination] = useState('')
+  const [shareMessage, setShareMessage] = useState(`Here's the CloudWatch observability setup I'd like to deploy. Please review and approve.`)
   const formats = [
     { id: 'cloudformation', label: 'CloudFormation' },
     { id: 'terraform', label: 'Terraform' },
     { id: 'json', label: 'JSON' },
+  ]
+  const shareMethods = [
+    { id: 'slack', label: 'Slack', placeholder: '#ops-team or @admin', icon: '💬' },
+    { id: 'email', label: 'Email', placeholder: 'admin@company.com', icon: '✉️' },
+    { id: 'jira', label: 'Jira', placeholder: 'OPS-123 or project key', icon: '🎫' },
   ]
 
   const resourceCount = selectedGaps.reduce((sum, g) => sum + g.fixCount, 0)
@@ -84,24 +94,80 @@ resource "aws_cloudwatch_metric_alarm" "${g.id.replace('g-', '').replace('-', '_
             }, null, 2)}
           </pre>
         </div>
-        <div className="flex items-center justify-between p-4 border-t border-border-muted">
-          <span className="text-[10px] text-foreground-disabled">Preview only — full template generated on export</span>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
-              Copy to clipboard
-            </button>
-            <button className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors flex items-center gap-1.5">
-              <Download size={14} /> Download
-            </button>
+        <div className="p-4 border-t border-border-muted">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-foreground-disabled">Preview only — full template generated on export</span>
+            <div className="flex gap-2">
+              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
+                Copy to clipboard
+              </button>
+              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+                <Download size={14} /> Download
+              </button>
+              <button onClick={() => setShowShare(!showShare)} className={`px-4 py-2 rounded-lg text-body-s font-medium transition-colors flex items-center gap-1.5 ${showShare ? 'bg-primary text-white' : 'bg-primary hover:bg-primary-hover text-white'}`}>
+                Share
+              </button>
+            </div>
           </div>
+
+          {showShare && (
+            <div className="mt-4 pt-4 border-t border-border-muted/30">
+              <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-2">Share with</p>
+              <div className="flex gap-2 mb-3">
+                {shareMethods.map(m => (
+                  <button key={m.id} onClick={() => setShareMethod(m.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${shareMethod === m.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
+                    <span>{m.icon}</span> {m.label}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={shareDestination}
+                onChange={(e) => setShareDestination(e.target.value)}
+                placeholder={shareMethods.find(m => m.id === shareMethod)?.placeholder}
+                className="w-full h-9 rounded-lg bg-background-surface-1 border border-border-muted px-3 text-[12px] text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 transition-colors mb-2"
+              />
+              <textarea
+                value={shareMessage}
+                onChange={(e) => setShareMessage(e.target.value)}
+                rows={2}
+                className="w-full rounded-lg bg-background-surface-1 border border-border-muted px-3 py-2 text-[11px] text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 transition-colors resize-none mb-3"
+              />
+              <button className="w-full px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium transition-colors">
+                Send via {shareMethods.find(m => m.id === shareMethod)?.label}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
+// ─── Inline Config Editor ──────────────────────────────────────────
+function ConfigEditor({ config }) {
+  if (!config) return null
+  const [threshold, setThreshold] = useState(config.threshold ?? '')
+  const [period, setPeriod] = useState(config.period || 300)
+  const [evalPeriods, setEvalPeriods] = useState(config.evalPeriods || 1)
+  const [missingData, setMissingData] = useState(config.missingData || 'missing')
+  const periodOpts = [{ v: 60, l: '1 min' }, { v: 300, l: '5 min' }, { v: 900, l: '15 min' }, { v: 3600, l: '1 hour' }]
+  const missingOpts = [{ v: 'breaching', l: 'Treat as breaching' }, { v: 'notBreaching', l: 'Not breaching' }, { v: 'missing', l: 'Treat as missing' }]
+  return (
+    <div className="mt-1 mb-1 ml-6 p-2.5 rounded-lg bg-background/40 border border-border-muted/20">
+      <div className="grid grid-cols-2 gap-2">
+        {config.threshold !== null && <div><label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Threshold ({config.unit})</label><input type="number" value={threshold} onChange={(e) => setThreshold(e.target.value)} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40" /></div>}
+        <div><label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Period</label><select value={period} onChange={(e) => setPeriod(+e.target.value)} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40">{periodOpts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}</select></div>
+        <div><label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Eval periods</label><input type="number" value={evalPeriods} onChange={(e) => setEvalPeriods(+e.target.value)} min={1} max={10} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40" /></div>
+        <div><label className="text-[8px] text-foreground-disabled uppercase tracking-wider">Missing data</label><select value={missingData} onChange={(e) => setMissingData(e.target.value)} className="w-full h-7 mt-0.5 rounded bg-background-surface-1 border border-border-muted px-2 text-[10px] text-foreground focus:outline-none focus:border-primary/40">{missingOpts.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}</select></div>
+      </div>
+      <p className="text-[8px] text-foreground-disabled mt-1.5">Metric: {config.metric} · Comparison: {config.comparison}</p>
+    </div>
+  )
+}
+
 // ─── Gap Card with Tree Select ────────────────────────────────────
-function GapCard({ gap, selectedItems, onToggleGap, onToggleService, onToggleItem, scopedServices }) {
+function GapCard({ gap, selectedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureAlarm }) {
   const Icon = categoryIcons[gap.category] || Lightning
   const [expanded, setExpanded] = useState(false)
   const colorClass = severityColors[gap.severity] || severityColors.medium
@@ -116,8 +182,9 @@ function GapCard({ gap, selectedItems, onToggleGap, onToggleService, onToggleIte
 
   const totalItems = gap.items?.length || 0
   const selectedCount = gap.items?.filter(i => selectedItems.has(i.id)).length || 0
-  const allSelected = totalItems > 0 && selectedCount === totalItems
-  const someSelected = selectedCount > 0 && selectedCount < totalItems
+  const isGapSelected = totalItems === 0 && selectedItems.has(gap.id)
+  const allSelected = isGapSelected || (totalItems > 0 && selectedCount === totalItems)
+  const someSelected = !isGapSelected && selectedCount > 0 && selectedCount < totalItems
 
   return (
     <div className={`glass-card p-4 transition-all ${selectedCount > 0 ? 'border-primary/40' : ''}`}>
@@ -180,16 +247,18 @@ function GapCard({ gap, selectedItems, onToggleGap, onToggleService, onToggleIte
                 </div>
                 <div className="ml-6 mt-1 flex flex-col gap-0.5">
                   {items.map(item => (
-                    <div key={item.id} className="flex items-center gap-2 py-0.5">
-                      <button onClick={() => onToggleItem(item.id)} className="flex-shrink-0">
-                        {selectedItems.has(item.id)
-                          ? <CheckSquare size={12} weight="fill" className="text-primary" />
-                          : <Square size={12} className="text-foreground-disabled hover:text-foreground-muted" />
-                        }
-                      </button>
-                      <span className="text-[10px] text-foreground-muted">{item.name}</span>
-                      {item.threshold && <span className="text-[9px] text-foreground-disabled">({item.threshold})</span>}
-                      {item.description && <span className="text-[9px] text-foreground-disabled">— {item.description}</span>}
+                    <div key={item.id}>
+                      <div className="flex items-center gap-2 py-0.5">
+                        <button onClick={() => onToggleItem(item.id)} className="flex-shrink-0">
+                          {selectedItems.has(item.id)
+                            ? <CheckSquare size={12} weight="fill" className="text-primary" />
+                            : <Square size={12} className="text-foreground-disabled hover:text-foreground-muted" />
+                          }
+                        </button>
+                        <span className="text-[10px] text-foreground-muted flex-1">{item.name}</span>
+                        {item.threshold && <span className="text-[9px] text-foreground-disabled">({item.threshold})</span>}
+                        {item.config && <button onClick={() => onConfigureAlarm?.(item)} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -374,12 +443,14 @@ function ActivityItem({ item, isLast }) {
 // ─── Main Page ────────────────────────────────────────────────────
 export default function Day0Page() {
   const [input, setInput] = useState('')
+  const navigate = useNavigate()
   const { persona } = usePersona()
   const { user, applications, gaps, cost, useCases, agentActivity } = persona
 
   const [activeApp, setActiveApp] = useState('all')
   const [selectedItems, setSelectedItems] = useState(new Set())
   const [showIaCModal, setShowIaCModal] = useState(false)
+  const [alarmConfigItem, setAlarmConfigItem] = useState(null)
 
   const firstName = user.name.split(' ')[0]
   const allServices = applications.flatMap(a => a.services)
@@ -415,7 +486,7 @@ export default function Day0Page() {
       result.push({ id: 'g-traces', category: 'traces', title: `No tracing on ${noTraces.length} service${noTraces.length > 1 ? 's' : ''}`, description: `${noTraces.length} of ${total} services have no X-Ray tracing enabled.`, severity: 'high', services: noTraces.length, fixCount: items.length, fixLabel: `${items.length} trace configurations`, items })
     }
 
-    const extraGapIds = ['g-dashboards', 'g-anomaly', 'g-slos', 'g-cross-account', 'g-cw-agent', 'g-stale']
+    const extraGapIds = ['g-dashboards', 'g-anomaly', 'g-slos', 'g-cross-account', 'g-cw-agent', 'g-stale', 'g-no-actions']
     for (const g of gaps) {
       if (!extraGapIds.includes(g.id)) continue
       if (activeApp === 'all' || g.appIds?.includes('all') || g.appIds?.includes(activeApp)) {
@@ -489,8 +560,9 @@ export default function Day0Page() {
           <Sparkle size={16} className="text-primary" weight="fill" />
           <span className="text-[11px] text-primary font-medium">Agent active</span>
         </div>
+        <button onClick={() => navigate('/day0')} className="text-[11px] text-primary hover:text-primary-hover mb-2 flex items-center gap-1">← Back to overview</button>
         <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-          Welcome, {firstName}
+          Observability Gaps
         </h1>
         <p className="text-body-m text-foreground-muted mt-1">
           I found {allServices.length} services across {applications.length} applications. Here's your observability posture.
@@ -532,17 +604,49 @@ export default function Day0Page() {
             </div>
             <div className="flex flex-col gap-2">
               {computedGaps.map(gap => (
-                <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} />
+                <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureAlarm={setAlarmConfigItem} />
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <div className="flex flex-col gap-4">
+        {/* Right sidebar — sticky */}
+        <div className="flex flex-col gap-4 self-start sticky top-6">
 
-          {/* Posture summary */}
-          <PostureSummary applications={applications} activeApp={activeApp} />
+          {/* Selection summary + actions */}
+          <div className="glass-card p-4">
+            <h3 className="text-body-s font-semibold text-foreground mb-3">Selection Summary</h3>
+            {totalSelected > 0 ? (
+              <>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-[11px] text-foreground-muted">{totalSelected} items selected</span>
+                  <span className="text-[11px] text-foreground-disabled">{selectedGapIds.size} categories</span>
+                </div>
+                <div className="flex flex-col gap-1 mb-3">
+                  {computedGaps.filter(g => selectedGapIds.has(g.id)).map(g => {
+                    const count = g.items ? g.items.filter(i => selectedItems.has(i.id)).length : 1
+                    return (
+                      <div key={g.id} className="flex items-center justify-between py-0.5">
+                        <span className="text-[10px] text-foreground-muted truncate">{g.title}</span>
+                        <span className="text-[9px] text-foreground-disabled">{count} items</span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium transition-colors">
+                    <Play size={12} /> Apply now
+                  </button>
+                  <button onClick={() => setShowIaCModal(true)} className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2 transition-colors">
+                    <Code size={12} /> Export as code
+                  </button>
+                  <button onClick={() => setSelectedItems(new Set())} className="text-[10px] text-foreground-muted hover:text-foreground text-center py-1">Clear selection</button>
+                </div>
+              </>
+            ) : (
+              <p className="text-[10px] text-foreground-disabled">Select gaps from the list to see a summary and take action.</p>
+            )}
+          </div>
 
           {/* Cost breakdown */}
           <CostBreakdown cost={cost} computedGaps={computedGaps} selectedItems={selectedItems} />
@@ -558,45 +662,17 @@ export default function Day0Page() {
               <button className="absolute right-1.5 top-1.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"><PaperPlaneRight size={12} /></button>
             </div>
           </div>
-
-          {/* Agent activity */}
-          <div className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Sparkle size={14} className="text-primary" weight="fill" />
-              <h3 className="text-body-s font-semibold text-foreground">Agent Activity</h3>
-            </div>
-            <div className="flex flex-col">
-              {agentActivity.map((item, i) => <ActivityItem key={i} item={item} isLast={i === agentActivity.length - 1} />)}
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* Sticky action bar */}
-      {totalSelected > 0 && (
-        <div className="fixed bottom-0 left-14 right-0 z-40 border-t border-border-muted bg-background/90 backdrop-blur-lg px-6 py-3">
-          <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CheckCircle size={16} className="text-primary" />
-              <span className="text-body-s text-foreground">{totalSelected} items selected</span>
-              <span className="text-[11px] text-foreground-muted">across {selectedGapIds.size} gap categories</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setSelectedItems(new Set())} className="text-[11px] text-foreground-muted hover:text-foreground">Clear</button>
-              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
-                <Play size={14} /> Apply now
-              </button>
-              <button onClick={() => setShowIaCModal(true)} className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors flex items-center gap-1.5">
-                <Code size={14} /> Export as code
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* IaC Modal */}
       {showIaCModal && (
         <IaCModal onClose={() => setShowIaCModal(false)} selectedGaps={computedGaps.filter(g => selectedGapIds.has(g.id))} persona={persona} />
+      )}
+
+      {/* Alarm Config Modal */}
+      {alarmConfigItem && (
+        <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={(cfg) => { setAlarmConfigItem(null) }} />
       )}
     </div>
   )

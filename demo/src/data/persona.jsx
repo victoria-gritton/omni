@@ -116,6 +116,7 @@ const maria = {
     { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Baselines exist from 14 days of auto-collected metrics but no anomaly detectors are configured.', severity: 'medium', services: 0, fixCount: 5, fixLabel: '5 anomaly detectors' },
     { id: 'g-slos', category: 'slos', appIds: ['novamart-checkout'], title: 'No SLOs defined', description: 'No Service Level Objectives configured. Recommended for the checkout critical path.', severity: 'low', services: 0, fixCount: 3, fixLabel: '3 SLOs' },
     { id: 'g-cw-agent', category: 'cw-agent', appIds: ['all'], title: 'CloudWatch Agent not installed', description: 'None of your 6 ECS services have the CW Agent. Missing memory, disk, and custom metrics.', severity: 'high', services: 6, fixCount: 6, fixLabel: '6 agent deployments' },
+    { id: 'g-no-actions', category: 'alarm-actions', appIds: ['all'], title: 'No alarm actions configured', description: 'Alarms will detect issues but won\'t notify anyone. Configure SNS, Slack, or email routing.', severity: 'medium', services: 0, fixCount: 0, fixLabel: 'Configure routing' },
   ],
 
   // Cost data
