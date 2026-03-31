@@ -65,4 +65,21 @@ export const incident = {
     { id: 'scale', label: 'Scale out payment service', description: 'Adds 2 more tasks to spread the load across more instances.', risk: 'low' },
     { id: 'rollback', label: 'Rollback task definition', description: 'Reverts to the previous task definition from 3 days ago.', risk: 'medium' },
   ],
+
+  // Log snapshot — auto-pulled by Lambda when alarm fired (Logs Insights query)
+  logSnapshot: {
+    query: 'fields @timestamp, @message | filter @message like /OutOfMemory|OOM|killed/ | filter service = "payment-service-east-2" | sort @timestamp desc | limit 8',
+    queryTime: '1.2s',
+    logGroup: '/ecs/payment-service-east-2',
+    lines: [
+      { ts: '2:03:12', level: 'ERROR', msg: 'Container killed: OutOfMemoryError — memory limit 512MB exceeded (current: 511MB)' },
+      { ts: '2:02:48', level: 'ERROR', msg: 'Container killed: OutOfMemoryError — memory limit 512MB exceeded (current: 509MB)' },
+      { ts: '2:01:15', level: 'WARN',  msg: 'Memory usage 98% (502MB/512MB) — approaching limit' },
+      { ts: '1:58:33', level: 'ERROR', msg: 'Container killed: OutOfMemoryError — memory limit 512MB exceeded (current: 512MB)' },
+      { ts: '1:55:02', level: 'ERROR', msg: 'Container killed: OutOfMemoryError — memory limit 512MB exceeded (current: 510MB)' },
+      { ts: '1:52:41', level: 'WARN',  msg: 'Memory usage 95% (486MB/512MB) — approaching limit' },
+      { ts: '1:52:18', level: 'ERROR', msg: 'Container killed: OutOfMemoryError — memory limit 512MB exceeded (current: 511MB)' },
+      { ts: '1:47:05', level: 'WARN',  msg: 'Memory usage 90% (461MB/512MB) — threshold crossed' },
+    ],
+  },
 }

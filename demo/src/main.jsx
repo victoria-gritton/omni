@@ -9,6 +9,8 @@ import LandingPage from './pages/LandingPage'
 import DevOpsFlowPage from './pages/DevOpsFlowPage'
 import DevOpsConsoleView from './pages/DevOpsConsoleView'
 import CoffeeView from './pages/CoffeeView'
+import BitchatView from './pages/BitchatView'
+import SlackView from './pages/SlackView'
 import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
 import QueryStudioPage from './pages/QueryStudioPage'
@@ -28,6 +30,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/devops-console" element={<ConsoleLayout><DevOpsConsoleView /></ConsoleLayout>} />
           <Route path="/watch" element={<WatchView />} />
           <Route path="/phone" element={<PhoneView />} />
+          <Route path="/bitchat" element={<BitchatView />} />
+          <Route path="/slack" element={<SlackView />} />
           <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />

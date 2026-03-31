@@ -123,8 +123,8 @@ function getAIResponse(input) {
 
 const PAGE_CONTEXT = {
   '/console': {
-    greeting: "I'm investigating INC-2847. Payment-service in east-2 is hitting memory limits. What would you like to know?",
-    prompts: ['What caused this?', 'How many users affected?', 'Should we rollback?', 'Generate post-mortem'],
+    greeting: "You acknowledged INC-2847 from your phone. I've been investigating since 2:03 AM — here's what I found. The investigation is loaded on the left. What would you like to dig into?",
+    prompts: ['Show me the OOM kill logs', 'What are the memory limits set to?', 'How do I scale up the tasks?', 'Who else is on-call tonight?'],
     placeholder: 'Ask about this incident...',
   },
   '/home': {
@@ -423,7 +423,7 @@ export default function ConsoleLayout({ children }) {
             <ChatContext.Provider value={{ openChat, chatOpen }}>
               <div className="px-4 pt-2">
                 <nav className="flex items-center gap-1 text-[11px]">
-                  <span className="text-foreground-muted">CW<sup className="text-primary">+</sup></span>
+                  <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
                     {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
