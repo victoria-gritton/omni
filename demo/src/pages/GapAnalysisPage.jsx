@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   PaperPlaneRight, Bell, ChartBar, Sparkle, Robot, ArrowRight,
-  WaveTriangle, FileText, Path, Broadcast,
+  WaveTriangle, FileText, Path, Broadcast, Cpu,
   CheckCircle, Globe, Lightning, Gauge,
   Download, Rocket, Info, CaretRight, CaretDown,
   CheckSquare, Square, Code, Play, X,
@@ -12,14 +12,14 @@ import { getAllRecommendedItems } from '../data/recommendations'
 
 const severityColors = {
   critical: 'text-red-400 bg-red-400/10',
-  high: 'text-status-degraded bg-status-degraded/10',
+  high: 'text-orange-400 bg-orange-400/10',
   medium: 'text-primary bg-primary/10',
   low: 'text-foreground-muted bg-foreground-muted/10',
 }
 
 const categoryIcons = {
   alarms: Bell, logs: FileText, traces: Path, dashboards: ChartBar,
-  anomaly: WaveTriangle, slos: Gauge, 'cross-account': Globe,
+  anomaly: WaveTriangle, slos: Gauge, 'cross-account': Globe, 'cw-agent': Cpu,
 }
 
 const useCaseIcons = {
@@ -415,13 +415,15 @@ export default function Day0Page() {
       result.push({ id: 'g-traces', category: 'traces', title: `No tracing on ${noTraces.length} service${noTraces.length > 1 ? 's' : ''}`, description: `${noTraces.length} of ${total} services have no X-Ray tracing enabled.`, severity: 'high', services: noTraces.length, fixCount: items.length, fixLabel: `${items.length} trace configurations`, items })
     }
 
-    const extraGapIds = ['g-dashboards', 'g-anomaly', 'g-slos', 'g-cross-account']
+    const extraGapIds = ['g-dashboards', 'g-anomaly', 'g-slos', 'g-cross-account', 'g-cw-agent', 'g-stale']
     for (const g of gaps) {
       if (!extraGapIds.includes(g.id)) continue
       if (activeApp === 'all' || g.appIds?.includes('all') || g.appIds?.includes(activeApp)) {
         result.push(g)
       }
     }
+    const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 }
+    result.sort((a, b) => (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3))
     return result
   })()
 

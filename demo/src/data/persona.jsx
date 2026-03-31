@@ -93,6 +93,20 @@ const maria = {
     },
   ],
 
+  // CloudWatch Agent coverage
+  cwAgent: {
+    installed: [],
+    notInstalled: [
+      { name: 'checkout-service', type: 'ECS Fargate', tasks: 6, workload: 'web-server', tags: { Application: 'NovaMart-Checkout', Environment: 'production' } },
+      { name: 'payment-service', type: 'ECS Fargate', tasks: 4, workload: 'web-server', tags: { Application: 'NovaMart-Checkout', Environment: 'production' } },
+      { name: 'order-service', type: 'ECS Fargate', tasks: 3, workload: 'web-server', tags: { Application: 'NovaMart-Checkout', Environment: 'production' } },
+      { name: 'user-service', type: 'ECS Fargate', tasks: 4, workload: 'web-server', tags: { Application: 'NovaMart-Platform', Environment: 'production' } },
+      { name: 'inventory-service', type: 'ECS Fargate', tasks: 2, workload: 'web-server', tags: { Application: 'NovaMart-Platform', Environment: 'production' } },
+      { name: 'search-service', type: 'ECS Fargate', tasks: 3, workload: 'web-server', tags: { Application: 'NovaMart-Catalog', Environment: 'production' } },
+    ],
+    summary: { ecs: 6, eks: 0, ec2: 0, total: 6 },
+  },
+
   // Observability gaps — selectable items for batch IaC generation
   gaps: [
     { id: 'g-alarms', category: 'alarms', appIds: ['all'], title: 'No alarms configured', description: '0 of 16 services have alarms. Recommended: 42 alarms across all services.', severity: 'critical', services: 16, fixCount: 42, fixLabel: '42 alarms' },
@@ -101,6 +115,7 @@ const maria = {
     { id: 'g-dashboards', category: 'dashboards', appIds: ['all'], title: 'No dashboards', description: 'No custom dashboards exist. Recommended: 1 production overview dashboard.', severity: 'medium', services: 16, fixCount: 1, fixLabel: '1 dashboard' },
     { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Baselines exist from 14 days of auto-collected metrics but no anomaly detectors are configured.', severity: 'medium', services: 0, fixCount: 5, fixLabel: '5 anomaly detectors' },
     { id: 'g-slos', category: 'slos', appIds: ['novamart-checkout'], title: 'No SLOs defined', description: 'No Service Level Objectives configured. Recommended for the checkout critical path.', severity: 'low', services: 0, fixCount: 3, fixLabel: '3 SLOs' },
+    { id: 'g-cw-agent', category: 'cw-agent', appIds: ['all'], title: 'CloudWatch Agent not installed', description: 'None of your 6 ECS services have the CW Agent. Missing memory, disk, and custom metrics.', severity: 'high', services: 6, fixCount: 6, fixLabel: '6 agent deployments' },
   ],
 
   // Cost data
@@ -122,8 +137,67 @@ const maria = {
     { id: 'uc-3', title: 'Enable full-stack observability', description: 'Alarms, logs, traces, dashboards, and anomaly detection for everything', icon: 'globe', gapIds: ['g-alarms', 'g-logs', 'g-traces', 'g-dashboards', 'g-anomaly'] },
   ],
 
+  // Needs your attention — ranked issues
+  attention: [
+    { id: 'att-1', severity: 'critical', category: 'coverage', title: 'No alarms on any service', description: 'None of your 16 services have CloudWatch alarms configured. You won\'t be notified of issues.', app: 'All', time: 'Detected just now' },
+    { id: 'att-2', severity: 'high', category: 'coverage', title: 'No distributed tracing', description: 'X-Ray is not enabled. You have no visibility into request flows across services.', app: 'All', time: 'Detected just now' },
+    { id: 'att-3', severity: 'high', category: 'coverage', title: '14 services missing logs', description: 'Only Lambda functions have auto-created log groups. ECS, RDS, and API Gateway need log delivery.', app: 'All', time: 'Detected just now' },
+    { id: 'att-4', severity: 'medium', category: 'insight', title: 'checkout-service CPU trending up', description: 'CPU utilization increased 15% over the past 7 days based on auto-collected metrics.', app: 'Checkout Flow', time: '7 day trend' },
+  ],
+
+  // Service dependency map per application
+  serviceMaps: {
+    'novamart-checkout': {
+      nodes: [
+        { id: 'api-gateway', label: 'API Gateway', type: 'API Gateway', status: 'unknown', x: 10, y: 50 },
+        { id: 'checkout-service', label: 'Checkout', type: 'ECS', status: 'unknown', x: 35, y: 30 },
+        { id: 'payment-service', label: 'Payment', type: 'ECS', status: 'unknown', x: 35, y: 70 },
+        { id: 'order-service', label: 'Orders', type: 'ECS', status: 'unknown', x: 60, y: 50 },
+        { id: 'orders-db', label: 'Orders DB', type: 'RDS', status: 'unknown', x: 85, y: 50 },
+      ],
+      edges: [
+        { from: 'api-gateway', to: 'checkout-service' },
+        { from: 'api-gateway', to: 'payment-service' },
+        { from: 'checkout-service', to: 'order-service' },
+        { from: 'payment-service', to: 'order-service' },
+        { from: 'order-service', to: 'orders-db' },
+      ],
+    },
+    'novamart-catalog': {
+      nodes: [
+        { id: 'search-service', label: 'Search', type: 'ECS', status: 'unknown', x: 15, y: 50 },
+        { id: 'product-catalog', label: 'Catalog DB', type: 'DynamoDB', status: 'unknown', x: 40, y: 30 },
+        { id: 'image-processor', label: 'Image Proc', type: 'Lambda', status: 'unknown', x: 40, y: 70 },
+        { id: 'cdn', label: 'CDN', type: 'CloudFront', status: 'unknown', x: 65, y: 50 },
+        { id: 'static-assets', label: 'Assets', type: 'S3', status: 'unknown', x: 85, y: 50 },
+      ],
+      edges: [
+        { from: 'search-service', to: 'product-catalog' },
+        { from: 'search-service', to: 'image-processor' },
+        { from: 'image-processor', to: 'static-assets' },
+        { from: 'cdn', to: 'static-assets' },
+      ],
+    },
+    'novamart-platform': {
+      nodes: [
+        { id: 'user-service', label: 'Users', type: 'ECS', status: 'unknown', x: 15, y: 30 },
+        { id: 'notification-service', label: 'Notifications', type: 'Lambda', status: 'unknown', x: 15, y: 70 },
+        { id: 'session-cache', label: 'Session Cache', type: 'Redis', status: 'unknown', x: 45, y: 30 },
+        { id: 'users-db', label: 'Users DB', type: 'RDS', status: 'unknown', x: 45, y: 70 },
+        { id: 'inventory-service', label: 'Inventory', type: 'ECS', status: 'unknown', x: 75, y: 30 },
+        { id: 'event-bus', label: 'Event Bus', type: 'SNS/SQS', status: 'unknown', x: 75, y: 70 },
+      ],
+      edges: [
+        { from: 'user-service', to: 'session-cache' },
+        { from: 'user-service', to: 'users-db' },
+        { from: 'notification-service', to: 'event-bus' },
+        { from: 'inventory-service', to: 'event-bus' },
+        { from: 'inventory-service', to: 'users-db' },
+      ],
+    },
+  },
+
   agentActivity: [
-    { time: 'Just now', action: 'Scanned 2 accounts, discovered 16 services across 3 regions' },
     { time: 'Just now', action: 'Grouped services into 3 applications by tags' },
     { time: 'Just now', action: 'Found 0 alarms, 0 dashboards, 0 traces configured' },
     { time: 'Just now', action: 'Analyzed 14 days of default metrics for baselines' },
@@ -244,6 +318,21 @@ const james = {
     },
   ],
 
+  cwAgent: {
+    installed: [],
+    notInstalled: [
+      { name: 'payments-cluster', type: 'EKS', pods: 180, workload: 'payment-processing', tags: { Application: 'Meridian-Payments', Environment: 'production' } },
+      { name: 'trading-cluster', type: 'EKS', pods: 220, workload: 'trading-engine', tags: { Application: 'Meridian-Trading', Environment: 'production' } },
+      { name: 'analytics-cluster', type: 'EKS', pods: 80, workload: 'analytics', tags: { Application: 'Meridian-Compliance', Environment: 'production' } },
+      { name: 'auth-service', type: 'ECS Fargate', tasks: 12, workload: 'auth', tags: { Application: 'Meridian-Core', Environment: 'production' } },
+      { name: 'account-service', type: 'ECS Fargate', tasks: 8, workload: 'web-server', tags: { Application: 'Meridian-Core', Environment: 'production' } },
+      { name: 'notification-hub', type: 'ECS Fargate', tasks: 4, workload: 'worker', tags: { Application: 'Meridian-Core', Environment: 'production' } },
+      { name: 'compliance-engine', type: 'ECS Fargate', tasks: 6, workload: 'compliance', tags: { Application: 'Meridian-Compliance', Environment: 'production' } },
+      { name: 'kyc-service', type: 'ECS Fargate', tasks: 4, workload: 'web-server', tags: { Application: 'Meridian-Compliance', Environment: 'eu-central-1' } },
+    ],
+    summary: { ecs: 5, eks: 3, ec2: 0, total: 8 },
+  },
+
   gaps: [
     { id: 'g-stale', category: 'alarms', appIds: ['all'], title: '52 stale/misconfigured alarms', description: 'Orphaned alarms for deleted resources, outdated thresholds, and duplicate alarms across accounts.', severity: 'critical', services: 8, fixCount: 52, fixLabel: '52 alarms to fix' },
     { id: 'g-alarms', category: 'alarms', appIds: ['meridian-trading', 'meridian-compliance'], title: '14 services have no alarms', description: 'EKS clusters, Lambda functions, Kinesis, MSK, and SageMaker endpoints have no alarm coverage.', severity: 'critical', services: 14, fixCount: 91, fixLabel: '91 new alarms' },
@@ -253,6 +342,7 @@ const james = {
     { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Historical data available but no anomaly detectors configured across any service.', severity: 'medium', services: 0, fixCount: 28, fixLabel: '28 anomaly detectors' },
     { id: 'g-slos', category: 'slos', appIds: ['meridian-payments'], title: 'No SLOs (PCI-DSS gap)', description: 'PCI-DSS compliance requires documented SLOs on payment processing. None configured.', severity: 'critical', services: 0, fixCount: 5, fixLabel: '5 SLOs' },
     { id: 'g-cross-account', category: 'cross-account', appIds: ['all'], title: 'No cross-account observability', description: '12 accounts operate in silos. No unified view of metrics, logs, or traces across accounts.', severity: 'high', services: 22, fixCount: 1, fixLabel: '1 observability access manager config' },
+    { id: 'g-cw-agent', category: 'cw-agent', appIds: ['all'], title: 'CloudWatch Agent not installed', description: 'None of your 5 ECS services or 3 EKS clusters have the CW Agent. Missing memory, disk, and custom metrics on 8 compute resources.', severity: 'high', services: 8, fixCount: 8, fixLabel: '8 agent deployments' },
   ],
 
   cost: {
@@ -287,6 +377,41 @@ const james = {
     { id: 'uc-4', title: 'Unified cross-account view', description: 'Link all 12 accounts for single-pane observability across 5 regions', icon: 'globe', gapIds: ['g-cross-account', 'g-dashboards'] },
     { id: 'uc-5', title: 'PCI-DSS compliance', description: 'SLOs, audit logging, and compliance dashboards for payment processing', icon: 'gauge', gapIds: ['g-slos', 'g-logs', 'g-dashboards'] },
   ],
+
+  attention: [
+    { id: 'att-1', severity: 'critical', category: 'alarm', title: 'transactions-db CPU at 76%', description: 'Aurora PostgreSQL CPU approaching 80% threshold. Connection count also elevated at 340/500.', app: 'Payments Platform', time: '12 min ago' },
+    { id: 'att-2', severity: 'critical', category: 'coverage', title: '52 stale alarms across 4 accounts', description: 'Orphaned alarms for deleted resources, outdated thresholds. Generating noise and masking real issues.', app: 'All', time: 'Detected just now' },
+    { id: 'att-3', severity: 'high', category: 'alarm', title: 'fraud-model latency approaching SLA', description: 'p99 latency at 290ms, SLA is 300ms. Trending upward over the past week — possible data drift.', app: 'Payments Platform', time: '25 min ago' },
+    { id: 'att-4', severity: 'high', category: 'coverage', title: 'No distributed tracing on any service', description: 'X-Ray/ADOT not enabled across 22 services and 12 accounts. No request flow visibility.', app: 'All', time: 'Detected just now' },
+    { id: 'att-5', severity: 'high', category: 'compliance', title: 'No SLOs defined (PCI-DSS gap)', description: 'PCI-DSS compliance requires documented SLOs on payment processing. None configured.', app: 'Payments Platform', time: 'Compliance' },
+    { id: 'att-6', severity: 'medium', category: 'insight', title: 'MSK consumer lag increasing', description: 'event-backbone consumer lag at 342 messages, up 40% from yesterday. Processing may be falling behind.', app: 'Trading Engine', time: '1 hour trend' },
+    { id: 'att-7', severity: 'medium', category: 'cost', title: 'Datadog running in parallel', description: '4 accounts still have Datadog agents. Consolidating could save ~$8,000/mo.', app: 'All', time: 'Optimization' },
+    { id: 'att-8', severity: 'low', category: 'insight', title: 'analytics-cluster underutilized', description: 'EKS cluster in eu-west-1 running at 22% CPU. Consider scaling down or consolidating workloads.', app: 'Compliance & Analytics', time: '7 day avg' },
+  ],
+
+  serviceMaps: {
+    'meridian-payments': {
+      nodes: [
+        { id: 'public-api', label: 'Public API', type: 'API GW', status: 'healthy', x: 5, y: 50 },
+        { id: 'payments-cluster', label: 'Payments EKS', type: 'EKS', status: 'warning', x: 30, y: 30 },
+        { id: 'transaction-processor', label: 'Txn Processor', type: 'Lambda', status: 'healthy', x: 30, y: 70 },
+        { id: 'fraud-scorer', label: 'Fraud Scorer', type: 'Lambda', status: 'healthy', x: 55, y: 30 },
+        { id: 'fraud-model', label: 'Fraud Model', type: 'SageMaker', status: 'warning', x: 55, y: 70 },
+        { id: 'transactions-db', label: 'Txn DB', type: 'Aurora', status: 'warning', x: 80, y: 50 },
+        { id: 'transaction-stream', label: 'Kinesis', type: 'Kinesis', status: 'healthy', x: 80, y: 15 },
+      ],
+      edges: [
+        { from: 'public-api', to: 'payments-cluster' },
+        { from: 'public-api', to: 'transaction-processor' },
+        { from: 'payments-cluster', to: 'fraud-scorer' },
+        { from: 'payments-cluster', to: 'transactions-db' },
+        { from: 'transaction-processor', to: 'fraud-model' },
+        { from: 'transaction-processor', to: 'transactions-db' },
+        { from: 'fraud-scorer', to: 'fraud-model' },
+        { from: 'transactions-db', to: 'transaction-stream' },
+      ],
+    },
+  },
 
   agentActivity: [
     { time: 'Just now', action: 'Scanned 12 accounts across 5 regions, discovered 22 services' },
