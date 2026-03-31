@@ -386,6 +386,7 @@ export default function CoffeeView() {
   const [showSuggestion, setShowSuggestion] = useState(false)
   const [confirmTypingDone, setConfirmTypingDone] = useState(false)
   const [tileMenu, setTileMenu] = useState(null)
+  const [feedFilter, setFeedFilter] = useState('all')
 
   useEffect(() => { if (act===1) { const t=setTimeout(()=>setShowChart(true),600); return ()=>clearTimeout(t) } }, [act])
   useEffect(() => { if (showChart) { const t=setTimeout(()=>setShowSuggestion(true),800); return ()=>clearTimeout(t) } }, [showChart])
@@ -466,26 +467,55 @@ export default function CoffeeView() {
               {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => openChat(p)} />)}
             </div>
 
-            {/* Observability Feed + Right sidebar */}
-            {/* Feed 50% | Tasks 25% | Investigations 25% */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
-              {/* Observability Feed — 2/4 cols */}
+            {/* Observability Feed + Recommendations */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+              {/* Observability Feed — 2/3 cols */}
               <div className="lg:col-span-2 glass-card p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
-                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length} issues</span>
+                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{investigations.length + feedItems.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-status-active animate-pulse" />
-                    <span className="text-[10px] text-foreground-muted">Agent monitoring</span>
+                  <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-background-surface-2/50">
+                    {['all', 'investigations', 'alarms', 'resolved'].map(f => (
+                      <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
+                        {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                      </button>
+                    ))}
                   </div>
                   <TileMenu id="feed" />
                 </div>
               </div>
               <div className="space-y-0">
-                {feedItems.map((item, i) => (
+                {/* Investigations at the top */}
+                {(feedFilter === 'all' || feedFilter === 'investigations') && investigations.map(inv => (
+                  <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-2 px-2 -mx-2 border-b border-border-muted/50 last:border-0 hover:bg-background-surface-2/30 rounded-lg transition-colors cursor-pointer">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':inv.status==='paused'?'bg-status-blocked':'bg-foreground-disabled'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
+                        <span className="text-[9px] text-foreground-disabled">{inv.id}</span>
+                      </div>
+                      <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
+                      <span className="text-[10px] text-foreground-disabled">{inv.started}</span>
+                      <CaretRight size={12} className="text-foreground-disabled" />
+                    </div>
+                  </div>
+                ))}
+                {/* Feed items */}
+                {feedItems
+                  .filter(item => {
+                    if (feedFilter === 'all') return true
+                    if (feedFilter === 'investigations') return false
+                    if (feedFilter === 'alarms') return item.severity === 'critical' || item.severity === 'warning'
+                    if (feedFilter === 'resolved') return item.severity === 'resolved'
+                    return true
+                  })
+                  .map((item, i) => (
                   <FeedItem key={i} {...item} expanded={expandedFeed === i} onToggle={() => setExpandedFeed(expandedFeed === i ? null : i)} />
                 ))}
               </div>
@@ -521,31 +551,6 @@ export default function CoffeeView() {
                 </div>
               </div>
 
-              {/* Investigations */}
-              <div className="glass-card p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <MagnifyingGlassPlus size={14} className="text-foreground-muted" />
-                    <h3 className="text-heading-xs font-normal text-foreground">Investigations</h3>
-                  </div>
-                  <TileMenu id="investigations" />
-                </div>
-                <div className="space-y-2">
-                  {investigations.map(inv => (
-                    <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':'bg-foreground-disabled'}`} />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
-                          <span className="text-[10px] text-foreground-disabled">· {inv.started}</span>
-                        </div>
-                      </div>
-                      <CaretRight size={12} className="text-foreground-disabled flex-shrink-0" />
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Monitored Systems + Service Topology */}
