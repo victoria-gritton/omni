@@ -490,7 +490,6 @@ export default function CoffeeView() {
                 {/* Investigations at the top */}
                 {(feedFilter === 'all' || feedFilter === 'investigations') && investigations.map(inv => (
                   <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-2 px-2 -mx-2 border-b border-border-muted/50 last:border-0 hover:bg-background-surface-2/30 rounded-lg transition-colors cursor-pointer">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':inv.status==='paused'?'bg-status-blocked':'bg-foreground-disabled'}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
