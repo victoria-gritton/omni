@@ -27,7 +27,7 @@ export default function DevOpsFlowPage() {
       <div className="content-layer flex flex-col flex-1">
         <div className="flex items-center justify-between px-6 py-3">
           <span className="text-[11px] text-foreground-muted">2AM Flow: DevOps</span>
-          <a href="#/" className="text-[11px] text-link">← Demos</a>
+          <a href="#/" className="text-[11px] text-link">Demos</a>
         </div>
         <iframe
           srcDoc={devopsFlowHtml}
