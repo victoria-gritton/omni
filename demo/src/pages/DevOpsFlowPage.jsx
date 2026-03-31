@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import devopsHtml from './devops-flow-html.html?raw'
 
 export default function DevOpsFlowPage() {
   const [blobUrl, setBlobUrl] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const blob = new Blob([devopsHtml], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     setBlobUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [])
+    const handler = (e) => {
+      if (e.data === 'navigate-devops-console') navigate('/devops-console')
+    }
+    window.addEventListener('message', handler)
+    return () => { URL.revokeObjectURL(url); window.removeEventListener('message', handler) }
+  }, [navigate])
 
   return (
     <div className="min-h-screen flex flex-col">

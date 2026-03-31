@@ -32,7 +32,7 @@ const recents = [
 
 const CHAT_RESPONSES = {
   default: {
-    text: <><p>I'm monitoring the incident.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-status-outage">●</span>payment-service east-2 — memory exhaustion</li><li className="flex gap-2"><span className="text-status-blocked">●</span>Restart loop active since 1:52 AM</li><li className="flex gap-2"><span className="text-foreground-muted">●</span>No deploys in 6h</li></ul></>,
+    text: <><p>I'm monitoring the incident.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-status-outage">●</span>order-service east-2 — memory exhaustion</li><li className="flex gap-2"><span className="text-status-blocked">●</span>Restart loop active since 1:52 AM</li><li className="flex gap-2"><span className="text-foreground-muted">●</span>No deploys in 6h</li></ul></>,
     followUps: ['What caused this?', 'How many users affected?', 'Show the timeline'],
   },
   'what caused': {
@@ -123,8 +123,8 @@ function getAIResponse(input) {
 
 const PAGE_CONTEXT = {
   '/console': {
-    greeting: "I'm investigating INC-2847. Payment-service in east-2 is hitting memory limits. What would you like to know?",
-    prompts: ['What caused this?', 'How many users affected?', 'Should we rollback?', 'Generate post-mortem'],
+    greeting: <><p className="font-medium">INC-2847 · order-service-memory-high</p><p className="mt-1.5">You acknowledged from your phone. I've been investigating since 2:03 AM — here's what I found. The investigation is loaded on the left.</p><p className="mt-1.5 text-foreground-muted">What would you like to dig into?</p></>,
+    prompts: ['Show me the OOM kill logs', 'What are the memory limits set to?', 'Post update to Slack'],
     placeholder: 'Ask about this incident...',
   },
   '/home': {
@@ -335,8 +335,7 @@ export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [navOpen, setNavOpen] = useState(false)
-  const location_init = typeof window !== 'undefined' ? window.location.hash : ''
-  const [chatOpen, setChatOpen] = useState(location_init.includes('devops-console'))
+  const [chatOpen, setChatOpen] = useState(location.pathname === '/console' || location.pathname === '/devops-console')
   const [pendingQuery, setPendingQuery] = useState(null)
   const [showPersona, setShowPersona] = useState(false)
   const { persona } = usePersona()
@@ -400,14 +399,6 @@ export default function ConsoleLayout({ children }) {
         </nav>
 
 
-
-        {chatOpen && pendingQuery === '__alarms__' && (
-          <div className="w-[340px] flex-shrink-0 border-r border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
-            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
-          </div>
-        )}
-        {chatOpen && pendingQuery !== '__alarms__' && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
-
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
@@ -437,10 +428,10 @@ export default function ConsoleLayout({ children }) {
             <ChatContext.Provider value={{ openChat, chatOpen }}>
               <div className="px-4 pt-2">
                 <nav className="flex items-center gap-1 text-[11px]">
-                  <span className="text-foreground-muted">CW<sup className="text-primary">+</sup></span>
+                  <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / payment-service','/devops-console':'Investigate / payments-service','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / payments-service','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>
@@ -449,6 +440,12 @@ export default function ConsoleLayout({ children }) {
           </div>
         </div>
 
+        {chatOpen && pendingQuery === '__alarms__' && (
+          <div className="w-[340px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
+            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
+          </div>
+        )}
+        {chatOpen && pendingQuery !== '__alarms__' && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
       </div>
     </div>
   )

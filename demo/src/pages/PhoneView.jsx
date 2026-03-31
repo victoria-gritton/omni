@@ -1,37 +1,24 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Warning, CheckCircle, ArrowRight, Lightning, ArrowClockwise
-} from '@phosphor-icons/react'
+import { Warning, CaretRight } from '@phosphor-icons/react'
 import { incident } from '../data/incident'
 
-const PROGRESS_STEPS = [
-  { tasks: '1/4', memory: '72%', latency: '1,800ms', services: [] },
-  { tasks: '2/4', memory: '58%', latency: '800ms', services: ['Checkout'] },
-  { tasks: '3/4', memory: '41%', latency: '350ms', services: ['Checkout', 'Order'] },
-  { tasks: '4/4', memory: '34%', latency: '210ms', services: ['Checkout', 'Order', 'Inventory'] },
+const RESPONDERS = [
+  { initials: 'MK', name: 'You (on-call)', status: 'acked', color: 'bg-emerald-700' },
+  { initials: 'AK', name: 'Alex K.', status: 'notified', color: 'bg-purple-700' },
+]
+
+const ALERT_TIMELINE = [
+  { time: '2:03 AM', event: 'Alarm fired', type: 'alert' },
+  { time: '2:03 AM', event: 'MK notified (push + watch)', type: 'notify' },
+  { time: '2:03 AM', event: 'AK notified (push)', type: 'notify' },
+  { time: '2:04 AM', event: 'MK acknowledged from watch', type: 'ack' },
 ]
 
 export default function PhoneView() {
   const navigate = useNavigate()
-  const [phase, setPhase] = useState('idle') // idle | progress | done
-  const [stepIndex, setStepIndex] = useState(0)
-  const timerRef = useRef(null)
-
-  function handleRestart() {
-    setPhase('progress')
-    setStepIndex(0)
-  }
-
-  useEffect(() => {
-    if (phase !== 'progress') return
-    if (stepIndex >= PROGRESS_STEPS.length) {
-      setPhase('done')
-      return
-    }
-    timerRef.current = setTimeout(() => setStepIndex(i => i + 1), 1000)
-    return () => clearTimeout(timerRef.current)
-  }, [phase, stepIndex])
+  const [showTimeline, setShowTimeline] = useState(true)
+  const [showLogs, setShowLogs] = useState(false)
 
   return (
     <div className="min-h-screen flex items-center justify-center py-8">
@@ -42,210 +29,136 @@ export default function PhoneView() {
           <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
 
-        {/* Phone frame */}
-        <div className="w-[390px] h-[844px] rounded-[44px] border-2 border-border bg-black overflow-hidden flex flex-col">
-          {/* Status bar */}
+        <div className="w-[390px] h-[844px] rounded-[44px] border-2 border-border bg-background overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-8 pt-4 pb-2">
-            <span className="text-[12px] text-white/60 font-semibold">2:05 AM</span>
+            <span className="text-[12px] text-foreground-muted font-semibold">2:05 AM</span>
             <div className="flex items-center gap-1.5">
               <svg width="10" height="12" viewBox="0 0 28 32" fill="none">
-                <path d="M8 18C4 18 2 15 2 12.5C2 10 4 8 6.5 8C7 5 9.5 2 14 2C18.5 2 21 5 21.5 8C24 8.5 26 10.5 26 13C26 15.5 24 18 21 18" stroke="#475569" strokeWidth="2" strokeLinecap="round" fill="none" /><line x1="14" y1="10.5" x2="14" y2="15.5" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" /><line x1="11.5" y1="13" x2="16.5" y2="13" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
-                
+                <path d="M8 18C4 18 2 15 2 12.5C2 10 4 8 6.5 8C7 5 9.5 2 14 2C18.5 2 21 5 21.5 8C24 8.5 26 10.5 26 13C26 15.5 24 18 21 18" stroke="#475569" strokeWidth="2" strokeLinecap="round" fill="none" />
+                <line x1="14" y1="10.5" x2="14" y2="15.5" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="11.5" y1="13" x2="16.5" y2="13" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
-              <span className="text-[11px] text-white/40">CloudWatch<sup>+</sup></span>
+              <span className="text-[11px] text-foreground-disabled">CloudWatch<sup className="text-primary">+</sup></span>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 px-5 pb-6 flex flex-col">
+          <div className="flex-1 px-5 pb-4 flex flex-col overflow-y-auto">
             {/* Header */}
             <div className="flex items-center gap-2 mb-3">
-              <Warning size={18} weight="fill" className="text-red-500" />
+              <Warning size={18} weight="fill" className="text-status-outage" />
               <div>
-                <span className="text-[12px] text-red-400">
-                  Critical · {incident.id}
-                </span>
-                <h1 className="text-[17px] leading-[22px] font-semibold text-white">
-                  payment-service is timing out
-                </h1>
+                <span className="text-[12px] text-status-outage">Critical · {incident.id}</span>
+                <h1 className="text-[17px] leading-[22px] font-semibold text-foreground">{incident.title}</h1>
               </div>
             </div>
 
-            {/* AI Brief + CTAs together */}
+            {/* AI Summary */}
             <div className="ai-glass-card p-3 mb-3">
-              <p className="text-[13px] leading-[19px] text-white/90">
+              <p className="text-[13px] leading-[19px] text-foreground">
                 <span className="text-orange-400 text-[12px] font-semibold mr-1">AI</span>
-                ECS tasks on payment-service-east-2 hit memory limits. Tasks are being killed and restarting in a loop. ~2,400 failed checkouts in the last 10 minutes. No deploys in 6h.
+                Memory exhaustion — 6 OOM kills, ~2,400 failed orders, no deploys in 6h. Tasks stuck in restart loop at 512 MB limit.
               </p>
-              <div className="flex items-center gap-2 mt-2 mb-3">
-                <span className="text-[10px] text-white/40">Confidence</span>
-                <span className="text-[10px] font-semibold text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full">High</span>
-                <span className="text-[10px] text-white/40 ml-2">Root cause</span>
-                <span className="text-[10px] font-semibold text-white/70">ECS memory exhaustion</span>
+            </div>
+
+            {/* Key numbers */}
+            <div className="flex justify-between gap-2 mb-3">
+              <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
+                <span className="text-[9px] text-foreground-disabled uppercase tracking-wider block">Impact</span>
+                <span className="text-[16px] font-semibold text-foreground">2.4K</span>
+                <span className="text-[8px] text-foreground-disabled block">failed orders</span>
               </div>
-
-              {/* Sources */}
-              <div className="border-t border-white/10 pt-2 mb-3">
-                <span className="text-[10px] text-white/40 block mb-1.5">Sources</span>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                    <div className="w-1 h-1 rounded-full bg-red-500" />
-                    <span className="text-[10px] text-white/60">Memory at 98%</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                    <div className="w-1 h-1 rounded-full bg-red-500" />
-                    <span className="text-[10px] text-white/60">6 out-of-memory kills</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                    <div className="w-1 h-1 rounded-full bg-amber-500" />
-                    <span className="text-[10px] text-white/60">p99 latency 2,400ms</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                    <div className="w-1 h-1 rounded-full bg-amber-500" />
-                    <span className="text-[10px] text-white/60">342 timeout errors</span>
-                  </div>
-                </div>
+              <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
+                <span className="text-[9px] text-foreground-disabled uppercase tracking-wider block">p99</span>
+                <span className="text-[16px] font-semibold text-foreground">2.4s</span>
+                <span className="text-[8px] text-foreground-disabled block">baseline 200ms</span>
               </div>
+              <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
+                <span className="text-[9px] text-foreground-disabled uppercase tracking-wider block">Memory</span>
+                <span className="text-[16px] font-semibold text-status-outage">98%</span>
+                <span className="text-[8px] text-foreground-disabled block">512 MB limit</span>
+              </div>
+            </div>
 
-              {/* Divider */}
-              <div className="border-t border-white/10 pt-3">
-                <span className="text-[12px] font-semibold text-sky-400/80 block mb-1">
-                  Matches your runbook
-                </span>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <div className="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-white/50 font-mono">
-                    OOM restart → increase memory
+            {/* Log context — collapsed */}
+            <details open={showLogs} onToggle={(e) => setShowLogs(e.target.open)} className="mb-3">
+              <summary className="text-[11px] text-foreground-muted cursor-pointer hover:text-foreground-secondary transition-colors flex items-center gap-1">
+                <CaretRight size={10} className={`transition-transform ${showLogs ? 'rotate-90' : ''}`} />
+                Logs: 6 OOM kills since 1:47 AM
+              </summary>
+              <div className="rounded-lg bg-background-surface-2 border border-border-muted p-2 mt-1.5 overflow-x-auto">
+                {incident.logSnapshot.lines.slice(0, 4).map((line, i) => (
+                  <div key={i} className="flex gap-2 text-[9px] font-mono leading-[14px]">
+                    <span className="text-foreground-disabled flex-shrink-0">{line.ts}</span>
+                    <span className={`flex-shrink-0 ${line.level === 'ERROR' ? 'text-status-outage' : 'text-status-blocked'}`}>{line.level}</span>
+                    <span className="text-foreground-muted truncate">{line.msg}</span>
                   </div>
+                ))}
+              </div>
+            </details>
+
+            {/* Agent action — pre-authorized, needs approval */}
+            <div className="mb-3">
+              <div className="px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/20 mb-3">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-status-active" />
+                  <span className="text-[10px] text-status-active">Pre-authorized action</span>
                 </div>
-                <p className="text-[12px] leading-[17px] text-white/50 mb-3">
-                  Restart ECS tasks with 1 GB memory (up from 512 MB), one task at a time. No downtime.
-                </p>
-
-                {phase === 'idle' && (
-                  <button
-                    onClick={handleRestart}
-                    className="w-full h-9 rounded-lg bg-[#0a84ff] text-[13px] font-semibold text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                  >
-                    <Lightning size={14} weight="fill" />
-                    Approve &amp; Execute
-                  </button>
-                )}
-
-                {phase === 'progress' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ArrowClockwise size={14} className="text-sky-400 animate-spin" />
-                      <span className="text-[13px] font-semibold text-white">
-                        Restarting {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].tasks} tasks...
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <div className="px-2 py-1.5 rounded bg-white/5 text-center">
-                        <span className="text-[9px] text-white/40 block">Memory</span>
-                        <span className="text-[11px] font-semibold text-white/80 font-mono">
-                          {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].memory}
-                        </span>
-                      </div>
-                      <div className="px-2 py-1.5 rounded bg-white/5 text-center">
-                        <span className="text-[9px] text-white/40 block">p99</span>
-                        <span className="text-[11px] font-semibold text-white/80 font-mono">
-                          {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].latency}
-                        </span>
-                      </div>
-                      <div className="px-2 py-1.5 rounded bg-white/5 text-center">
-                        <span className="text-[9px] text-white/40 block">Recovered</span>
-                        <span className="text-[11px] font-semibold text-green-400">
-                          {PROGRESS_STEPS[Math.min(stepIndex, PROGRESS_STEPS.length - 1)].services.length}/3
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {phase === 'done' && (
-                  <div className="space-y-2">
-                    <div className="w-full h-9 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center gap-2">
-                      <CheckCircle size={14} className="text-green-400" weight="fill" />
-                      <span className="text-[13px] text-green-400 font-semibold">All clear</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                        <div className="w-1 h-1 rounded-full bg-green-500" />
-                        <span className="text-[10px] text-white/60">4/4 tasks healthy</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                        <div className="w-1 h-1 rounded-full bg-green-500" />
-                        <span className="text-[10px] text-white/60">Memory 34%</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                        <div className="w-1 h-1 rounded-full bg-green-500" />
-                        <span className="text-[10px] text-white/60">p99 210ms</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5">
-                        <div className="w-1 h-1 rounded-full bg-green-500" />
-                        <span className="text-[10px] text-white/60">3/3 services recovered</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <button
-                  onClick={() => navigate('/console')}
-                  className="w-full mt-2 text-[11px] text-sky-400 flex items-center justify-center"
-                >
-                  Investigate in console
+                <span className="text-[13px] text-foreground font-medium block">Scale memory from 512 MB → 1 GB</span>
+                <span className="text-[10px] text-foreground-muted block mt-0.5">Rolling restart, no downtime · matches your ECS scaling policy</span>
+                <button className="w-full h-9 mt-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-body-s font-medium text-foreground flex items-center justify-center">
+                  Approve agent action
                 </button>
               </div>
+              <button onClick={() => navigate('/console')} className="w-full h-10 rounded-lg bg-background-surface-1 border border-border-muted text-body-s font-medium text-foreground flex items-center justify-center">
+                View investigation in CloudWatch+
+              </button>
             </div>
 
-            {/* Blast radius — mini service map */}
-            <div className="glass-card p-3 mb-3">
-              <span className="text-[12px] font-semibold text-white/40 block mb-2">
-                Blast radius
-              </span>
-              <svg viewBox="0 0 340 140" className="w-full" fill="none">
-                <line x1="170" y1="38" x2="60" y2="90" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.4">
-                  <animate attributeName="strokeDasharray" values="0 4 4 0;4 4" dur="1.5s" repeatCount="indefinite" />
-                </line>
-                <line x1="170" y1="42" x2="170" y2="82" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
-                  <animate attributeName="strokeDashoffset" values="0;-6" dur="1s" repeatCount="indefinite" />
-                </line>
-                <line x1="170" y1="38" x2="280" y2="90" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
-                  <animate attributeName="strokeDashoffset" values="0;-6" dur="1s" repeatCount="indefinite" />
-                </line>
-                <circle cx="170" cy="28" r="20" fill="#0a0e1a" stroke="#ef4444" strokeWidth="2">
-                  <animate attributeName="strokeOpacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
-                </circle>
-                <circle cx="170" cy="28" r="22" fill="none" stroke="#ef4444" strokeWidth="0.5" strokeOpacity="0.2">
-                  <animate attributeName="r" values="22;26;22" dur="2s" repeatCount="indefinite" />
-                  <animate attributeName="strokeOpacity" values="0.2;0;0.2" dur="2s" repeatCount="indefinite" />
-                </circle>
-                <text x="170" y="32" textAnchor="middle" fill="white" fontSize="10" fontWeight="600" fontFamily="monospace">2.4s</text>
-                <circle cx="186" cy="14" r="6" fill="#ef4444" />
-                <text x="186" y="17" textAnchor="middle" fill="white" fontSize="7" fontWeight="700">3</text>
-                <text x="170" y="56" textAnchor="middle" fill="white" fillOpacity="0.8" fontSize="8" fontWeight="500">Payment</text>
-                <circle cx="60" cy="95" r="16" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
-                <text x="60" y="99" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="monospace">1.8s</text>
-                <circle cx="73" cy="83" r="3" fill="#f59e0b" />
-                <text x="60" y="120" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="7">Checkout</text>
-                <circle cx="170" cy="95" r="16" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
-                <text x="170" y="99" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="monospace">900ms</text>
-                <circle cx="183" cy="83" r="3" fill="#f59e0b" />
-                <text x="170" y="120" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="7">Order</text>
-                <circle cx="280" cy="95" r="16" fill="#0a0e1a" stroke="#f59e0b" strokeWidth="1.5" />
-                <text x="280" y="99" textAnchor="middle" fill="white" fontSize="9" fontWeight="600" fontFamily="monospace">600ms</text>
-                <circle cx="293" cy="83" r="3" fill="#f59e0b" />
-                <text x="280" y="120" textAnchor="middle" fill="white" fillOpacity="0.6" fontSize="7">Inventory</text>
-                <circle cx="320" cy="28" r="10" fill="#0a0e1a" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.5" />
-                <text x="320" y="32" textAnchor="middle" fill="#22c55e" fontSize="8" fontWeight="600">3</text>
-                <circle cx="328" cy="21" r="2.5" fill="#22c55e" fillOpacity="0.8" />
-                <text x="320" y="46" textAnchor="middle" fill="white" fillOpacity="0.3" fontSize="7">Healthy</text>
-              </svg>
+            {/* Responders */}
+            <div className="mb-3">
+              <span className="text-[10px] text-foreground-disabled uppercase tracking-wider block mb-1.5">Responders</span>
+              <div className="flex gap-2">
+                {RESPONDERS.map((r) => (
+                  <div key={r.initials} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-background-surface-1 border border-border-muted">
+                    <div className={`w-5 h-5 rounded-full ${r.color} flex items-center justify-center text-[8px] font-bold text-white`}>{r.initials}</div>
+                    <div>
+                      <span className="text-[10px] text-foreground-secondary block leading-tight">{r.name}</span>
+                      {r.status === 'acked'
+                        ? <span className="text-[8px] text-status-active">Acknowledged</span>
+                        : <button className="text-[8px] text-status-outage hover:underline">Escalate</button>
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Spacer */}
+            {/* Alert timeline */}
+            <details open={showTimeline} onToggle={(e) => setShowTimeline(e.target.open)} className="mb-3">
+              <summary className="text-[10px] text-foreground-disabled uppercase tracking-wider cursor-pointer hover:text-foreground-muted transition-colors flex items-center gap-1">
+                <CaretRight size={8} className={`transition-transform ${showTimeline ? 'rotate-90' : ''}`} />
+                Alert timeline
+              </summary>
+              <div className="mt-1.5 space-y-0">
+                {ALERT_TIMELINE.map((item, i) => (
+                  <div key={i} className="flex gap-2 py-1">
+                    <span className="text-[9px] text-foreground-disabled w-14 flex-shrink-0 font-mono">{item.time}</span>
+                    <div className={`w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 ${
+                      item.type === 'alert' ? 'bg-status-outage' : item.type === 'ack' ? 'bg-status-active' : 'bg-foreground-disabled'
+                    }`} />
+                    <span className="text-[10px] text-foreground-muted">{item.event}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
+
             <div className="flex-1" />
           </div>
         </div>
+
+        <p className="text-body-s text-foreground-muted text-center max-w-[300px]">
+          AI summary + log context + actions. Tap to open the console.
+        </p>
       </div>
     </div>
   )

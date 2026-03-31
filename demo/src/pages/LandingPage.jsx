@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { Warning, Moon, Coffee, House, ArrowRight, CheckCircle } from '@phosphor-icons/react'
+import { Warning, Moon, Coffee, House, ArrowRight, CheckCircle, Bluetooth, Hash } from '@phosphor-icons/react'
 
 const flows = [
   {
     id: '2am-sre',
     title: '2AM Flow: SRE',
-    subtitle: 'Why is Payments timing out?',
+    subtitle: 'Why is order-service timing out?',
     path: '/watch',
     ready: true,
     preview: 'watch',
@@ -33,6 +33,14 @@ const flows = [
     path: '/day0',
     ready: true,
     preview: 'day0',
+  },
+  {
+    id: 'slack',
+    title: 'Slack Incident Thread',
+    subtitle: 'AI posts context, team coordinates',
+    path: '/slack',
+    ready: true,
+    preview: 'slack',
   },
 ]
 
@@ -169,6 +177,58 @@ function Day0Preview() {
   )
 }
 
+function BitchatPreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[120px] h-[80px] rounded-lg border border-purple-500/20 bg-background overflow-hidden flex flex-col items-center justify-center gap-1.5 p-2">
+        <Bluetooth size={14} className="text-purple-400" />
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-red-500/30 border border-red-500/40" />
+          <div className="w-[16px] h-px bg-purple-400/40" />
+          <div className="w-2 h-2 rounded-full bg-green-500/30 border border-green-500/40" />
+          <div className="w-[16px] h-px bg-purple-400/40" />
+          <div className="w-2 h-2 rounded-full bg-green-500/30 border border-green-500/40" />
+        </div>
+        <span className="text-[5px] text-purple-400/60 font-medium">MESH RELAY</span>
+      </div>
+    </div>
+  )
+}
+
+function SlackPreview() {
+  return (
+    <div className="flex items-center justify-center h-full">
+      <div className="w-[120px] h-[80px] rounded-lg border border-[#4a154b]/40 bg-[#1a1d21] overflow-hidden flex">
+        <div className="w-5 bg-[#19171d] border-r border-white/5 flex flex-col items-center pt-2 gap-1">
+          <div className="w-2.5 h-2.5 rounded bg-white/10" />
+          <div className="w-2.5 h-2.5 rounded bg-[#1164a3]/50" />
+          <div className="w-2.5 h-2.5 rounded bg-white/10" />
+        </div>
+        <div className="flex-1 p-1.5 flex flex-col gap-1">
+          <div className="flex items-center gap-1">
+            <Hash size={6} className="text-white/30" />
+            <span className="text-[5px] text-white/50 font-bold">incidents</span>
+            <div className="ml-auto w-2 h-2 rounded-full bg-red-500 flex items-center justify-center text-[4px] text-white font-bold">1</div>
+          </div>
+          <div className="flex gap-1 items-start">
+            <div className="w-3 h-3 rounded bg-sky-600 flex-shrink-0" />
+            <div className="flex-1">
+              <div className="h-1 w-8 bg-white/20 rounded mb-0.5" />
+              <div className="h-4 w-full bg-red-500/10 rounded border-l border-red-500/40 p-0.5">
+                <div className="h-0.5 w-6 bg-red-400/30 rounded" />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-1 items-start">
+            <div className="w-3 h-3 rounded bg-emerald-700 flex-shrink-0" />
+            <div className="h-1 w-12 bg-white/10 rounded mt-1" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const navigate = useNavigate()
 
@@ -201,6 +261,7 @@ export default function LandingPage() {
                 {flow.preview === 'day0' && <Day0Preview />}
                 {flow.preview === 'coffee' && <CoffeePreview />}
                 {flow.preview === 'devops-watch' && <DevOpsWatchPreview />}
+                {flow.preview === 'slack' && <SlackPreview />}
                 {flow.preview === 'placeholder' && <PlaceholderPreview />}
               </div>
               <div className="p-3">
