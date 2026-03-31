@@ -153,9 +153,8 @@ function TypedText({ text, speed=20, onDone }) {
 
 /* ── Data ── */
 const promptPills = [
-  "Why is payment-service timing out?", "Show me all active alarms",
   "Show me recent errors in my logs",
-  "List my dashboards", "How are my containers doing?",
+  "List my dashboards",
   "Top invoked Lambda functions", "Check my database instances health",
 ]
 
