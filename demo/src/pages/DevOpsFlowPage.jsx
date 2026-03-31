@@ -1,20 +1,14 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import rawHtml from '../assets/devops-flow.html?raw'
-
-// Replace window.top.location.hash navigations with postMessage calls
-const devopsFlowHtml = rawHtml.replace(
-  /window\.top\.location\.hash='([^']*)'/g,
-  (_, hash) => `parent.postMessage({type:'navigate',hash:'${hash}'},'*')`
-)
+import devopsFlowHtml from '../assets/devops-flow.html?raw'
 
 export default function DevOpsFlowPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.data?.type === 'navigate' && e.data.hash) {
-        navigate(e.data.hash.replace('#', ''))
+      if (e.data === 'navigate-devops-console') {
+        navigate('/devops-console')
       }
     }
     window.addEventListener('message', handler)
