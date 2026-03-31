@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
 
 export default function DevOpsConsoleView() {
+  const navigate = useNavigate()
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="px-6 py-6">
@@ -53,6 +55,26 @@ export default function DevOpsConsoleView() {
               <p className="text-body-m text-foreground leading-relaxed mt-2">
                 Deploy #847 introduced a reference to <strong>PaymentsTable-v2</strong> which doesn't exist. The Terraform change to create the table hasn't been applied yet -- the code shipped before the infrastructure. Rolled back to deploy #846 at 02:09 AM. Service recovered by 02:14 AM. <strong>847 payment attempts failed</strong>, all retryable, no data corruption.
               </p>
+              <div className="mt-3 p-3 rounded-lg bg-primary/10 border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-body-s font-semibold text-primary block">Recommended action</span>
+                    <span className="text-body-s text-foreground-muted">Roll back to deploy #846 to restore working table reference</span>
+                  </div>
+                  <button className="inline-flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-body-s font-semibold hover:bg-primary/80 transition-all flex-shrink-0 ml-4">
+                    Roll Back #847
+                  </button>
+                </div>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-primary/10">
+                  <div>
+                    <span className="text-body-s font-semibold text-foreground block">Fix forward</span>
+                    <span className="text-body-s text-foreground-muted">Update table reference in payment-processor.ts:47 and apply Terraform</span>
+                  </div>
+                  <button onClick={() => navigate('/devops-ide')} className="inline-flex items-center gap-2 h-9 px-5 rounded-lg bg-background-surface-2 border border-border-muted text-foreground text-body-s font-semibold hover:bg-background-surface-2/80 transition-all flex-shrink-0 ml-4">
+                    Open in IDE
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Error Rate + Service Map row */}
