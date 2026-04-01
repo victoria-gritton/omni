@@ -117,8 +117,8 @@ const recommendations = [
     sub: 'No SLO defined. A 300ms threshold would have triggered 18 min before the alarm fired today.',
     color: 'from-purple-900/40 to-purple-950/30',
     border: 'border-purple-500/20',
-    link: '/configure',
-    linkLabel: 'Set up SLO',
+    chatQuery: 'Set up a p99 latency SLO for order-service',
+    linkLabel: 'Review SLO',
   },
   {
     title: 'payment-processing-prod',
@@ -126,8 +126,8 @@ const recommendations = [
     sub: 'Container at 85% memory with no alarm. Weekend traffic typically increases 40%.',
     color: 'from-purple-900/30 to-purple-950/20',
     border: 'border-purple-500/15',
-    link: '/configure',
-    linkLabel: 'Configure alarm',
+    chatQuery: 'Set up container memory monitoring for payment-processing-prod',
+    linkLabel: 'Review alarm',
   },
   {
     title: '3 services',
@@ -135,7 +135,7 @@ const recommendations = [
     sub: 'auth-service, search-service, and inventory-service have zero alarms. Agent can auto-generate based on baselines.',
     color: 'from-purple-900/30 to-purple-950/20',
     border: 'border-purple-500/15',
-    link: '/configure',
+    chatQuery: '__alarms__',
     linkLabel: 'Review alarms',
   },
 ]
@@ -219,7 +219,7 @@ export default function TileHomePage() {
         <h2 className="text-[10px] font-bold tracking-wider uppercase text-foreground-disabled mb-2">Recommendations</h2>
         <div className="grid grid-cols-3 gap-3 mb-6">
           {recommendations.map(r => (
-            <div key={r.title} onClick={() => navigate(r.link)} className={`rounded-xl border ${r.border} bg-gradient-to-br ${r.color} p-4 cursor-pointer hover:brightness-110 transition-all`}>
+            <div key={r.title} onClick={() => openChat(r.chatQuery)} className={`rounded-xl border ${r.border} bg-gradient-to-br ${r.color} p-4 cursor-pointer hover:brightness-110 transition-all`}>
               <p className="text-[10px] text-foreground-muted tracking-wider font-bold uppercase">{r.title}</p>
               <p className="text-heading-l font-normal text-foreground mt-1">{r.headline}</p>
               <p className="text-[11px] text-foreground-muted mt-1">{r.sub}</p>
