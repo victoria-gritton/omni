@@ -22,7 +22,7 @@ export default {
       colors: {
         // Cloudscape dark mode tokens
         background: {
-          DEFAULT: '#161d26',       // main content area, containers
+          DEFAULT: '#0f141a',       // main content area
           'surface-1': '#1b232d',   // dropdown bg, hover bg, shaded cells
           'surface-2': '#232b37',   // disabled primary bg, row dividers
         },
@@ -38,7 +38,7 @@ export default {
           muted: '#333843',         // active button bg, disabled checkbox bg
         },
         input: {
-          DEFAULT: '#161d26',       // input background
+          DEFAULT: '#0f141a',       // input background
           border: '#656871',        // input border
         },
         primary: {

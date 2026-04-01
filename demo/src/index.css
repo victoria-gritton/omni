@@ -5,7 +5,7 @@
 body {
   margin: 0;
   min-width: 1024px;
-  background: #161d26;
+  background: #0f141a;
   color: #c6c6cd;
   font-family: 'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +18,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #161d26;
+  background: #0f141a;
 }
 
 .content-layer {
