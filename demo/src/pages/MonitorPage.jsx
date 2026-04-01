@@ -152,7 +152,7 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
           const Icon = typeIcons[r.type] || Cpu
           return (
             <button key={r.name} onClick={() => onInvestigate('db-connections', { service: r.name, label: r.name })} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group w-full flex-shrink-0">
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDots[r.status]}`} />
+              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-background ${statusDots[r.status] || 'bg-foreground-muted'}`} />
               <Icon size={10} className="text-foreground-disabled flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-medium text-foreground">{r.name}</p>
