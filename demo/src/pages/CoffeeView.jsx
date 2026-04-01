@@ -254,7 +254,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
               {chartVisible && (
                 <div className="glass-card p-4" style={{ animation: 'fadeIn 0.4s ease-out' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-heading-s font-normal text-foreground">Container Memory Usage</h3>
+                    <h3 className="text-heading-m font-normal text-foreground">Container Memory Usage</h3>
                     <span className="text-body-s text-foreground-muted">payment-processing-prod</span>
                   </div>
                   <MemoryChart data={coffee.memoryChartData} threshold={700} />
@@ -292,7 +292,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
               {setupPhase === 3 && (
                 <>
                   <div className="glass-card p-4">
-                    <h3 className="text-heading-s font-normal text-foreground mb-3">Setup complete</h3>
+                    <h3 className="text-heading-m font-normal text-foreground mb-3">Setup complete</h3>
                     <div className="space-y-3">
                       {[
                         { title: 'Dashboard created', desc: '"Payment Service Health" with memory usage widget' },
@@ -671,7 +671,7 @@ export default function CoffeeView() {
             </div>
             {showChart && (
               <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}>
-                <div className="flex items-center justify-between mb-3"><h3 className="text-heading-s font-normal text-foreground">Container Memory Usage</h3><span className="text-body-s text-foreground-muted">payment-processing-prod</span></div>
+                <div className="flex items-center justify-between mb-3"><h3 className="text-heading-m font-normal text-foreground">Container Memory Usage</h3><span className="text-body-s text-foreground-muted">payment-processing-prod</span></div>
                 <MemoryChart data={coffee.memoryChartData} threshold={700} />
                 <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-status-blocked/[0.06] border border-status-blocked/[0.15]"><Warning size={14} className="text-status-blocked" /><span className="text-body-s text-status-blocked">{coffee.metricQuery.highlight}</span></div>
               </div>
@@ -696,7 +696,7 @@ export default function CoffeeView() {
           <div className="space-y-3">
             {settingUp && <div className="ai-glass-card p-4 flex items-center gap-3"><ArrowClockwise size={16} className="text-primary animate-spin"/><div><span className="text-body-s font-semibold text-primary block">Setting up monitoring...</span><span className="text-body-s text-foreground-muted">Creating dashboard, alarm, and notifications</span></div></div>}
             {setupDone && (<>
-              <div className="glass-card p-4"><h3 className="text-heading-s font-normal text-foreground mb-3">Setup complete</h3><div className="space-y-3">{[{title:'Dashboard created',desc:`"${coffee.setup.dashboard.name}" with memory usage widget`},{title:'Alarm configured',desc:`"${coffee.setup.alarm.name}" — triggers at ${coffee.setup.alarm.threshold} for ${coffee.setup.alarm.evaluationPeriods} × ${coffee.setup.alarm.period}`},{title:'Notifications active',desc:`${coffee.setup.notification.type} → ${coffee.setup.notification.channel}`}].map((item,i)=><div key={i} className={`flex items-start gap-3 py-2 ${i<2?'border-b border-border-muted':''}`}><CheckCircle size={16} className="text-status-active mt-0.5" weight="fill"/><div><span className="text-body-s text-foreground font-medium block">{item.title}</span><span className="text-body-s text-foreground-muted">{item.desc}</span></div></div>)}</div></div>
+              <div className="glass-card p-4"><h3 className="text-heading-m font-normal text-foreground mb-3">Setup complete</h3><div className="space-y-3">{[{title:'Dashboard created',desc:`"${coffee.setup.dashboard.name}" with memory usage widget`},{title:'Alarm configured',desc:`"${coffee.setup.alarm.name}" — triggers at ${coffee.setup.alarm.threshold} for ${coffee.setup.alarm.evaluationPeriods} × ${coffee.setup.alarm.period}`},{title:'Notifications active',desc:`${coffee.setup.notification.type} → ${coffee.setup.notification.channel}`}].map((item,i)=><div key={i} className={`flex items-start gap-3 py-2 ${i<2?'border-b border-border-muted':''}`}><CheckCircle size={16} className="text-status-active mt-0.5" weight="fill"/><div><span className="text-body-s text-foreground font-medium block">{item.title}</span><span className="text-body-s text-foreground-muted">{item.desc}</span></div></div>)}</div></div>
               <div className="ai-glass-card p-4"><div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary"/><span className="text-body-s font-semibold text-primary">AI assistant</span></div><p className="text-body-m text-foreground leading-relaxed"><TypedText text={coffee.setup.confirmationMessage} speed={15} onDone={()=>setConfirmTypingDone(true)}/></p></div>
               {confirmTypingDone && <div className="flex justify-end" style={{animation:'fadeIn 0.3s ease-out'}}><button onClick={()=>setAct(3)} className="h-8 px-4 rounded-lg bg-primary border border-white/10 text-body-s font-medium text-primary-foreground hover:bg-slate-200 active:bg-slate-300 transition-all flex items-center gap-2">Back to homepage <ArrowRight size={14}/></button></div>}
             </>)}
@@ -712,7 +712,7 @@ export default function CoffeeView() {
                 <div className="glass-card p-4"><h3 className="text-heading-m font-normal text-foreground mb-3">Live Updates</h3><div className="flex items-center gap-2 py-2"><CheckCircle size={14} className="text-status-active"/><span className="text-body-s text-foreground-muted">{coffee.updatedState.liveUpdates}</span></div></div>
               </div>
               <div className="space-y-3">
-                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-s font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
+                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-m font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
                 <div className="ai-glass-card p-4"><div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary"/><span className="text-body-s font-semibold text-primary">Weekend readiness</span></div><div className="space-y-2">{['Memory monitoring active','Alarm threshold set at 87.5%','Team notifications configured'].map(t=><div key={t} className="flex items-center gap-2"><CheckCircle size={12} className="text-status-active" weight="fill"/><span className="text-body-s text-foreground-secondary">{t}</span></div>)}</div><p className="text-body-s text-foreground-muted mt-3">You're covered for the weekend. Enjoy it.</p></div>
                 <button onClick={()=>{setAct(0);setExpandedFeed(null);setAiTypingDone(false);setSettingUp(false);setSetupDone(false);setShowChart(false);setShowSuggestion(false);setConfirmTypingDone(false)}} className="w-full h-8 rounded-lg border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center justify-center gap-2"><ArrowClockwise size={14}/> Restart demo</button>
               </div>

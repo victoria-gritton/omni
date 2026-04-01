@@ -49,7 +49,7 @@ export default function InvestigatePage() {
 
       <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-heading-s font-normal text-foreground">Investigations ({activeInvestigations.length})</h3>
+          <h3 className="text-heading-m font-normal text-foreground">Investigations ({activeInvestigations.length})</h3>
         </div>
 
         {/* Search bar — full width */}

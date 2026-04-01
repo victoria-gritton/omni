@@ -738,7 +738,7 @@ export default function ExplorePage() {
                 <div className="mt-4 p-4 rounded-xl bg-[#06080A] border border-[#e040fb]/30">
                   <div className="flex items-center gap-2 mb-3">
                     <Sparkle size={14} className="text-[#e040fb]" />
-                    <h3 className="text-heading-s font-normal text-foreground">AI-suggested explorations</h3>
+                    <h3 className="text-heading-m font-normal text-foreground">AI-suggested explorations</h3>
                   </div>
                   <div className="space-y-0">
                     {suggestedExplorations.map((item) => (
