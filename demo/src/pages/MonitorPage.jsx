@@ -23,7 +23,7 @@ const agentFlags = {
 
 
 // ─── Health at a Glance ───────────────────────────────────────────
-function HealthGlance({ applications, activeAlarms, slos }) {
+function HealthGlance({ applications, activeAlarms, slos, regionHealth }) {
   const allServices = applications.flatMap(a => a.services)
   const alarming = activeAlarms.filter(a => a.state === 'ALARM').length
   const sloAtRisk = slos.filter(s => s.status === 'at-risk').length
@@ -71,6 +71,22 @@ function HealthGlance({ applications, activeAlarms, slos }) {
           </div>
         ))}
       </div>
+
+      {/* Cross-region health */}
+      {regionHealth && regionHealth.length > 0 && (
+        <div className="flex gap-2 pt-3 mt-3 border-t border-border-muted/20">
+          <p className="text-[9px] text-foreground-disabled uppercase tracking-wider self-center mr-1">Regions</p>
+          {regionHealth.map(r => (
+            <div key={r.region} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${r.status === 'warning' ? 'border-orange-400/20 bg-orange-400/5' : r.status === 'critical' ? 'border-red-400/20 bg-red-400/5' : 'border-border-muted/20 bg-background/30'}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${r.status === 'warning' ? 'bg-orange-400' : r.status === 'critical' ? 'bg-red-400' : 'bg-green-400'}`} />
+              <span className="text-[10px] text-foreground">{r.region}</span>
+              <span className="text-[9px] text-foreground-disabled">{r.services} svc</span>
+              {r.alarms > 0 && <span className="text-[8px] text-red-400">{r.alarms} alarm{r.alarms > 1 ? 's' : ''}</span>}
+              {r.note && <span className="text-[8px] text-foreground-disabled">· {r.note}</span>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -248,18 +264,26 @@ function SLOsCard({ slos, onInvestigate }) {
   const atRisk = slos.filter(s => s.status === 'at-risk')
   const healthy = slos.filter(s => s.status === 'healthy')
 
+  const burnColor = (rate) => rate >= 2 ? 'text-red-400' : rate >= 1 ? 'text-orange-400' : 'text-foreground-muted'
+
   const renderSlo = (slo, dimmed = false) => {
     const TrendIcon = trendIcons[slo.trend] || Minus
     const isAtRisk = slo.status === 'at-risk'
     return (
-      <button key={slo.id} onClick={() => onInvestigate('slo', { slo })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-status-degraded/5' : ''} ${dimmed ? 'opacity-40' : ''}`}>
+      <button key={slo.id} onClick={() => onInvestigate('slo', { slo })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-orange-400/5' : ''} ${dimmed ? 'opacity-40' : ''}`}>
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAtRisk ? 'bg-orange-400' : 'bg-green-400'}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="text-[11px] font-medium text-foreground">{slo.name}</p>
-            {isAtRisk && <span className="text-[8px] text-status-degraded bg-status-degraded/10 px-1 py-0 rounded">at risk</span>}
+            {isAtRisk && <span className="text-[8px] text-orange-400 bg-orange-400/10 px-1 py-0 rounded">at risk</span>}
           </div>
           <p className="text-[9px] text-foreground-muted">{slo.service} · Target: {slo.target}% · Current: {slo.current}%</p>
+          {slo.burnRate != null && (
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`text-[8px] ${burnColor(slo.burnRate)}`}>Burn: {slo.burnRate}×</span>
+              <span className="text-[8px] text-foreground-disabled">Budget: {slo.budgetRemaining}% remaining</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <TrendIcon size={12} className={trendColors[slo.trend]} />
@@ -432,7 +456,7 @@ export default function MonitorPage() {
         <div className="flex items-center gap-2"><Sparkle size={14} className="text-primary" weight="fill" /><span className="text-[11px] text-primary font-medium">Agent active</span></div>
       </div>
 
-      <HealthGlance applications={applications} activeAlarms={activeAlarms} slos={slos} />
+      <HealthGlance applications={applications} activeAlarms={activeAlarms} slos={slos} regionHealth={persona.regionHealth} />
 
       <div className="grid grid-cols-2 gap-4 mb-6">
         <ApplicationsCard applications={applications} onInvestigate={openInvestigation} />
