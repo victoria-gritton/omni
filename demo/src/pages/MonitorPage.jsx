@@ -205,8 +205,8 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
         }).map(alarm => {
           const isAcked = acked.has(alarm.id)
           return (
-            <div key={alarm.id} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-all text-left group ${isAcked ? 'opacity-50' : ''}`}>
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAcked ? 'bg-green-400' : alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-green-400'}`} />
+            <div key={alarm.id} className={`flex items-start gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-all text-left group ${isAcked ? 'opacity-50' : ''}`}>
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${isAcked ? 'bg-green-400' : alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-green-400'}`} />
               <button onClick={() => onInvestigate('alarm', { alarm })} className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
                   <span className={`text-[8px] px-1 py-0 rounded font-medium ${sevColors[alarm.severity]}`}>{alarm.severity}</span>
@@ -216,7 +216,7 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
                 <p className="text-[9px] text-foreground-muted">{alarm.resource} · {alarm.metric}: {alarm.value}</p>
                 {!isAcked && <div className="flex items-center gap-2 mt-0.5"><span className="text-[8px] text-foreground-disabled">{alarm.triggered}</span><span className="text-[8px] text-primary flex items-center gap-0.5"><Sparkle size={7} weight="fill" /> {alarm.recommendation}</span></div>}
               </button>
-              <div className="flex items-start gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1.5 flex-shrink-0 self-start mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!isAcked && <button onClick={(e) => { e.stopPropagation(); setAcked(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-status-active px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted hover:border-status-active/30 transition-colors">Acknowledge</button>}
                 <div className="relative">
                   <button onClick={(e) => { e.stopPropagation(); setSnoozeMenuOpen(snoozeMenuOpen === alarm.id ? null : alarm.id) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors">Snooze</button>
