@@ -50,13 +50,14 @@ function WidgetHeader({ icon: Icon, title, color, action, actionLabel = 'View al
 function AlarmsW({ services }) {
   const w = services.filter(s => s.hasAlarms).length
   if (w === 0) return <EmptyW icon={Bell} label="No alarms configured" action="Set up alarms →" />
+  const [hoverSeg, setHoverSeg] = useState(null)
 
-  // Mock 24h status timeline: mostly OK, with a brief alarm period
+  // Mock 24h status timeline with alarm names
   const segments = useMemo(() => [
-    { start: 0, end: 65, status: 'ok' },
-    { start: 65, end: 78, status: 'alarm' },
-    { start: 78, end: 100, status: 'ok' },
-  ], [])
+    { start: 0, end: 65, status: 'ok', count: w, alarms: [] },
+    { start: 65, end: 78, status: 'alarm', count: 2, alarms: ['transactions-db-cpu', 'fraud-model-latency'] },
+    { start: 78, end: 100, status: 'ok', count: w, alarms: [] },
+  ], [w])
 
   return (
     <div className="glass-card p-4 h-full flex flex-col">
@@ -67,16 +68,32 @@ function AlarmsW({ services }) {
         <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">0</p><p className="text-[8px] text-foreground-muted">Insuff.</p></div>
       </div>
       <p className="text-[9px] text-foreground-disabled mb-1">Alarm state changes (24h)</p>
-      <div className="mt-auto flex items-center h-8">
-        <svg width="100%" height="4" className="rounded-full overflow-hidden">
+      <div className="mt-auto relative" onMouseLeave={() => setHoverSeg(null)}>
+        <svg width="100%" height="6" className="rounded-full overflow-hidden cursor-crosshair">
           {segments.map((seg, i) => (
-            <rect key={i} x={`${seg.start}%`} y="0" width={`${seg.end - seg.start}%`} height="4" rx="2" fill={seg.status === 'alarm' ? '#ef4444' : '#22c55e'} />
+            <rect key={i} x={`${seg.start}%`} y="0" width={`${seg.end - seg.start}%`} height="6" fill={seg.status === 'alarm' ? '#ef4444' : '#22c55e'} opacity={hoverSeg !== null && hoverSeg !== i ? 0.3 : 1} className="transition-opacity" onMouseEnter={() => setHoverSeg(i)} />
           ))}
         </svg>
-      </div>
-      <div className="flex justify-between mt-1">
-        <span className="text-[7px] text-foreground-disabled">24h ago</span>
-        <span className="text-[7px] text-foreground-disabled">Now</span>
+        {hoverSeg !== null && (() => {
+          const seg = segments[hoverSeg]
+          const left = (seg.start + seg.end) / 2
+          return (
+            <div className="absolute bottom-full mb-2 bg-background-surface-2 border border-border-muted rounded-lg px-2.5 py-1.5 text-[9px] pointer-events-none z-10 shadow-lg whitespace-nowrap" style={{ left: `${left}%`, transform: 'translateX(-50%)' }}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${seg.status === 'alarm' ? 'bg-red-400' : 'bg-green-400'}`} />
+                <span className={`font-medium ${seg.status === 'alarm' ? 'text-red-400' : 'text-green-400'}`}>{seg.status === 'alarm' ? 'In Alarm' : 'All OK'}</span>
+                <span className="text-foreground-muted">· {seg.count} alarm{seg.count !== 1 ? 's' : ''}</span>
+              </div>
+              {seg.alarms.length > 0 && seg.alarms.map(a => (
+                <p key={a} className="text-foreground-muted pl-3">{a}</p>
+              ))}
+            </div>
+          )
+        })()}
+        <div className="flex justify-between mt-1">
+          <span className="text-[7px] text-foreground-disabled">24h ago</span>
+          <span className="text-[7px] text-foreground-disabled">Now</span>
+        </div>
       </div>
     </div>
   )
