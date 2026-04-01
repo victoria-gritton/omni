@@ -361,7 +361,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
           <div class="wn-face">
             <div class="wn-time">2:07</div>
             <div class="wn-date">Thursday, Mar 26</div>
-            <div class="wn-banner" onclick="ws(1)">
+            <div class="wn-banner" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){window.top.location.hash='#/devops-console'}" style="cursor:pointer">
               <div class="wn-hdr">
                 <div class="wn-icon"><svg stroke="#fff"><use href="#ic-alert"/></svg></div>
                 <span class="wn-app">CloudWatch</span>

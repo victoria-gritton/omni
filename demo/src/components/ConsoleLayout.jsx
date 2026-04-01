@@ -35,6 +35,66 @@ const CHAT_RESPONSES = {
     text: <><p>I'm monitoring the incident.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-status-outage">●</span>order-service east-2 — memory exhaustion</li><li className="flex gap-2"><span className="text-status-blocked">●</span>Restart loop active since 1:52 AM</li><li className="flex gap-2"><span className="text-foreground-muted">●</span>No deploys in 6h</li></ul></>,
     followUps: ['What caused this?', 'How many users affected?', 'Show the timeline'],
   },
+  'deploy diff': {
+    text: <><p className="text-foreground font-medium">Deploy #847 — commit a3f7c2d by Raj Patel</p><div className="mt-1.5 p-2 rounded-lg bg-background-surface-2/50 font-mono text-[10px]"><p className="text-status-outage">- TableName: 'PaymentsTable'</p><p className="text-status-active">+ TableName: 'PaymentsTable-v2'</p></div><p className="mt-1.5 text-foreground-muted">1 file changed in payment-processor.ts:47. The table reference was updated as part of migration work, but the Terraform change to create PaymentsTable-v2 has not been applied yet.</p></>,
+    followUps: ['Open this in IDE', 'Who approved this CR?', 'Show the Terraform change'],
+  },
+  'post-mortem': {
+    text: <><p className="text-foreground font-medium">Post-mortem draft generated</p><div className="mt-1.5 space-y-1.5"><div><p className="text-foreground-muted font-semibold">Title:</p><p>Payments service outage — bad deploy #847</p></div><div><p className="text-foreground-muted font-semibold">Duration:</p><p>22 minutes (01:52 — 02:14 AM)</p></div><div><p className="text-foreground-muted font-semibold">Impact:</p><p>847 failed checkouts, ~$12.4k est. revenue impact, 0 data loss</p></div><div><p className="text-foreground-muted font-semibold">Root cause:</p><p>Code referencing PaymentsTable-v2 deployed before Terraform created the table</p></div><div><p className="text-foreground-muted font-semibold">Action items:</p><ul className="mt-0.5 space-y-0.5"><li>1. Add deployment gate to validate referenced resources exist</li><li>2. Require Terraform apply before code deploy for migration PRs</li><li>3. Add feature flag for table migration cutover</li></ul></div></div></>,
+    followUps: ['Share to Slack', 'Create Jira ticket', 'Edit draft'],
+  },
+  'slack': {
+    text: <><p className="text-foreground font-medium">Slack update sent to #payments-eng</p><div className="mt-1.5 p-2 rounded-lg bg-background-surface-2/50"><p className="text-foreground">Incident update — Payments service</p><p className="mt-1 text-foreground-muted">Deploy #847 introduced a reference to PaymentsTable-v2 which does not exist. 847 payment attempts failed (12% error rate). No data corruption. Root cause: code shipped before Terraform applied. Investigating rollback and fix.</p><p className="mt-1 text-[10px] text-foreground-disabled">Posted by CloudWatch AI on behalf of Maya Santos</p></div><a href="#/slack" className="text-[11px] text-link mt-2 block hover:underline">View in Slack u2192</a></>,
+    followUps: ['Send to #incidents too', 'Page Raj Patel', 'Generate post-mortem'],
+  },
+  'open this in ide': {
+    text: <><p>Opening <span className="text-foreground font-medium">payment-processor.ts</span> in your IDE with the suggested fix highlighted.</p><div className="mt-1.5 p-2 rounded-lg bg-background-surface-2/50 font-mono text-[10px]"><p>Line 47:</p><p className="text-status-outage">- TableName: 'PaymentsTable-v2'</p><p className="text-status-active">+ TableName: 'PaymentsTable'</p></div><p className="mt-1.5 text-foreground-muted">Accept the change and the Terraform apply will be queued automatically.</p></>,
+    followUps: ['Apply Terraform now', 'Show full file', 'Run tests first'],
+  },
+  'who approved': {
+    text: <><p className="text-foreground font-medium">CR-4821 approved by Alex Kim</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span className="text-foreground-muted">Author</span><span>Raj Patel</span></div><div className="flex justify-between"><span className="text-foreground-muted">Reviewer</span><span>Alex Kim</span></div><div className="flex justify-between"><span className="text-foreground-muted">Approved</span><span>Yesterday 5:32 PM</span></div><div className="flex justify-between"><span className="text-foreground-muted">Merged</span><span>Yesterday 5:47 PM</span></div></div><p className="mt-1.5 text-foreground-muted">The CR description mentions table migration but does not reference a Terraform dependency.</p></>,
+    followUps: ['Show the CR diff', 'Notify Raj Patel', 'Add deployment gate policy'],
+  },
+  'terraform': {
+    text: <><p className="text-foreground font-medium">Terraform change: create PaymentsTable-v2</p><div className="mt-1.5 p-2 rounded-lg bg-background-surface-2/50 font-mono text-[10px]"><p>resource "aws_dynamodb_table" "payments_v2" {'{'}</p><p>  name = "PaymentsTable-v2"</p><p>  billing_mode = "PAY_PER_REQUEST"</p><p>  hash_key = "paymentId"</p><p>{'}'}</p></div><p className="mt-1.5 text-foreground-muted">This change is in the pipeline but requires approval from the infra team. Estimated apply time: 3-5 minutes once approved.</p></>,
+    followUps: ['Request approval now', 'Show pipeline status', 'Who needs to approve?'],
+  },
+  'jira': {
+    text: <><p className="text-foreground font-medium">Jira ticket created: PAY-2847</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span className="text-foreground-muted">Type</span><span>Incident</span></div><div className="flex justify-between"><span className="text-foreground-muted">Priority</span><span className="text-status-outage">P1</span></div><div className="flex justify-between"><span className="text-foreground-muted">Assignee</span><span>Maya Santos</span></div><div className="flex justify-between"><span className="text-foreground-muted">Labels</span><span>deploy-issue, payments</span></div></div><p className="mt-1.5 text-foreground-muted">Linked to deploy #847 and CR-4821. Post-mortem draft attached.</p></>,
+    followUps: ['Open in Jira', 'Add Raj as watcher', 'Link to runbook'],
+  },
+  '#incidents': {
+    text: <><p className="text-foreground font-medium">Update posted to #incidents</p><div className="mt-1.5 p-2 rounded-lg bg-background-surface-2/50"><p className="text-foreground">P1 Incident — Payments service</p><p className="mt-1 text-foreground-muted">12% error rate on /process-payment. 847 failed checkouts. Root cause: Deploy #847 refs non-existent PaymentsTable-v2. Investigating rollback. No data corruption.</p><p className="mt-1 text-[10px] text-foreground-disabled">Posted to #incidents and #payments-eng</p></div></>,
+    followUps: ['Page on-call manager', 'Start bridge call', 'Update status page'],
+  },
+  'raj': {
+    text: <><p className="text-foreground font-medium">Notification sent to Raj Patel</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span className="text-foreground-muted">Channel</span><span>Slack DM + PagerDuty</span></div><div className="flex justify-between"><span className="text-foreground-muted">Message</span><span>You are listed as author of deploy #847</span></div><div className="flex justify-between"><span className="text-foreground-muted">Status</span><span className="text-status-blocked">Awaiting response</span></div></div><p className="mt-1.5 text-foreground-muted">Raj merged commit a3f7c2d at 5:47 PM yesterday. The commit changed the table reference from PaymentsTable to PaymentsTable-v2 as part of migration work.</p></>,
+    followUps: ['Show the CR diff', 'Escalate to manager', 'Send reminder'],
+  },
+  'page': {
+    text: <><p className="text-foreground font-medium">Notification sent to Raj Patel</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span className="text-foreground-muted">Channel</span><span>Slack DM + PagerDuty</span></div><div className="flex justify-between"><span className="text-foreground-muted">Message</span><span>You are listed as author of deploy #847</span></div><div className="flex justify-between"><span className="text-foreground-muted">Status</span><span className="text-status-blocked">Awaiting response</span></div></div><p className="mt-1.5 text-foreground-muted">Raj merged commit a3f7c2d at 5:47 PM yesterday. The commit changed the table reference from PaymentsTable to PaymentsTable-v2 as part of migration work.</p></>,
+    followUps: ['Show the CR diff', 'Escalate to manager', 'Send reminder'],
+  },
+  'notify': {
+    text: <><p className="text-foreground font-medium">Raj Patel notified via Slack and PagerDuty</p><p className="mt-1 text-foreground-muted">He is the author of deploy #847 (commit a3f7c2d). Awaiting acknowledgment.</p></>,
+    followUps: ['Show the CR diff', 'Escalate to manager', 'Send reminder'],
+  },
+  'bridge': {
+    text: <><p className="text-foreground font-medium">Bridge call started</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span className="text-foreground-muted">Room</span><span>Chime: INC-payments-847</span></div><div className="flex justify-between"><span className="text-foreground-muted">Invited</span><span>Maya Santos, Raj Patel, Alex Kim</span></div><div className="flex justify-between"><span className="text-foreground-muted">Status</span><span className="text-status-active">Active</span></div></div></>,
+    followUps: ['Share investigation link', 'Add on-call manager', 'Record notes'],
+  },
+  'status page': {
+    text: <><p className="text-foreground font-medium">Status page updated</p><div className="mt-1.5 p-2 rounded-lg bg-background-surface-2/50"><p className="text-status-outage font-medium">Payments Service - Degraded</p><p className="mt-1 text-foreground-muted">Some customers may experience payment failures at checkout. Our team is actively investigating and working on a fix. No data has been lost.</p><p className="mt-1 text-[10px] text-foreground-disabled">Updated 2:15 AM</p></div></>,
+    followUps: ['Notify subscribers', 'Update to resolved', 'Add timeline entry'],
+  },
+  'escalate': {
+    text: <><p className="text-foreground font-medium">Escalated to engineering manager</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span className="text-foreground-muted">Manager</span><span>Sarah Chen</span></div><div className="flex justify-between"><span className="text-foreground-muted">Channel</span><span>Slack DM + Phone call</span></div><div className="flex justify-between"><span className="text-foreground-muted">Severity</span><span className="text-status-outage">P1</span></div></div><p className="mt-1.5 text-foreground-muted">Incident summary and investigation link shared. Sarah has been added to the bridge call.</p></>,
+    followUps: ['Start bridge call', 'Share post-mortem draft', 'Show blast radius'],
+  },
+  'reminder': {
+    text: <><p className="text-foreground font-medium">Reminder sent to Raj Patel</p><p className="mt-1 text-foreground-muted">Second notification sent via Slack DM and PagerDuty. If no response in 5 minutes, I can escalate to his manager.</p></>,
+    followUps: ['Escalate to manager', 'Try phone call', 'Continue without Raj'],
+  },
   'what caused': {
     text: <><p>ECS tasks hit their <span className="text-foreground font-medium">512 MB memory limit</span>.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-status-outage">●</span>6 OOM kills since 1:52 AM</li><li className="flex gap-2"><span className="text-status-outage">●</span>Tasks stuck in restart loop</li><li className="flex gap-2"><span className="text-status-active">●</span>No bad deploys — workload outgrew allocation</li></ul></>,
     followUps: ['How do we fix it?', 'Show affected services', 'Should we rollback?'],
@@ -144,7 +204,7 @@ const PAGE_CONTEXT = {
   },
   '/devops-console': {
     greeting: "I'm investigating the Payments service failure. Deploy #847 referenced PaymentsTable-v2 which doesn't exist. 847 payments failed. What would you like to know?",
-    prompts: ['Show me the deploy diff', 'What is the blast radius?', 'Generate post-mortem', 'Apply Terraform for v2 table'],
+    prompts: ['Show me the deploy diff', 'Generate post-mortem', 'Send update to Slack'],
     placeholder: 'Ask about this incident...',
   },
   '/monitor': {
@@ -325,7 +385,7 @@ function PersonaCard({ onClose }) {
 }
 
 function Section({ title, children }) {
-  return <div className="mb-4"><h4 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">{title}</h4><div className="flex flex-col gap-1.5">{children}</div></div>
+  return <div className="mb-4"><h4 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">{title}</h4><div className="flex flex-wrap gap-1.5">{children}</div></div>
 }
 function Row({ label, value }) {
   return <div className="flex gap-2"><span className="text-[11px] text-foreground-muted w-24 flex-shrink-0">{label}</span><span className="text-[11px] text-foreground">{value}</span></div>

@@ -145,45 +145,35 @@ export default function DevOpsConsoleView() {
                 </div>
               </div>
 
+
+
               {/* Actions */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary/8 border border-primary/20 hover:bg-primary/12 transition-colors">
-                  <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2"><polyline points="11 19 2 12 11 5"/><polyline points="22 19 13 12 22 5"/></svg>
-                  </div>
+              <div className="space-y-3 mt-2">
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/6 border border-primary/20">
+                  <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-[13px] font-bold text-primary-foreground">1</div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-body-s font-semibold text-primary block">Recommended: Roll back deploy #847</span>
+                    <span className="text-body-s font-semibold text-foreground block">Recommended: Roll back deploy #847</span>
                     <span className="text-[11px] text-foreground-muted">Restore deploy #846 to fix the table reference immediately</span>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0 ml-4">
-                    <button className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-background-surface-2 border border-border-muted text-foreground text-body-s font-semibold hover:bg-background-surface-2/80 active:scale-[0.98] transition-all">
-                      Notify PoC
-                    </button>
-                    <button className="inline-flex items-center gap-2 h-9 px-5 rounded-lg bg-primary text-primary-foreground text-body-s font-semibold hover:bg-primary/80 active:scale-[0.98] transition-all">
-                    Roll Back
-                    </button>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button className="inline-flex items-center h-9 px-4 rounded-lg bg-background-surface-2 border border-border-muted text-foreground text-body-s font-medium hover:bg-background-surface-2/80 active:scale-[0.98] transition-all">Escalate to Payments team</button>
+                    <button className="inline-flex items-center h-9 px-5 rounded-lg bg-primary text-primary-foreground text-body-s font-semibold hover:bg-primary/80 active:scale-[0.98] transition-all">Roll Back</button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-background-surface-2/30 border border-border-muted hover:bg-background-surface-2/50 transition-colors cursor-pointer" onClick={() => navigate('/devops-ide')}>
-                  <div className="w-9 h-9 rounded-lg bg-background-surface-2 flex items-center justify-center flex-shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-foreground-muted"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  </div>
+                <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/6 border border-primary/20 cursor-pointer" onClick={() => navigate("/devops-ide")}>
+                  <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-[13px] font-bold text-primary-foreground">2</div>
                   <div className="flex-1 min-w-0">
                     <span className="text-body-s font-semibold text-foreground block">Fix forward: Update code in IDE</span>
                     <span className="text-[11px] text-foreground-muted">Change table reference in payment-processor.ts:47 and apply Terraform</span>
                   </div>
-                  <button onClick={() => navigate('/devops-ide')} className="inline-flex items-center gap-2 h-9 px-5 rounded-lg bg-background-surface-2 border border-border-muted text-foreground text-body-s font-semibold hover:bg-background-surface-2/80 active:scale-[0.98] transition-all flex-shrink-0">
-                    Open in IDE
-                  </button>
+                  <button onClick={() => navigate("/devops-ide")} className="inline-flex items-center h-9 px-5 rounded-lg bg-background-surface-2 border border-border-muted text-foreground text-body-s font-medium hover:bg-background-surface-2/80 active:scale-[0.98] transition-all flex-shrink-0">Open in IDE</button>
                 </div>
               </div>
-            </div>
+              </div>
             </div>
 
-            {/* Consolidated visualization: Error Rate + Service Map + Timeline */}
+            {/* Consolidated visualization */}
             <div className="grid grid-cols-3 gap-3">
-              {/* Error Rate - spans 2 cols */}
               <ErrorRateChart />
 
               {/* Service Health - right col */}
@@ -231,18 +221,29 @@ export default function DevOpsConsoleView() {
                 Root Cause Chain
               </h3>
 
+              {/* Conclusion */}
+              <div className="mb-3 pb-3 border-b border-border-muted flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center flex-shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div>
+                  <span className="text-body-s text-primary font-semibold block">Conclusion</span>
+                  <p className="text-[11px] text-foreground-muted leading-relaxed">Code change shipped before infrastructure was ready. The fix is to roll back deploy #847 or apply the Terraform change to create PaymentsTable-v2.</p>
+                </div>
+              </div>
+
               <div className="space-y-0">
                 {[
                   { t: '5:47 PM', e: 'Raj Patel merges commit a3f7c2d', d: 'Table reference changed from PaymentsTable to PaymentsTable-v2 as part of migration work', icon: 'commit', s: 'warn' },
                   { t: '5:47 PM', e: 'Terraform change not applied', d: 'Infrastructure to create PaymentsTable-v2 is still in the pipeline awaiting approval', icon: 'infra', s: 'warn' },
                   { t: '1:45 AM', e: 'Deploy #847 goes live', d: 'New code referencing non-existent table reaches production', icon: 'deploy', s: 'err' },
                   { t: '1:52 AM', e: 'ResourceNotFoundException on every request', d: '12% error rate -- 847 payment attempts fail with clean 500 errors', icon: 'error', s: 'err' },
-                ].map((step, i, arr) => (
+                ].reverse().map((step, i, arr) => (
                   <div key={i} className="flex gap-4">
                     {/* Timeline column */}
                     <div className="flex flex-col items-center w-6 flex-shrink-0">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${step.s === 'err' ? 'bg-status-outage/15 text-status-outage ring-1 ring-status-outage/30' : 'bg-status-blocked/15 text-status-blocked ring-1 ring-status-blocked/30'}`}>
-                        {i + 1}
+                        {arr.length - i}
                       </div>
                       {i < arr.length - 1 && <div className={`w-px flex-1 my-1 ${step.s === 'err' ? 'bg-status-outage/20' : 'bg-status-blocked/20'}`} />}
                     </div>
@@ -258,16 +259,6 @@ export default function DevOpsConsoleView() {
                 ))}
               </div>
 
-              {/* Conclusion */}
-              <div className="mt-3 pt-3 border-t border-border-muted flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-primary/15 ring-1 ring-primary/30 flex items-center justify-center flex-shrink-0">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <div>
-                  <span className="text-body-s text-primary font-semibold block">Conclusion</span>
-                  <p className="text-[11px] text-foreground-muted leading-relaxed">Code change shipped before infrastructure was ready. The fix is to roll back deploy #847 or apply the Terraform change to create PaymentsTable-v2.</p>
-                </div>
-              </div>
             </div>
 
               {/* Customer Impact */}
