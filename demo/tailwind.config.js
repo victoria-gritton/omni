@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Open Sans', 'Amazon Ember', 'system-ui', 'sans-serif'],
+        sans: ['Amazon Ember', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       fontSize: {
