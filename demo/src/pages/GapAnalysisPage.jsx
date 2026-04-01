@@ -158,6 +158,32 @@ function ProgressBar({ tiers, activeTier, onTierClick, deploying }) {
 }
 
 
+// ─── Agent Blurb (glassmorphic, dismissible) ─────────────────────
+function AgentBlurb({ text, gapId }) {
+  const [dismissed, setDismissed] = useState(false)
+  if (dismissed) return null
+  return (
+    <div className="relative mb-3 rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(14,165,233,0.05) 100%)' }}>
+      <div className="absolute inset-0 rounded-xl" style={{ background: 'linear-gradient(90deg, rgba(139,92,246,0.2), rgba(14,165,233,0.2), rgba(139,92,246,0.2))', backgroundSize: '200% 100%', animation: 'shimmerBorder 3s linear infinite', mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', maskComposite: 'exclude', WebkitMaskComposite: 'xor', padding: '1px', borderRadius: '12px' }} />
+      <div className="relative flex gap-2.5 px-3.5 py-2.5 backdrop-blur-sm">
+        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.3), rgba(14,165,233,0.2))' }}>
+          <Sparkle size={12} className="text-purple-300" weight="fill" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
+        </div>
+        <p className="text-[10px] text-foreground leading-relaxed flex-1 pt-1">{text}</p>
+        <button onClick={() => setDismissed(true)} className="flex-shrink-0 mt-0.5 p-0.5 rounded hover:bg-white/5 text-foreground-disabled hover:text-foreground-muted transition-colors">
+          <X size={10} />
+        </button>
+      </div>
+      <style>{`
+        @keyframes shimmerBorder {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
 // ─── Gap Card (only shows non-deployed items) ─────────────────────
 function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, isInActiveTier, isSliding }) {
   const Icon = categoryIcons[gap.category] || Lightning
@@ -201,14 +227,7 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
               {selectedCount > 0 && <span className="text-[9px] text-primary">{selectedCount} selected</span>}
             </div>
             <p className="text-[11px] text-foreground-muted mb-2">{gap.description}</p>
-            {blurb && isInActiveTier && (
-              <div className="relative flex gap-2.5 mb-3 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-primary/8 to-primary/3 border border-primary/15">
-                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Sparkle size={10} className="text-primary" weight="fill" />
-                </div>
-                <p className="text-[10px] text-foreground leading-relaxed">{blurb}</p>
-              </div>
-            )}
+            {blurb && isInActiveTier && <AgentBlurb text={blurb} gapId={gap.id} />}
             <div className="flex items-center gap-3">
               {totalActive > 0 && (
                 <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-[10px] text-primary hover:text-primary-hover">
