@@ -135,13 +135,16 @@ function ProgressBar({ tiers, activeTier, onTierClick, deploying }) {
           )
         })}
       </div>
-      <div className="relative h-8">
+      <div className="relative h-10">
         {segments.map((seg, i) => {
           const cfg = tierConfig[seg.key]; const isActive = activeTier === seg.key; const position = (i + 1) * 25; const done = tierComplete[seg.key]
+          const TierIcon = cfg.icon
           const statusText = done ? '✓' : seg.deployed > 0 ? `${seg.deployed}/${seg.total}` : seg.total > 0 ? `0/${seg.total}` : ''
           return (
             <button key={seg.key} onClick={() => onTierClick(seg.key)} className="absolute flex flex-col items-center -translate-x-1/2 group" style={{ left: `${position}%` }}>
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${done ? `${cfg.bgColor} border-transparent` : isActive ? `border-current ${cfg.color} bg-background` : 'border-border-muted bg-background'}`}>{done && <Check size={10} weight="bold" className="text-white" />}</div>
+              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${done ? `${cfg.bgColor} border-transparent shadow-lg` : isActive ? `border-current ${cfg.color} bg-background` : 'border-border-muted bg-background'}`} style={done ? { boxShadow: `0 0 12px ${seg.key === 'critical' ? 'rgba(248,113,113,0.5)' : seg.key === 'high' ? 'rgba(251,146,60,0.5)' : seg.key === 'medium' ? 'rgba(14,165,233,0.4)' : 'rgba(100,116,139,0.3)'}` } : undefined}>
+                {done ? <Check size={12} weight="bold" className="text-white" /> : <TierIcon size={12} className={isActive ? cfg.color : 'text-foreground-disabled'} weight={isActive ? 'fill' : 'regular'} />}
+              </div>
               <span className={`text-[8px] mt-0.5 whitespace-nowrap ${isActive ? cfg.color : 'text-foreground-disabled group-hover:text-foreground-muted'}`}>{cfg.label} {statusText && `(${statusText})`}</span>
             </button>
           )
@@ -178,8 +181,11 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
   const blurbFn = agentBlurbs[gap.category]
   const blurb = blurbFn ? blurbFn(gap) : null
 
+  const sevBorderColors = { critical: 'border-l-red-400', high: 'border-l-orange-400', medium: 'border-l-primary', low: 'border-l-foreground-muted' }
+  const leftBorder = isInActiveTier && !isSliding ? `border-l-2 ${sevBorderColors[gap.severity] || ''}` : ''
+
   return (
-    <div className={`rounded-xl border transition-all ${isSliding ? 'duration-700 opacity-0 translate-y-24 scale-95 max-h-0 overflow-hidden mb-0 border-status-active/30 bg-status-active/10' : 'duration-300 opacity-100 translate-y-0 scale-100'} ${!isSliding && isInActiveTier ? 'border-border-muted/40 bg-background-surface-1/50' : !isSliding ? 'border-border-muted/10 bg-background/30 opacity-60' : ''} ${!isSliding && (selectedCount > 0 || isGapSelected) ? 'border-primary/40 bg-primary/5' : ''}`}>
+    <div className={`rounded-xl border transition-all ${leftBorder} ${isSliding ? 'duration-700 opacity-0 translate-y-24 scale-95 max-h-0 overflow-hidden mb-0 border-status-active/30 bg-status-active/10' : 'duration-300 opacity-100 translate-y-0 scale-100'} ${!isSliding && isInActiveTier ? 'border-border-muted/40 bg-background-surface-1/50' : !isSliding ? 'border-border-muted/10 bg-background/30 opacity-60' : ''} ${!isSliding && (selectedCount > 0 || isGapSelected) ? 'border-primary/40 bg-primary/5' : ''}`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
           <button onClick={() => onToggleGap(gap)} className="mt-0.5 flex-shrink-0">
@@ -196,9 +202,11 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
             </div>
             <p className="text-[11px] text-foreground-muted mb-2">{gap.description}</p>
             {blurb && isInActiveTier && (
-              <div className="flex gap-2 mb-3 px-3 py-2 rounded-lg bg-primary/5 border border-primary/10">
-                <Sparkle size={12} className="text-primary flex-shrink-0 mt-0.5" weight="fill" />
-                <p className="text-[10px] text-foreground-muted leading-relaxed">{blurb}</p>
+              <div className="relative flex gap-2.5 mb-3 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-primary/8 to-primary/3 border border-primary/15">
+                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Sparkle size={10} className="text-primary" weight="fill" />
+                </div>
+                <p className="text-[10px] text-foreground leading-relaxed">{blurb}</p>
               </div>
             )}
             <div className="flex items-center gap-3">
