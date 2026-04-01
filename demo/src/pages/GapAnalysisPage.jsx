@@ -12,6 +12,7 @@ import { usePersona } from '../data/persona'
 import { AlarmConfigModal } from '../components/AlarmConfigModal'
 import { LogConfigModal } from '../components/LogConfigModal'
 import { TraceConfigModal } from '../components/TraceConfigModal'
+import { AgentDrawer } from '../components/Drawer'
 import { getAllRecommendedItems, serviceSeverity } from '../data/recommendations'
 
 const severityColors = {
@@ -185,7 +186,7 @@ function AgentBlurb({ text, gapId }) {
 }
 
 // ─── Gap Card (only shows non-deployed items) ─────────────────────
-function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, isInActiveTier, isSliding }) {
+function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, isInActiveTier, isSliding, onInvestigate }) {
   const Icon = categoryIcons[gap.category] || Lightning
   const [expanded, setExpanded] = useState(false)
   const colorClass = severityColors[gap.severity] || severityColors.medium
@@ -225,6 +226,7 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
               <Icon size={14} className="text-foreground-muted" />
               <span className="text-body-s font-medium text-foreground">{gap.title}</span>
               {selectedCount > 0 && <span className="text-[9px] text-primary">{selectedCount} selected</span>}
+              {onInvestigate && <button onClick={(e) => { e.stopPropagation(); onInvestigate(gap) }} className="text-[9px] text-purple-400 hover:text-purple-300 flex items-center gap-0.5 ml-auto"><Sparkle size={9} weight="fill" /> Why?</button>}
             </div>
             <p className="text-[11px] text-foreground-muted mb-2">{gap.description}</p>
             {blurb && isInActiveTier && <AgentBlurb text={blurb} gapId={gap.id} />}
@@ -280,7 +282,7 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
 
 
 // ─── Tier Section ─────────────────────────────────────────────────
-function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, slidingGaps }) {
+function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, slidingGaps, onInvestigate }) {
   const cfg = tierConfig[tier]
   const Icon = cfg.icon
   // Only count non-deployed items
@@ -312,7 +314,7 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
       {isActive && (
         <div className="flex flex-col gap-2 mt-2 pl-2">
           {activeGaps.map(gap => (
-            <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureItem={onConfigureItem} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} />
+            <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureItem={onConfigureItem} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} onInvestigate={onInvestigate} />
           ))}
         </div>
       )}
@@ -461,6 +463,7 @@ export default function Day0Page() {
   const [traceConfigItem, setTraceConfigItem] = useState(null)
   const [deploying, setDeploying] = useState(null) // { count, progress }
   const [slidingGaps, setSlidingGaps] = useState(new Set())
+  const [drawerInvestigation, setDrawerInvestigation] = useState(null)
 
   const allServices = applications.flatMap(a => a.services)
   const scopedServices = activeApp === 'all' ? allServices : (applications.find(a => a.id === activeApp)?.services || [])
@@ -526,6 +529,44 @@ export default function Day0Page() {
     if (!gap.items || gap.items.length === 0) { if (deployedItems.has(gap.id)) return; setSelectedItems(p => { const n = new Set(p); n.has(gap.id) ? n.delete(gap.id) : n.add(gap.id); return n }); return }
     const s = gap.items.filter(i => !deployedItems.has(i.id))
     setSelectedItems(p => { const n = new Set(p); const all = s.every(i => n.has(i.id)); s.forEach(i => all ? n.delete(i.id) : n.add(i.id)); return n })
+  }
+
+  // Build investigation for a gap to show in the drawer
+  const openGapInvestigation = (gap) => {
+    const activeItems = (gap.items || []).filter(i => !deployedItems.has(i.id))
+    const catLabel = { alarms: 'Alarm', logs: 'Log', traces: 'Trace', dashboards: 'Dashboard', anomaly: 'Anomaly', slos: 'SLO', 'cw-agent': 'CW Agent', 'cross-account': 'Cross-Account', 'alarm-actions': 'Alarm Actions' }[gap.category] || gap.category
+    const blurbFn = agentBlurbs[gap.category]
+    const blurb = blurbFn ? blurbFn(gap) : ''
+
+    const messages = [
+      { type: 'text', content: blurb },
+      { type: 'finding', severity: gap.severity === 'critical' ? 'critical' : gap.severity === 'high' ? 'warning' : 'info', title: gap.title, content: gap.description },
+    ]
+
+    // Add drill-down items as steps
+    if (activeItems.length > 0) {
+      const steps = activeItems.slice(0, 8).map(item => ({
+        action: `${item.service || ''} — ${item.name}`,
+        result: item.config ? `Threshold: ${item.config.threshold}${item.config.unit || ''} · Period: ${item.config.period}s` : item.description || `${catLabel} configuration`,
+        status: 'found',
+      }))
+      if (activeItems.length > 8) steps.push({ action: `...and ${activeItems.length - 8} more items`, result: 'Expand the gap card to see all', status: 'clear' })
+      messages.push({ type: 'steps', steps })
+    }
+
+    messages.push({ type: 'text', content: `Select the items you want to deploy from the gap card, then click Apply. You can also ask me anything about these ${catLabel.toLowerCase()} recommendations.` })
+
+    setDrawerInvestigation({
+      title: `${catLabel} Gap Analysis`,
+      subtitle: gap.title,
+      messages,
+      followUps: [
+        `Why is this ${gap.severity}?`,
+        `What happens if I skip this?`,
+        `Show me the CloudFormation template`,
+        `Which items should I prioritize?`,
+      ],
+    })
   }
 
   const handleDeploy = () => {
@@ -613,7 +654,7 @@ export default function Day0Page() {
           {['critical', 'high', 'medium', 'low'].map(tier => {
             const gapsInTier = tierGroups[tier]
             if (!gapsInTier || gapsInTier.length === 0) return null
-            return <TierSection key={tier} tier={tier} gaps={gapsInTier} isActive={activeTier === tier} onActivate={() => setActiveTier(prev => prev === tier ? null : tier)} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureItem={(item, category) => { if (category === 'logs') setLogConfigItem(item); else if (category === 'traces') setTraceConfigItem(item); else setAlarmConfigItem(item) }} slidingGaps={slidingGaps} />
+            return <TierSection key={tier} tier={tier} gaps={gapsInTier} isActive={activeTier === tier} onActivate={() => setActiveTier(prev => prev === tier ? null : tier)} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureItem={(item, category) => { if (category === 'logs') setLogConfigItem(item); else if (category === 'traces') setTraceConfigItem(item); else setAlarmConfigItem(item) }} slidingGaps={slidingGaps} onInvestigate={openGapInvestigation} />
           })}
           <DeployedSection deployedLog={deployedLog} />
         </div>
@@ -639,6 +680,12 @@ export default function Day0Page() {
         </div>
       </div>
 
+      {drawerInvestigation && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setDrawerInvestigation(null)} />
+          <AgentDrawer investigation={drawerInvestigation} onClose={() => setDrawerInvestigation(null)} onExportCode={() => setShowIaCModal(true)} />
+        </>
+      )}
       {showIaCModal && <IaCModal onClose={() => setShowIaCModal(false)} selectedGaps={computedGaps.filter(g => selectedGapIds.has(g.id))} />}
       {alarmConfigItem && <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(alarmConfigItem.id)); setAlarmConfigItem(null) }} />}
       {logConfigItem && <LogConfigModal item={logConfigItem} onClose={() => setLogConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(logConfigItem.id)); setLogConfigItem(null) }} />}
