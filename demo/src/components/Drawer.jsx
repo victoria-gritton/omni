@@ -116,6 +116,28 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
     setExtraMessages(prev => [...prev, userMsg, ...response])
   }
 
+  const handleDrillDown = (step) => {
+    const action = step.action || ''
+    const result = step.result || ''
+    const parts = action.split(' — ')
+    const service = parts[0]?.trim() || 'this service'
+    const metric = parts[1]?.trim() || action
+
+    const userMsg = { type: 'user', content: `Tell me more about ${metric} on ${service}` }
+
+    let base = 50, variance = 20, unit = '', color = '#0ea5e9', threshold = null, thresholdLabel = ''
+    if (result.includes('%')) { base = 0.3; variance = 0.4; unit = '%'; color = '#f87171'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}%` } }
+    else if (result.includes('ms') || result.includes('s')) { base = 180; variance = 80; unit = 'ms'; color = '#8b5cf6'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}ms` } }
+    else { base = 12; variance = 5; color = '#22c55e' }
+
+    setExtraMessages(prev => [...prev, userMsg,
+      { type: 'text', content: `Here's the detail on ${metric} for ${service}. Showing the last 24 hours with the recommended threshold.` },
+      { type: 'chart', label: `${service} — ${metric} (24h)`, base, variance, color, unit, threshold, thresholdLabel },
+      { type: 'finding', severity: threshold ? 'info' : 'warning', title: `Why this ${threshold ? 'threshold' : 'metric'}`, content: threshold ? `The ${threshold}${unit} threshold is ~5× the current baseline — avoids false positives while catching real issues. Adjust via the Edit button.` : `This uses anomaly detection based on your historical patterns rather than a static threshold.` },
+      { type: 'text', content: 'You can edit the configuration from the gap card, or ask me to adjust it here.' },
+    ])
+  }
+
   const handleSend = () => {
     if (!input.trim()) return
     handleFollowUp(input.trim())
@@ -149,7 +171,7 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
             {msg.type === 'chart' && <div className="glass-card p-3 my-2"><p className="text-[9px] text-foreground-disabled mb-2">{msg.label}</p><LineChart data={mockTimeSeries(24, msg.base || 50, msg.variance || 20)} color={msg.color || '#0ea5e9'} height={64} unit={msg.unit || ''} thresholdValue={msg.threshold} thresholdLabel={msg.thresholdLabel} /></div>}
             {msg.type === 'finding' && <div className={`rounded-lg p-3 my-2 border-l-2 ${msg.severity === 'critical' ? 'border-l-red-400 bg-red-400/5' : msg.severity === 'warning' ? 'border-l-status-degraded bg-status-degraded/5' : 'border-l-primary bg-primary/5'}`}><p className="text-[11px] font-medium text-foreground">{msg.title}</p><p className="text-[10px] text-foreground-muted mt-1">{msg.content}</p></div>}
             {msg.type === 'actions' && !hasSelectable && <div className="flex gap-2 my-3"><button className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium"><Play size={12} /> Apply now</button><button onClick={() => onExportCode?.()} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2"><Code size={12} /> Export as code</button></div>}
-            {msg.type === 'steps' && <div className="my-2">{msg.steps.map((step, si) => <div key={si} className="flex gap-2 py-1.5"><div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${step.status === 'found' ? 'bg-red-400/20 text-red-400' : 'bg-status-active/20 text-status-active'}`}>{si + 1}</div><div><p className="text-[11px] text-foreground">{step.action}</p><p className="text-[10px] text-foreground-muted">{step.result}</p></div></div>)}</div>}
+            {msg.type === 'steps' && <div className="my-2">{msg.steps.map((step, si) => <button key={si} onClick={() => handleDrillDown(step)} className="flex gap-2 py-1.5 w-full text-left hover:bg-primary/5 rounded px-1 -mx-1 transition-colors cursor-pointer group"><div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${step.status === 'found' ? 'bg-red-400/20 text-red-400' : 'bg-status-active/20 text-status-active'}`}>{si + 1}</div><div className="flex-1"><p className="text-[11px] text-foreground">{step.action}</p><p className="text-[10px] text-foreground-muted">{step.result}</p></div><CaretRight size={10} className="text-foreground-disabled group-hover:text-primary mt-1 flex-shrink-0" /></button>)}</div>}
 
             {msg.type === 'selectable' && hasSelectable && (
               <div className="my-3">
