@@ -301,9 +301,11 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
 
   if (activeGaps.length === 0) return null
 
+  const sevBorderLeft = { critical: 'border-l-red-400', high: 'border-l-orange-400', medium: 'border-l-primary', low: 'border-l-foreground-muted' }
+
   return (
-    <div className="mb-4">
-      <button onClick={onActivate} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${isActive ? `${severityColors[tier]} border` : 'border-border-muted/20 bg-background/30 hover:bg-background-surface-1/30'}`}>
+    <div className={`mb-4 rounded-xl border transition-all ${isActive ? `${severityColors[tier]} border border-l-2 ${sevBorderLeft[tier]}` : 'border-transparent'}`}>
+      <button onClick={onActivate} className={`w-full flex items-center gap-3 px-4 py-3 ${isActive ? '' : 'rounded-xl border border-border-muted/20 bg-background/30 hover:bg-background-surface-1/30'} transition-all`}>
         <Icon size={16} className={cfg.color} weight={isActive ? 'fill' : 'regular'} />
         <span className={`text-body-s font-semibold ${isActive ? cfg.color : 'text-foreground'}`}>{cfg.label}</span>
         <span className="text-[10px] text-foreground-disabled">{activeGaps.length} gaps · {totalActive} items</span>
@@ -312,7 +314,7 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
         {isActive ? <CaretDown size={12} className="text-foreground-muted" /> : <CaretRight size={12} className="text-foreground-muted" />}
       </button>
       {isActive && (
-        <div className="flex flex-col gap-2 mt-2 pl-2">
+        <div className="flex flex-col gap-2 px-3 pb-3">
           {activeGaps.map(gap => (
             <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureItem={onConfigureItem} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} onInvestigate={onInvestigate} />
           ))}
