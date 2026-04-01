@@ -111,16 +111,26 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
   const tierKeys = ['critical', 'high', 'medium', 'low']
   const totalGaps = tierKeys.reduce((s, k) => s + (tiers[k]?.total || 0), 0)
   const totalResolved = tierKeys.reduce((s, k) => s + (tiers[k]?.resolved || 0), 0)
-  const pct = totalGaps > 0 ? (totalResolved / totalGaps) * 100 : 0
 
-  // Evenly spaced milestones at 25%, 50%, 75%, 100%
-  const milestones = tierKeys.map((k, i) => ({
-    key: k,
-    count: tiers[k]?.total || 0,
-    resolved: tiers[k]?.resolved || 0,
-    allDone: (tiers[k]?.total || 0) > 0 && (tiers[k]?.resolved || 0) === (tiers[k]?.total || 0),
-    position: (i + 1) * 25,
-  }))
+  // Each tier gets 25% of the bar. Fill within each segment based on that tier's completion.
+  const segments = tierKeys.map((k, i) => {
+    const t = tiers[k] || { total: 0, resolved: 0 }
+    const segPct = t.total > 0 ? (t.resolved / t.total) : 0
+    return {
+      key: k,
+      total: t.total,
+      resolved: t.resolved,
+      allDone: t.total > 0 && t.resolved === t.total,
+      segPct,
+      startPct: i * 25,
+      fillWidth: segPct * 25, // how much of this 25% segment is filled
+    }
+  })
+
+  // Total filled width = sum of each segment's fill
+  const totalFillPct = segments.reduce((s, seg) => s + seg.fillWidth, 0)
+
+  const segColors = ['from-red-400 to-red-400', 'from-orange-400 to-orange-400', 'from-primary to-primary', 'from-foreground-muted/60 to-foreground-muted/60']
 
   return (
     <div className="glass-card p-5 mb-6">
@@ -132,22 +142,30 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
         <span className="text-[11px] text-foreground-muted">{totalResolved} of {totalGaps} gaps addressed</span>
       </div>
 
-      {/* Bar */}
-      <div className="relative h-3 rounded-full bg-border-muted/20 overflow-hidden mb-2">
-        <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-red-400 via-orange-400 via-[60%] to-primary transition-all duration-500" style={{ width: `${pct}%` }} />
+      {/* Bar — 4 segments, each fills independently */}
+      <div className="relative h-3 rounded-full bg-border-muted/20 overflow-hidden mb-2 flex">
+        {segments.map((seg, i) => (
+          <div key={seg.key} className="relative h-full" style={{ width: '25%' }}>
+            <div className={`absolute inset-y-0 left-0 ${severityBarColors[seg.key]} transition-all duration-500 ${i === 0 ? 'rounded-l-full' : ''} ${i === 3 && seg.allDone ? 'rounded-r-full' : ''}`} style={{ width: `${seg.segPct * 100}%` }} />
+            {i > 0 && <div className="absolute left-0 inset-y-0 w-px bg-border-muted/30" />}
+          </div>
+        ))}
       </div>
 
-      {/* Tier markers */}
+      {/* Tier markers at segment boundaries (25%, 50%, 75%, 100%) */}
       <div className="relative h-8">
-        {milestones.map((m, i) => {
-          const cfg = tierConfig[m.key]
-          const isActive = activeTier === m.key
+        {segments.map((seg, i) => {
+          const cfg = tierConfig[seg.key]
+          const isActive = activeTier === seg.key
+          const position = (i + 1) * 25
           return (
-            <button key={m.key} onClick={() => onTierClick(m.key)} className="absolute flex flex-col items-center -translate-x-1/2 group" style={{ left: `${m.position}%` }}>
-              <div className={`w-3 h-3 rounded-full border-2 transition-all ${m.allDone ? `${cfg.bgColor} border-transparent` : isActive ? `border-current ${cfg.color} bg-background` : 'border-border-muted bg-background'}`}>
-                {m.allDone && <CheckCircle size={12} weight="fill" className="text-white -mt-px -ml-px" />}
+            <button key={seg.key} onClick={() => onTierClick(seg.key)} className="absolute flex flex-col items-center -translate-x-1/2 group" style={{ left: `${position}%` }}>
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${seg.allDone ? `${cfg.bgColor} border-transparent` : isActive ? `border-current ${cfg.color} bg-background` : 'border-border-muted bg-background'}`}>
+                {seg.allDone && <CheckCircle size={14} weight="fill" className="text-white" />}
               </div>
-              <span className={`text-[8px] mt-0.5 whitespace-nowrap transition-colors ${isActive ? cfg.color : 'text-foreground-disabled group-hover:text-foreground-muted'}`}>{cfg.label}</span>
+              <span className={`text-[8px] mt-0.5 whitespace-nowrap transition-colors ${isActive ? cfg.color : 'text-foreground-disabled group-hover:text-foreground-muted'}`}>
+                {cfg.label}{seg.total > 0 ? ` (${seg.resolved}/${seg.total})` : ''}
+              </span>
             </button>
           )
         })}
