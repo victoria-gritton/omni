@@ -123,39 +123,43 @@ function ApplicationsCard({ applications, onInvestigate }) {
 
 // ─── Infrastructure Card (grouped by type) ────────────────────────
 function InfrastructureCard({ infraHealth, onInvestigate }) {
+  const [activeType, setActiveType] = useState('all')
   const byType = {}
   for (const r of infraHealth) { if (!byType[r.type]) byType[r.type] = []; byType[r.type].push(r) }
   const typeOrder = ['EKS', 'Aurora PostgreSQL', 'DynamoDB', 'ElastiCache Redis', 'ECS Fargate']
   const sortedTypes = Object.keys(byType).sort((a, b) => (typeOrder.indexOf(a) === -1 ? 99 : typeOrder.indexOf(a)) - (typeOrder.indexOf(b) === -1 ? 99 : typeOrder.indexOf(b)))
+  const typeLabels = { 'EKS': 'EKS', 'Aurora PostgreSQL': 'Aurora', 'DynamoDB': 'DynamoDB', 'ElastiCache Redis': 'Redis', 'ECS Fargate': 'ECS' }
+
+  const filtered = activeType === 'all' ? infraHealth : (byType[activeType] || [])
 
   return (
-    <div className="glass-card p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="glass-card p-4 flex flex-col" style={{ maxHeight: 320 }}>
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5"><Cpu size={14} className="text-cyan-400" /><span className="text-[11px] font-medium text-foreground">Infrastructure</span></div>
         <span className="text-[9px] text-foreground-disabled">{infraHealth.length} resources</span>
       </div>
-      <div className="flex flex-col gap-2">
+      {/* Type tabs */}
+      <div className="flex gap-1 mb-2 flex-shrink-0">
+        <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors ${activeType === 'all' ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>All</button>
         {sortedTypes.map(type => {
-          const resources = byType[type]
-          const Icon = typeIcons[type] || Cpu
-          const hasIssue = resources.some(r => r.status !== 'healthy')
+          const hasIssue = byType[type].some(r => r.status !== 'healthy')
+          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors flex items-center gap-1 ${activeType === type ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>{typeLabels[type] || type}{hasIssue && <div className="w-1.5 h-1.5 rounded-full bg-status-degraded" />}</button>
+        })}
+      </div>
+      {/* Scrollable list */}
+      <div className="flex-1 overflow-y-auto flex flex-col gap-0.5 -mr-1 pr-1">
+        {filtered.map(r => {
+          const Icon = typeIcons[r.type] || Cpu
           return (
-            <div key={type}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Icon size={10} className="text-foreground-disabled" />
-                <span className="text-[9px] text-foreground-disabled uppercase tracking-wider">{type}</span>
+            <button key={r.name} onClick={() => onInvestigate('db-connections', { service: r.name, label: r.name })} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group w-full flex-shrink-0">
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDots[r.status]}`} />
+              <Icon size={10} className="text-foreground-disabled flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-medium text-foreground">{r.name}</p>
+                <p className="text-[9px] text-foreground-muted">{r.note}</p>
               </div>
-              {resources.map(r => (
-                <button key={r.name} onClick={() => onInvestigate('db-connections', { service: r.name, label: r.name })} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group w-full">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusDots[r.status]}`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-foreground">{r.name}</p>
-                    <p className="text-[9px] text-foreground-muted">{r.note}</p>
-                  </div>
-                  <CaretRight size={10} className="text-foreground-disabled group-hover:text-primary" />
-                </button>
-              ))}
-            </div>
+              <CaretRight size={10} className="text-foreground-disabled group-hover:text-primary" />
+            </button>
           )
         })}
       </div>
