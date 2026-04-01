@@ -10,7 +10,7 @@ import { usePersona } from '../data/persona'
 import { AgentDrawer } from '../components/Drawer'
 import { getInvestigation } from '../data/investigations'
 
-const statusDots = { healthy: 'bg-status-active', warning: 'bg-status-degraded', critical: 'bg-red-400', 'at-risk': 'bg-status-degraded' }
+const statusDots = { healthy: 'bg-green-400', warning: 'bg-orange-400', critical: 'bg-red-400', 'at-risk': 'bg-orange-400' }
 const sevColors = { critical: 'text-red-400 bg-red-400/10', high: 'text-orange-400 bg-orange-400/10', medium: 'text-primary bg-primary/10', low: 'text-foreground-muted bg-foreground-muted/10' }
 const typeIcons = { 'EKS': Cpu, 'Aurora PostgreSQL': Database, 'DynamoDB': Database, 'ElastiCache Redis': Lightning, 'ECS Fargate': Cpu }
 
@@ -152,7 +152,7 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
           const Icon = typeIcons[r.type] || Cpu
           return (
             <button key={r.name} onClick={() => onInvestigate('db-connections', { service: r.name, label: r.name })} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group w-full flex-shrink-0">
-              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ring-1 ring-background ${statusDots[r.status] || 'bg-foreground-muted'}`} />
+              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusDots[r.status] || 'bg-foreground-muted'}`} />
               <Icon size={10} className="text-foreground-disabled flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-medium text-foreground">{r.name}</p>
