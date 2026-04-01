@@ -20,37 +20,43 @@ export default {
         'pre': ['14px', '20px'],
       },
       colors: {
+        // Cloudscape dark mode tokens
         background: {
-          DEFAULT: '#161D26',
-          'surface-1': '#192534',
-          'surface-2': '#232f3e',
+          DEFAULT: '#161d26',       // main content area, containers
+          'surface-1': '#1b232d',   // dropdown bg, hover bg, shaded cells
+          'surface-2': '#232b37',   // disabled primary bg, row dividers
         },
         foreground: {
-          DEFAULT: '#d1d5db',
-          secondary: '#b6bec9',
-          muted: '#8d99a8',
-          disabled: '#5f6b7a',
+          DEFAULT: '#c6c6cd',       // body text, cell data
+          secondary: '#a4a4ad',     // descriptions, placeholders, secondary text
+          muted: '#8c8c94',         // disabled text, breadcrumb current, form borders
+          disabled: '#656871',      // disabled controls, divider borders, input borders
         },
-        link: '#0972d3',
+        link: '#42b4ff',            // links, active tabs, primary buttons
         border: {
-          DEFAULT: '#414d5c',
-          muted: '#354150',
+          DEFAULT: '#424650',       // dividers, side nav, help panel
+          muted: '#333843',         // active button bg, disabled checkbox bg
         },
         input: {
-          DEFAULT: '#192534',
-          border: '#414d5c',
+          DEFAULT: '#161d26',       // input background
+          border: '#656871',        // input border
         },
         primary: {
-          DEFAULT: '#0972d3',
-          foreground: '#ffffff',
+          DEFAULT: '#42b4ff',       // primary buttons, checkboxes, focus rings, links
+          foreground: '#0f141a',    // text on primary buttons
         },
-        'primary-foreground': '#ffffff',
-        destructive: '#d91515',
+        'primary-foreground': '#0f141a',
+        destructive: '#db0000',     // error badges
         status: {
-          active: '#2ea043',
-          blocked: '#ff9900',
-          outage: '#d91515',
-          inactive: '#5f6b7a',
+          active: '#00802f',        // success text/icons (Cloudscape green)
+          blocked: '#855900',       // warning border/icons (Cloudscape amber)
+          outage: '#ff7a7a',        // error text/icons (Cloudscape red text)
+          inactive: '#656871',      // inactive/loading
+        },
+        // GenAI purple
+        purple: {
+          400: '#bf80ff',           // Cloudscape GenAI label color
+          500: '#7300e5',           // GenAI accent
         },
       },
       borderRadius: {

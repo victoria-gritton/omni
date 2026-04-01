@@ -5,20 +5,20 @@
 body {
   margin: 0;
   min-width: 1024px;
-  background: #161D26;
-  color: #d1d5db;
+  background: #161d26;
+  color: #c6c6cd;
   font-family: 'Open Sans', 'Amazon Ember', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-size: 14px;
   line-height: 1.5;
 }
 
-/* Cloudscape dark background — solid, no gradients */
+/* Cloudscape dark background — solid */
 .gradient-bg-dark {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #161D26;
+  background: #161d26;
 }
 
 .content-layer {
@@ -26,25 +26,25 @@ body {
   z-index: 1;
 }
 
-/* Cloudscape card — solid surface, no glass */
+/* Cloudscape container — solid surface */
 .glass-card {
-  background: #192534;
-  border: 1px solid #414d5c;
+  background: #161d26;
+  border: 1px solid #424650;
   border-radius: 8px;
 }
 
-/* AI card — subtle blue-left-border accent */
+/* AI card — left accent border (Cloudscape info style) */
 .ai-glass-card {
-  background: #192534;
-  border: 1px solid #414d5c;
-  border-left: 3px solid #0972d3;
+  background: #161d26;
+  border: 1px solid #424650;
+  border-left: 3px solid #42b4ff;
   border-radius: 8px;
 }
 
 /* Metric card */
 .metric-card {
-  background: #192534;
-  border: 1px solid #414d5c;
+  background: #161d26;
+  border: 1px solid #424650;
   border-radius: 8px;
 }
 
