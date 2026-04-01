@@ -125,6 +125,14 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
     return { key: k, total: t.total, deployed: t.deployed, selected: t.selected, deployedPct, selectedPct, allDeployed: t.total > 0 && t.deployed === t.total }
   })
 
+  // A tier is truly "complete" only if it AND all higher-priority tiers are fully deployed
+  const tierComplete = {}
+  let chainComplete = true
+  for (const seg of segments) {
+    chainComplete = chainComplete && seg.allDeployed
+    tierComplete[seg.key] = chainComplete
+  }
+
   return (
     <div className="glass-card p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
@@ -139,13 +147,11 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
         </div>
       </div>
 
-      {/* Bar — 4 segments, deployed = solid, selected = muted overlay */}
+      {/* Bar */}
       <div className="relative h-3 rounded-full bg-border-muted/20 overflow-hidden mb-2 flex">
         {segments.map((seg, i) => (
           <div key={seg.key} className="relative h-full" style={{ width: '25%' }}>
-            {/* Selected (muted) — behind deployed */}
             <div className={`absolute inset-y-0 left-0 ${severityBarMuted[seg.key]} transition-all duration-500 ${i === 0 ? 'rounded-l-full' : ''}`} style={{ width: `${Math.min(seg.selectedPct, 1) * 100}%` }} />
-            {/* Deployed (solid) — on top */}
             <div className={`absolute inset-y-0 left-0 ${severityBarColors[seg.key]} transition-all duration-500 ${i === 0 ? 'rounded-l-full' : ''} ${i === 3 && seg.allDeployed ? 'rounded-r-full' : ''}`} style={{ width: `${seg.deployedPct * 100}%` }} />
             {i > 0 && <div className="absolute left-0 inset-y-0 w-px bg-border-muted/30 z-10" />}
           </div>
@@ -158,11 +164,12 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
           const cfg = tierConfig[seg.key]
           const isActive = activeTier === seg.key
           const position = (i + 1) * 25
-          const statusText = seg.allDeployed ? '✓' : seg.deployed > 0 ? `${seg.deployed}/${seg.total}` : seg.total > 0 ? `0/${seg.total}` : ''
+          const isComplete = tierComplete[seg.key]
+          const statusText = isComplete ? '✓' : seg.deployed > 0 ? `${seg.deployed}/${seg.total}` : seg.total > 0 ? `0/${seg.total}` : ''
           return (
             <button key={seg.key} onClick={() => onTierClick(seg.key)} className="absolute flex flex-col items-center -translate-x-1/2 group" style={{ left: `${position}%` }}>
-              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${seg.allDeployed ? `${cfg.bgColor} border-transparent` : isActive ? `border-current ${cfg.color} bg-background` : 'border-border-muted bg-background'}`}>
-                {seg.allDeployed && <Check size={10} weight="bold" className="text-white" />}
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isComplete ? `${cfg.bgColor} border-transparent` : isActive ? `border-current ${cfg.color} bg-background` : 'border-border-muted bg-background'}`}>
+                {isComplete && <Check size={10} weight="bold" className="text-white" />}
               </div>
               <span className={`text-[8px] mt-0.5 whitespace-nowrap transition-colors ${isActive ? cfg.color : 'text-foreground-disabled group-hover:text-foreground-muted'}`}>
                 {cfg.label} {statusText && `(${statusText})`}
@@ -172,8 +179,8 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
         })}
       </div>
 
-      {/* Milestone — only when tier is fully DEPLOYED */}
-      {activeTier && segments.find(s => s.key === activeTier)?.allDeployed && (
+      {/* Milestone — only when tier AND all prior tiers are fully deployed */}
+      {activeTier && tierComplete[activeTier] && (
         <div className={`flex items-center gap-2 mt-1 px-3 py-2 rounded-lg ${severityColors[activeTier]} border`}>
           <CheckCircle size={14} weight="fill" />
           <span className="text-[10px]">{tierConfig[activeTier].milestone}</span>
