@@ -5,7 +5,8 @@ import {
   CaretDown, CaretUp, ArrowRight, Lightning, ShieldCheck,
   Coffee, ArrowClockwise, Microphone, WarningCircle, Globe,
   ChatTeardropDots, Cpu, HardDrives, Database, CloudArrowUp,
-  ListChecks, MagnifyingGlassPlus, CaretRight, Eye, X
+  ListChecks, MagnifyingGlassPlus, CaretRight, Eye, X,
+  DotsThree, MagnifyingGlass, Trash, SquaresFour
 } from '@phosphor-icons/react'
 import { coffee } from '../data/coffee'
 import { useChatPanel } from '../components/ConsoleLayout'
@@ -152,9 +153,8 @@ function TypedText({ text, speed=20, onDone }) {
 
 /* ── Data ── */
 const promptPills = [
-  "Why is payment-service timing out?", "Show me all active alarms",
   "Show me recent errors in my logs",
-  "List my dashboards", "How are my containers doing?",
+  "List my dashboards",
   "Top invoked Lambda functions", "Check my database instances health",
 ]
 
@@ -361,12 +361,12 @@ const monitoredSystems = {
     { name: 'search-service', type: 'ECS', status: 'healthy', metrics: '9 metrics' },
   ],
   infrastructure: [
-    { name: 'DynamoDB', count: '8 tables', status: 'warning' },
-    { name: 'RDS', count: '3 instances', status: 'healthy' },
-    { name: 'ECS Clusters', count: '4 clusters', status: 'healthy' },
-    { name: 'Lambda', count: '23 functions', status: 'degraded' },
-    { name: 'API Gateway', count: '2 APIs', status: 'warning' },
-    { name: 'S3', count: '12 buckets', status: 'healthy' },
+    { name: 'DynamoDB', count: '8 tables', status: 'warning', health: { critical: 0, warning: 2, ok: 6 } },
+    { name: 'RDS', count: '3 instances', status: 'healthy', health: { critical: 0, warning: 0, ok: 3 } },
+    { name: 'ECS Clusters', count: '4 clusters', status: 'healthy', health: { critical: 0, warning: 1, ok: 3 } },
+    { name: 'Lambda', count: '23 functions', status: 'degraded', health: { critical: 2, warning: 3, ok: 18 } },
+    { name: 'API Gateway', count: '2 APIs', status: 'warning', health: { critical: 0, warning: 1, ok: 1 } },
+    { name: 'S3', count: '12 buckets', status: 'healthy', health: { critical: 0, warning: 0, ok: 12 } },
   ],
 }
 
@@ -384,6 +384,8 @@ export default function CoffeeView() {
   const [showChart, setShowChart] = useState(false)
   const [showSuggestion, setShowSuggestion] = useState(false)
   const [confirmTypingDone, setConfirmTypingDone] = useState(false)
+  const [tileMenu, setTileMenu] = useState(null)
+  const [feedFilter, setFeedFilter] = useState('all')
 
   useEffect(() => { if (act===1) { const t=setTimeout(()=>setShowChart(true),600); return ()=>clearTimeout(t) } }, [act])
   useEffect(() => { if (showChart) { const t=setTimeout(()=>setShowSuggestion(true),800); return ()=>clearTimeout(t) } }, [showChart])
@@ -393,12 +395,48 @@ export default function CoffeeView() {
   const statusDot = (s) => s==='healthy'?'bg-status-active':s==='degraded'?'bg-status-outage':s==='warning'?'bg-status-blocked':'bg-foreground-muted'
   const priorityStyle = (p) => p==='high'?'text-status-outage bg-status-outage/10 border-status-outage/20':p==='medium'?'text-status-blocked bg-status-blocked/10 border-status-blocked/20':'text-foreground-muted bg-background-surface-2 border-border-muted'
 
+  function TileMenu({ id }) {
+    return (
+      <div className="relative">
+        <button onClick={(e) => { e.stopPropagation(); setTileMenu(tileMenu === id ? null : id) }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-background-surface-2 text-foreground-disabled hover:text-foreground-muted transition-colors">
+          <DotsThree size={16} weight="bold" />
+        </button>
+        {tileMenu === id && (
+          <div className="absolute right-0 top-6 z-20 w-36 py-1 rounded-lg bg-background-surface-1 border border-border-muted shadow-dropdown-light">
+            <button onClick={() => setTileMenu(null)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-foreground-secondary hover:bg-background-surface-2 transition-colors">
+              <SquaresFour size={12} /> Add to dashboard
+            </button>
+            <button onClick={() => { navigate('/investigate'); setTileMenu(null) }} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-foreground-secondary hover:bg-background-surface-2 transition-colors">
+              <MagnifyingGlass size={12} /> Investigate
+            </button>
+            <button onClick={() => setTileMenu(null)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[11px] text-status-outage hover:bg-background-surface-2 transition-colors">
+              <Trash size={12} /> Remove
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto" onClick={() => { tileMenu && setTileMenu(null) }}>
       <div className="px-6 py-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[20px] font-normal text-foreground">{coffee.greeting}</h1>
           <div className="flex items-center gap-2">
+            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="all-accounts">
+              <option value="all-accounts">All accounts</option>
+              <option value="prod">Production (us-east-1)</option>
+              <option value="staging">Staging (us-west-2)</option>
+              <option value="dev">Development</option>
+            </select>
+            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="all-teams">
+              <option value="all-teams">All teams</option>
+              <option value="payments">Payments</option>
+              <option value="platform">Platform</option>
+              <option value="checkout">Checkout</option>
+              <option value="infra">Infrastructure</option>
+            </select>
             <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="3h">
               <option value="1h">Last 1 hour</option>
               <option value="3h">Last 3 hours</option>
@@ -409,6 +447,9 @@ export default function CoffeeView() {
             </select>
             <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">
               Actions ▾
+            </button>
+            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">
+              Customize
             </button>
           </div>
         </div>
@@ -438,23 +479,54 @@ export default function CoffeeView() {
               {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => openChat(p)} />)}
             </div>
 
-            {/* Observability Feed + Right sidebar */}
-            {/* Feed 50% | Tasks 25% | Investigations 25% */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
-              {/* Observability Feed — 2/4 cols */}
+            {/* Observability Feed + Recommendations */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+              {/* Observability Feed — 2/3 cols */}
               <div className="lg:col-span-2 glass-card p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
-                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length} issues</span>
+                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{investigations.length + feedItems.length}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-status-active animate-pulse" />
-                  <span className="text-[10px] text-foreground-muted">Agent monitoring</span>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-background-surface-2/50">
+                    {['all', 'investigations', 'alarms', 'resolved'].map(f => (
+                      <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
+                        {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <TileMenu id="feed" />
                 </div>
               </div>
               <div className="space-y-0">
-                {feedItems.map((item, i) => (
+                {/* Investigations at the top */}
+                {(feedFilter === 'all' || feedFilter === 'investigations') && investigations.map(inv => (
+                  <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-2 px-2 -mx-2 border-b border-border-muted/50 last:border-0 hover:bg-background-surface-2/30 rounded-lg transition-colors cursor-pointer">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
+                        <span className="text-[9px] text-foreground-disabled">{inv.id}</span>
+                      </div>
+                      <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
+                      <span className="text-[10px] text-foreground-disabled">{inv.started}</span>
+                      <CaretRight size={12} className="text-foreground-disabled" />
+                    </div>
+                  </div>
+                ))}
+                {/* Feed items */}
+                {feedItems
+                  .filter(item => {
+                    if (feedFilter === 'all') return true
+                    if (feedFilter === 'investigations') return false
+                    if (feedFilter === 'alarms') return item.severity === 'critical' || item.severity === 'warning'
+                    if (feedFilter === 'resolved') return item.severity === 'resolved'
+                    return true
+                  })
+                  .map((item, i) => (
                   <FeedItem key={i} {...item} expanded={expandedFeed === i} onToggle={() => setExpandedFeed(expandedFeed === i ? null : i)} />
                 ))}
               </div>
@@ -462,10 +534,13 @@ export default function CoffeeView() {
 
               {/* Pending Tasks — 1/4 col */}
               <div className="glass-card p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <ListChecks size={14} className="text-foreground-muted" />
-                  <h3 className="text-heading-xs font-normal text-foreground">Recommendations</h3>
-                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <ListChecks size={14} className="text-foreground-muted" />
+                    <h3 className="text-heading-xs font-normal text-foreground">Recommendations</h3>
+                    <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
+                  </div>
+                  <TileMenu id="recommendations" />
                 </div>
                 <div className="space-y-2">
                   {pendingTasks.map(task => (
@@ -487,35 +562,16 @@ export default function CoffeeView() {
                 </div>
               </div>
 
-              {/* Investigations */}
-              <div className="glass-card p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <MagnifyingGlassPlus size={14} className="text-foreground-muted" />
-                  <h3 className="text-heading-xs font-normal text-foreground">Investigations</h3>
-                </div>
-                <div className="space-y-2">
-                  {investigations.map(inv => (
-                    <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
-                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${inv.status==='active'?'bg-primary animate-pulse':'bg-foreground-disabled'}`} />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
-                          <span className="text-[10px] text-foreground-disabled">· {inv.started}</span>
-                        </div>
-                      </div>
-                      <CaretRight size={12} className="text-foreground-disabled flex-shrink-0" />
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Monitored Systems + Service Topology */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {/* Monitored Systems */}
               <div className="glass-card p-3">
-                <h3 className="text-heading-xs font-normal text-foreground mb-0.5">Monitored Systems</h3>
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="text-heading-xs font-normal text-foreground">Monitored Systems</h3>
+                  <TileMenu id="monitored" />
+                </div>
                 <p className="text-[10px] text-foreground-muted mb-2">Applications and infrastructure under observation</p>
 
                 <div className="mb-2">
@@ -543,15 +599,30 @@ export default function CoffeeView() {
                 <div className="mb-2">
                   <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Infrastructure</span>
                   <div className="grid grid-cols-3 gap-1">
-                    {monitoredSystems.infrastructure.map(infra => (
-                      <div key={infra.name} className="px-2 py-1.5 rounded-md border border-border-muted/50">
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <div className={`w-1.5 h-1.5 rounded-full ${statusDot(infra.status)}`} />
-                          <span className="text-[11px] text-foreground font-medium">{infra.name}</span>
+                    {monitoredSystems.infrastructure.map(infra => {
+                      const { critical, warning, ok } = infra.health
+                      const total = critical + warning + ok
+                      return (
+                        <div key={infra.name} className="px-2 py-1.5 rounded-md border border-border-muted/50 relative">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <div className={`w-1.5 h-1.5 rounded-full ${statusDot(infra.status)}`} />
+                            <span className="text-[11px] text-foreground font-medium flex-1">{infra.name}</span>
+                            <TileMenu id={`infra-${infra.name}`} />
+                          </div>
+                          <span className="text-[9px] text-foreground-disabled block mb-1">{infra.count}</span>
+                          <div className="flex h-1.5 rounded-full overflow-hidden bg-background-surface-2">
+                            {critical > 0 && <div className="bg-status-outage" style={{ width: `${(critical/total)*100}%` }} />}
+                            {warning > 0 && <div className="bg-status-blocked" style={{ width: `${(warning/total)*100}%` }} />}
+                            {ok > 0 && <div className="bg-primary" style={{ width: `${(ok/total)*100}%` }} />}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {critical > 0 && <span className="text-[8px] text-status-outage">{critical} critical</span>}
+                            {warning > 0 && <span className="text-[8px] text-status-blocked">{warning} warning</span>}
+                            <span className="text-[8px] text-primary">{ok} ok</span>
+                          </div>
                         </div>
-                        <span className="text-[9px] text-foreground-disabled">{infra.count}</span>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -569,8 +640,14 @@ export default function CoffeeView() {
               </div>
 
               {/* Service Topology */}
-              <div className="glass-card p-3">
-                <TopologyMap />
+              <div className="glass-card p-3 flex flex-col" style={{ height: '460px' }}>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-heading-xs font-normal text-foreground">Application map</h3>
+                  <TileMenu id="topology" />
+                </div>
+                <div className="flex-1 min-h-0">
+                  <TopologyMap />
+                </div>
               </div>
             </div>
           </div>

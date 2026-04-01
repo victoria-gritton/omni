@@ -27,9 +27,9 @@ export default {
         },
         foreground: {
           DEFAULT: '#f1f5f9',
-          secondary: '#94a3b8',
-          muted: '#64748b',
-          disabled: '#475569',
+          secondary: '#e2e8f0',
+          muted: '#cbd5e1',
+          disabled: '#94a3b8',
         },
         link: '#38bdf8',
         border: {
