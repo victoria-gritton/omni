@@ -208,11 +208,8 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
   const blurbFn = agentBlurbs[gap.category]
   const blurb = blurbFn ? blurbFn(gap) : null
 
-  const sevBorderColors = { critical: 'border-l-red-400', high: 'border-l-orange-400', medium: 'border-l-primary', low: 'border-l-foreground-muted' }
-  const leftBorder = isInActiveTier && !isSliding ? `border-l-2 ${sevBorderColors[gap.severity] || ''}` : ''
-
   return (
-    <div className={`rounded-xl border transition-all ${leftBorder} ${isSliding ? 'duration-700 opacity-0 translate-y-24 scale-95 max-h-0 overflow-hidden mb-0 border-status-active/30 bg-status-active/10' : 'duration-300 opacity-100 translate-y-0 scale-100'} ${!isSliding && isInActiveTier ? 'border-border-muted/40 bg-background-surface-1/50' : !isSliding ? 'border-border-muted/10 bg-background/30 opacity-60' : ''} ${!isSliding && (selectedCount > 0 || isGapSelected) ? 'border-primary/40 bg-primary/5' : ''}`}>
+    <div className={`rounded-xl border transition-all ${isSliding ? 'duration-700 opacity-0 translate-y-24 scale-95 max-h-0 overflow-hidden mb-0 border-status-active/30 bg-status-active/10' : 'duration-300 opacity-100 translate-y-0 scale-100'} ${!isSliding && isInActiveTier ? 'border-border-muted/40 bg-background-surface-1/50' : !isSliding ? 'border-border-muted/10 bg-background/30 opacity-60' : ''} ${!isSliding && (selectedCount > 0 || isGapSelected) ? 'border-primary/40 bg-primary/5' : ''}`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
           <button onClick={() => onToggleGap(gap)} className="mt-0.5 flex-shrink-0">
