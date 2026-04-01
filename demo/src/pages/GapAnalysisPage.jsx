@@ -298,53 +298,82 @@ function DeployedSection({ deployedLog }) {
   const [expanded, setExpanded] = useState(false)
   const prevCountRef = useRef(0)
 
-  // Auto-expand when new deployments arrive
   useEffect(() => {
-    if (deployedLog.length > prevCountRef.current) {
-      setExpanded(true)
-    }
+    if (deployedLog.length > prevCountRef.current) setExpanded(true)
     prevCountRef.current = deployedLog.length
   }, [deployedLog.length])
 
   if (deployedLog.length === 0) return null
 
-  const totalItems = deployedLog.reduce((s, entry) => s + entry.items.length, 0)
-  const isNewest = (di) => di === 0 && deployedLog.length > 1
+  // Flatten all deployed items and group by category → severity
+  const allItems = deployedLog.flatMap(e => e.items)
+  const totalItems = allItems.length
+  const catLabels = { alarms: 'Alarms', logs: 'Logs', traces: 'Traces', dashboards: 'Dashboards', anomaly: 'Anomaly Detection', slos: 'SLOs', 'cross-account': 'Cross-Account', 'cw-agent': 'CW Agent', 'alarm-actions': 'Alarm Actions' }
+  const sevOrder = ['critical', 'high', 'medium', 'low']
+  const sevLabels = { critical: 'Critical', high: 'High Priority', medium: 'Recommended', low: 'Nice to Have' }
+
+  // Group: { alarms: { critical: [...], high: [...] }, logs: { ... } }
+  const grouped = {}
+  for (const item of allItems) {
+    const cat = item.category || 'other'
+    const sev = item.severity || 'medium'
+    if (!grouped[cat]) grouped[cat] = {}
+    if (!grouped[cat][sev]) grouped[cat][sev] = []
+    grouped[cat][sev].push(item)
+  }
+  const categories = Object.keys(grouped).sort((a, b) => {
+    const order = ['alarms', 'logs', 'traces', 'cw-agent', 'dashboards', 'anomaly', 'slos', 'cross-account', 'alarm-actions']
+    return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b))
+  })
+
+  const isNewDeploy = deployedLog.length > 0
+  const CatIcon = (cat) => categoryIcons[cat] || Lightning
 
   return (
     <div className="mt-6">
       <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-status-active/20 bg-status-active/5 transition-all hover:bg-status-active/10">
         <CheckCircle size={16} weight="fill" className="text-status-active" />
         <span className="text-body-s font-semibold text-status-active">Deployed</span>
-        <span className="text-[10px] text-foreground-disabled">{totalItems} items across {deployedLog.length} deployments</span>
+        <span className="text-[10px] text-foreground-disabled">{totalItems} items · {categories.length} categories</span>
         <span className="flex-1" />
         {expanded ? <CaretDown size={12} className="text-foreground-muted" /> : <CaretRight size={12} className="text-foreground-muted" />}
       </button>
       {expanded && (
-        <div className="mt-2 pl-2 flex flex-col gap-2">
-          {deployedLog.map((entry, di) => (
-            <div key={di} className={`rounded-xl border border-status-active/10 bg-status-active/5 p-3 opacity-70 transition-all duration-500 ${di === 0 ? 'animate-slideUp' : ''}`} style={di === 0 ? { animation: 'slideUp 0.5s ease-out' } : undefined}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] text-status-active font-medium">{entry.time}</span>
-                <span className="text-[9px] text-foreground-disabled">{entry.items.length} items</span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                {entry.items.map((item, ii) => (
-                  <div key={ii} className="flex items-center gap-2 py-0.5">
-                    <CheckCircle size={10} weight="fill" className="text-status-active flex-shrink-0" />
-                    <span className="text-[10px] text-foreground-disabled">{item.name || item.id}</span>
-                    {item.category && <span className="text-[8px] text-foreground-disabled bg-foreground-muted/10 px-1 rounded">{item.category}</span>}
+        <div className="mt-2 pl-2 flex flex-col gap-3" style={isNewDeploy ? { animation: 'slideUp 0.5s ease-out' } : undefined}>
+          {categories.map(cat => {
+            const Icon = CatIcon(cat)
+            const sevGroups = grouped[cat]
+            const catTotal = Object.values(sevGroups).reduce((s, arr) => s + arr.length, 0)
+            return (
+              <div key={cat} className="rounded-xl border border-status-active/10 bg-status-active/5 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon size={14} className="text-status-active" />
+                  <span className="text-[11px] font-medium text-status-active">{catLabels[cat] || cat}</span>
+                  <span className="text-[9px] text-foreground-disabled">{catTotal} items</span>
+                </div>
+                {sevOrder.filter(s => sevGroups[s]?.length > 0).map(sev => (
+                  <div key={sev} className="ml-4 mb-1.5 last:mb-0">
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${severityColors[sev]}`}>{sevLabels[sev]}</span>
+                    <div className="flex flex-col gap-0.5 mt-1">
+                      {sevGroups[sev].map((item, ii) => (
+                        <div key={ii} className="flex items-center gap-2 py-0.5">
+                          <CheckCircle size={10} weight="fill" className="text-status-active flex-shrink-0" />
+                          <span className="text-[10px] text-foreground-disabled">{item.name || item.id}</span>
+                          {item.service && <span className="text-[8px] text-foreground-disabled">· {item.service}</span>}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(-20px) scale(0.97); }
-          to { opacity: 0.7; transform: translateY(0) scale(1); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>
@@ -469,8 +498,8 @@ export default function Day0Page() {
     const logItems = []
     for (const id of itemsToDeploy) {
       for (const gap of computedGaps) {
-        if (gap.items) { const item = gap.items.find(i => i.id === id); if (item) { logItems.push({ id, name: item.name, category: gap.category, service: item.service }); break } }
-        if (gap.id === id) { logItems.push({ id, name: gap.title, category: gap.category }); break }
+        if (gap.items) { const item = gap.items.find(i => i.id === id); if (item) { logItems.push({ id, name: item.name, category: gap.category, severity: gap.severity, service: item.service }); break } }
+        if (gap.id === id) { logItems.push({ id, name: gap.title, category: gap.category, severity: gap.severity }); break }
       }
     }
 
