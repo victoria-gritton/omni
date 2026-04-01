@@ -25,9 +25,9 @@ const tokens = {
 
   // ── Text Scale ──
   '--foreground':          'colors.slate.100',
-  '--foreground-secondary': 'colors.slate.300',
-  '--foreground-muted':    'colors.slate.400',
-  '--foreground-disabled': 'colors.slate.400',
+  '--foreground-secondary': 'colors.slate.200',
+  '--foreground-muted':    'colors.slate.300',
+  '--foreground-disabled': 'colors.slate.500',
   '--link':                'colors.blue.400',
 
   // ── Core Semantic Colors ──
@@ -38,9 +38,9 @@ const tokens = {
   '--primary':             'colors.slate.50',
   '--primary-foreground':  'colors.slate.950',
   '--secondary':           'colors.slate.700',
-  '--secondary-foreground': 'colors.slate.300',
+  '--secondary-foreground': 'colors.slate.200',
   '--muted':               'colors.slate.700',
-  '--muted-foreground':    'colors.slate.400',
+  '--muted-foreground':    'colors.slate.300',
   '--accent':              'colors.teal.400',
   '--accent-foreground':   'colors.slate.950',
   '--destructive':         'colors.red.400',
@@ -91,7 +91,7 @@ const tokens = {
   // ── Sidebar ──
   '--sidebar':             'colors.slate.950',
   '--sidebar-accent':      'colors.slate.800',
-  '--sidebar-accent-foreground': 'colors.slate.300',
+  '--sidebar-accent-foreground': 'colors.slate.200',
   '--sidebar-border':      'colors.slate.700',
   '--sidebar-foreground':  'colors.slate.100',
   '--sidebar-primary':     'colors.slate.50',

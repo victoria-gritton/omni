@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   House, MagnifyingGlass, Pulse, MagnifyingGlassPlus,
-  GearSix, Star, Clock, Sparkle, Bell, User,
+  CodeBlock, GearSix, Star, Clock, Sparkle, Bell, User,
   ChatTeardropDots, X, PaperPlaneRight, List
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
@@ -13,9 +13,9 @@ export function useChatPanel() { return useContext(ChatContext) }
 
 const navItems = [
   { icon: House, label: 'Home', subtitle: 'Overview', path: '/home' },
-  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Logs, metrics, traces', path: '/explore', also: ['/query'] },
+  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Search & query', path: '/explore' },
   { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/monitor' },
-  { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate', also: ['/console', '/devops-console'] },
+  { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Active investigations', path: '/investigate', also: ['/console', '/devops-console'] },
   { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources', path: '/configure' },
 ]
 
@@ -141,6 +141,11 @@ const PAGE_CONTEXT = {
     prompts: ['Find high-error services', 'Show unused metrics', 'Search OOM events', 'List active alarms'],
     placeholder: 'Search or ask a question...',
   },
+  '/devops-console': {
+    greeting: "I'm investigating the Payments service failure. Deploy #847 referenced PaymentsTable-v2 which doesn't exist. 847 payments failed. What would you like to know?",
+    prompts: ['Show me the deploy diff', 'What is the blast radius?', 'Generate post-mortem', 'Apply Terraform for v2 table'],
+    placeholder: 'Ask about this incident...',
+  },
   '/monitor': {
     greeting: "I can help you review active alarms, set up new monitors, or analyze alert patterns.",
     prompts: ['Show active alarms', 'Which alarms are noisy?', 'Set up a new alarm', 'Alert trends this week'],
@@ -197,7 +202,7 @@ function ChatPanel({ onClose, path, pendingQuery, onQueryConsumed }) {
   }
 
   return (
-    <div className="w-[320px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col">
+    <div className="w-[320px] flex-shrink-0 border-r border-border-muted bg-background-surface-1 flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border-muted flex-shrink-0">
         <div className="flex items-center gap-2">
           <Sparkle size={16} className="text-orange-400" />
@@ -329,7 +334,7 @@ export default function ConsoleLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [navOpen, setNavOpen] = useState(false)
-  const [chatOpen, setChatOpen] = useState(location.pathname === '/console')
+  const [chatOpen, setChatOpen] = useState(location.pathname === '/console' || location.pathname === '/devops-console')
   const [pendingQuery, setPendingQuery] = useState(null)
   const [showPersona, setShowPersona] = useState(false)
   const { persona } = usePersona()
@@ -393,6 +398,14 @@ export default function ConsoleLayout({ children }) {
         </nav>
 
 
+
+        {chatOpen && pendingQuery === "__alarms__" && (
+          <div className="w-[340px] flex-shrink-0 border-r border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
+            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
+          </div>
+        )}
+        {chatOpen && pendingQuery !== "__alarms__" && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
+
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
@@ -425,7 +438,7 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / database-failover','/query':'Explore / Advanced','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / payments-service','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>
@@ -434,12 +447,6 @@ export default function ConsoleLayout({ children }) {
           </div>
         </div>
 
-        {chatOpen && pendingQuery === '__alarms__' && (
-          <div className="w-[340px] flex-shrink-0 border-l border-border-muted bg-background-surface-1 flex flex-col overflow-y-auto scrollbar-hide">
-            <AlarmRecommendations onClose={() => { setChatOpen(false); setPendingQuery(null) }} />
-          </div>
-        )}
-        {chatOpen && pendingQuery !== '__alarms__' && <ChatPanel onClose={() => { setChatOpen(false); setPendingQuery(null) }} path={location.pathname} pendingQuery={pendingQuery} onQueryConsumed={() => setPendingQuery(null)} />}
       </div>
     </div>
   )
