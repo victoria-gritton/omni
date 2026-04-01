@@ -541,7 +541,7 @@ export default function Day0Page() {
           {['critical', 'high', 'medium', 'low'].map(tier => {
             const gapsInTier = tierGroups[tier]
             if (!gapsInTier || gapsInTier.length === 0) return null
-            return <TierSection key={tier} tier={tier} gaps={gapsInTier} isActive={activeTier === tier} onActivate={() => setActiveTier(tier)} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureAlarm={setAlarmConfigItem} />
+            return <TierSection key={tier} tier={tier} gaps={gapsInTier} isActive={activeTier === tier} onActivate={() => setActiveTier(prev => prev === tier ? null : tier)} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureAlarm={setAlarmConfigItem} />
           })}
         </div>
 
