@@ -567,9 +567,9 @@ export default function Day0Page() {
 
       {deploying && <DeployOverlay count={deploying.count} progress={deploying.progress} />}
       {showIaCModal && <IaCModal onClose={() => setShowIaCModal(false)} selectedGaps={computedGaps.filter(g => selectedGapIds.has(g.id))} />}
-      {alarmConfigItem && <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => setAlarmConfigItem(null)} />}
-      {logConfigItem && <LogConfigModal item={logConfigItem} onClose={() => setLogConfigItem(null)} onSave={() => setLogConfigItem(null)} />}
-      {traceConfigItem && <TraceConfigModal item={traceConfigItem} onClose={() => setTraceConfigItem(null)} onSave={() => setTraceConfigItem(null)} />}
+      {alarmConfigItem && <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(alarmConfigItem.id)); setAlarmConfigItem(null) }} />}
+      {logConfigItem && <LogConfigModal item={logConfigItem} onClose={() => setLogConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(logConfigItem.id)); setLogConfigItem(null) }} />}
+      {traceConfigItem && <TraceConfigModal item={traceConfigItem} onClose={() => setTraceConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(traceConfigItem.id)); setTraceConfigItem(null) }} />}
     </div>
   )
 }
