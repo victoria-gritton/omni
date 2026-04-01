@@ -422,6 +422,37 @@ const james = {
     { time: 'Just now', action: 'Identified PCI-DSS compliance gaps' },
     { time: 'Just now', action: 'Ready — select gaps to fix or choose a use case' },
   ],
+
+  slos: [
+    { id: "slo-payments-avail", service: "Payments Platform", name: "Availability", target: 99.95, current: 99.92, trend: "down", status: "at-risk", window: "30d rolling" },
+    { id: "slo-payments-latency", service: "Payments Platform", name: "Latency p99 < 500ms", target: 99.5, current: 99.8, trend: "stable", status: "healthy", window: "30d rolling" },
+    { id: "slo-trading-avail", service: "Trading Engine", name: "Availability", target: 99.99, current: 99.995, trend: "stable", status: "healthy", window: "30d rolling" },
+    { id: "slo-trading-latency", service: "Trading Engine", name: "Order latency p99 < 50ms", target: 99.0, current: 99.2, trend: "stable", status: "healthy", window: "30d rolling" },
+    { id: "slo-core-auth", service: "Core Services", name: "Auth availability", target: 99.9, current: 99.95, trend: "up", status: "healthy", window: "30d rolling" },
+    { id: "slo-compliance-audit", service: "Compliance & Analytics", name: "Audit log completeness", target: 100, current: 100, trend: "stable", status: "healthy", window: "7d rolling" },
+  ],
+  activeAlarms: [
+    { id: "aa-1", name: "transactions-db-cpu", resource: "transactions-db", severity: "critical", state: "ALARM", triggered: "12 min ago", metric: "CPUUtilization", value: "76%", threshold: "80%", recommendation: "Scale up or optimize queries." },
+    { id: "aa-2", name: "fraud-model-latency-p99", resource: "fraud-model", severity: "high", state: "ALARM", triggered: "25 min ago", metric: "ModelLatency p99", value: "290ms", threshold: "300ms", recommendation: "Approaching SLA. Check for data drift." },
+    { id: "aa-3", name: "event-backbone-consumer-lag", resource: "event-backbone", severity: "medium", state: "ALARM", triggered: "1 hour ago", metric: "ConsumerLag", value: "342 msgs", threshold: "200 msgs", recommendation: "Consumer falling behind." },
+    { id: "aa-4", name: "public-api-5xx", resource: "public-api", severity: "low", state: "OK", triggered: "3 hours ago (resolved)", metric: "5XXError", value: "0.1%", threshold: "1%", recommendation: "Resolved. Brief upstream timeout." },
+  ],
+  infraHealth: [
+    { name: "payments-cluster", type: "EKS", status: "warning", note: "CPU 72%, 3 pods restarted", app: "Payments Platform" },
+    { name: "trading-cluster", type: "EKS", status: "healthy", note: "All pods healthy, CPU 45%", app: "Trading Engine" },
+    { name: "analytics-cluster", type: "EKS", status: "healthy", note: "Underutilized, CPU 22%", app: "Compliance & Analytics" },
+    { name: "transactions-db", type: "Aurora PostgreSQL", status: "warning", note: "CPU 76%, connections 340/500", app: "Payments Platform" },
+    { name: "accounts-db", type: "Aurora PostgreSQL", status: "healthy", note: "CPU 34%, connections 45/200", app: "Core Services" },
+    { name: "ledger-db", type: "DynamoDB", status: "healthy", note: "Throttles: 0, on-demand", app: "Trading Engine" },
+    { name: "session-store", type: "ElastiCache Redis", status: "healthy", note: "Hit ratio 94%, CPU 18%", app: "Core Services" },
+    { name: "auth-service", type: "ECS Fargate", status: "healthy", note: "12 tasks, CPU 28%", app: "Core Services" },
+    { name: "compliance-engine", type: "ECS Fargate", status: "healthy", note: "6 tasks, CPU 41%", app: "Compliance & Analytics" },
+  ],
+  dashboards: [
+    { id: "dash-1", name: "Payments Overview", lastViewed: "2 hours ago", widgets: 12 },
+    { id: "dash-2", name: "Trading Floor", lastViewed: "1 day ago", widgets: 8 },
+    { id: "dash-3", name: "Infrastructure", lastViewed: "4 months ago", stale: true, widgets: 15 },
+  ],
 }
 
 // ─── Exports ──────────────────────────────────────────────────────
