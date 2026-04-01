@@ -35,6 +35,14 @@ const flows = [
     preview: 'day0',
   },
   {
+    id: 'tiles',
+    title: 'Tile Homepage',
+    subtitle: 'Agent-curated dashboard tiles',
+    path: '/tiles',
+    ready: true,
+    preview: 'placeholder',
+  },
+  {
     id: 'slack',
     title: 'Slack Incident Thread',
     subtitle: 'AI posts context, team coordinates',

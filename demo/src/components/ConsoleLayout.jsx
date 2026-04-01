@@ -555,7 +555,7 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / payments-service','/query':'Explore / Advanced','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / payments-service','/query':'Explore / Advanced','/configure':'Configure','/day0':'Welcome','/coffee':'Home','/tiles':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>

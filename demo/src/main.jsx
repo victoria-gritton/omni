@@ -10,6 +10,7 @@ import DevOpsFlowPage from './pages/DevOpsFlowPage'
 import DevOpsConsoleView from './pages/DevOpsConsoleView'
 import DevOpsIDEView from './pages/DevOpsIDEView'
 import CoffeeView from './pages/CoffeeView'
+import TileHomePage from './pages/TileHomePage'
 import SlackView from './pages/SlackView'
 import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/watch" element={<WatchView />} />
           <Route path="/phone" element={<PhoneView />} />
           <Route path="/slack" element={<SlackView />} />
+          <Route path="/tiles" element={<ConsoleLayout><TileHomePage /></ConsoleLayout>} />
           <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />
