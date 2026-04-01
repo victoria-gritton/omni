@@ -279,9 +279,12 @@ function SLOsCard({ slos, onInvestigate }) {
           </div>
           <p className="text-[9px] text-foreground-muted">{slo.service} · Target: {slo.target}% · Current: {slo.current}%</p>
           {slo.burnRate != null && (
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-1">
               <span className={`text-[8px] ${burnColor(slo.burnRate)}`}>Burn: {slo.burnRate}×</span>
-              <span className="text-[8px] text-foreground-disabled">Budget: {slo.budgetRemaining}% remaining</span>
+              <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${slo.budgetRemaining > 50 ? 'bg-green-400' : slo.budgetRemaining > 20 ? 'bg-orange-400' : 'bg-red-400'}`} style={{ width: `${slo.budgetRemaining}%` }} />
+              </div>
+              <span className="text-[8px] text-foreground-disabled w-6 text-right">{slo.budgetRemaining}%</span>
             </div>
           )}
         </div>
