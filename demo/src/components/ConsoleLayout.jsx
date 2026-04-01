@@ -419,8 +419,8 @@ export default function ConsoleLayout({ children }) {
               <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
                 <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
               </button>
-              <button onClick={() => setChatOpen(!chatOpen)} className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s font-medium transition-colors ${chatOpen ? 'bg-[#7300e5] text-white' : 'bg-[#7300e5]/15 text-[#bf80ff] border border-[#7300e5]/30 hover:bg-[#7300e5]/25'}`}>
-                <ChatTeardropDots size={16} />
+              <button onClick={() => setChatOpen(!chatOpen)} className={`relative inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s font-medium transition-colors ${chatOpen ? 'bg-[#7300e5] text-white' : 'text-[#bf80ff] hover:bg-[#7300e5]/15'}`} style={!chatOpen ? { background: '#161d26', border: 'double 2px transparent', backgroundImage: 'linear-gradient(#161d26, #161d26), linear-gradient(135deg, #7300e5, #42b4ff, #e040fb)', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' } : undefined}>
+                <ChatTeardropDots size={16} className="text-[#e040fb]" />
                 Ask AI
               </button>
               <div className="relative">
