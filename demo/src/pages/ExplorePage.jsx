@@ -178,7 +178,7 @@ function ExploreToolbar({ dataSource, setDataSource, timeRange, setTimeRange, sp
       <div className="flex-1" />
 
       {/* Run query */}
-      <button onClick={onRun} className="h-8 px-4 rounded-lg bg-primary text-body-s font-medium text-primary-foreground hover:bg-slate-200 transition-colors flex items-center gap-1.5">
+      <button onClick={onRun} className="h-8 px-4 rounded-lg bg-[#ec7211] text-body-s font-medium text-white hover:bg-[#eb5f07] transition-colors flex items-center gap-1.5">
         <Play size={12} />
         Run query
       </button>
@@ -231,7 +231,7 @@ function QueryHistoryDrawer({ onClose, onUse }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ClockCounterClockwise size={14} className="text-foreground-muted" />
-          <h3 className="text-heading-xs font-normal text-foreground">Query history</h3>
+          <h3 className="text-heading-m font-normal text-foreground">Query history</h3>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setStarredOnly(!starredOnly)} className={`text-[10px] px-2 py-1 rounded-md transition-colors ${starredOnly ? 'bg-primary/10 text-primary border border-primary/30' : 'text-foreground-muted hover:bg-background-surface-2 border border-border-muted'}`}>
@@ -595,7 +595,7 @@ function QueryEditorBlock({ index, initialQuery }) {
       {index === 0 && (
         <div className="w-52 space-y-3">
           <div className="glass-card p-4">
-            <h3 className="text-heading-xs font-normal text-foreground mb-3">Saved queries</h3>
+            <h3 className="text-heading-m font-normal text-foreground mb-3">Saved queries</h3>
             <div className="space-y-0">
               {savedQueries.map((q) => (
                 <div key={q.name} className="py-2 border-b border-border-muted last:border-0 cursor-pointer">
@@ -735,19 +735,19 @@ export default function ExplorePage() {
                 {activeTab === 'transactions' && <TransactionsPanel filter={filter} />}
 
                 {/* Suggested explorations */}
-                <div className="mt-4 p-4 rounded-xl bg-purple-500/[0.06] border border-purple-400/20">
+                <div className="mt-4 p-4 rounded-xl bg-[#06080A] border border-[#e040fb]/30">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkle size={14} className="text-purple-400" />
-                    <h3 className="text-heading-s font-normal text-foreground">AI-suggested explorations</h3>
+                    <Sparkle size={14} className="text-[#e040fb]" />
+                    <h3 className="text-heading-m font-normal text-foreground">AI-suggested explorations</h3>
                   </div>
                   <div className="space-y-0">
                     {suggestedExplorations.map((item) => (
-                      <div key={item.title} className="flex items-start gap-3 py-3 border-b border-purple-400/10 last:border-0 cursor-pointer hover:bg-purple-500/[0.04] -mx-2 px-2 rounded-lg transition-colors">
+                      <div key={item.title} className="flex items-start gap-3 py-3 border-b border-[#e040fb]/10 last:border-0 cursor-pointer hover:bg-[#e040fb]/[0.04] -mx-2 px-2 rounded-lg transition-colors">
                         <div>
                           <span className="text-body-s text-foreground font-medium block">{item.title}</span>
                           <span className="text-body-s text-foreground-muted">{item.subtitle}</span>
                         </div>
-                        <ArrowRight size={14} className="text-purple-400/60 mt-0.5 ml-auto flex-shrink-0" />
+                        <ArrowRight size={14} className="text-[#e040fb]/40 mt-0.5 ml-auto flex-shrink-0" />
                       </div>
                     ))}
                   </div>

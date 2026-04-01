@@ -69,7 +69,10 @@ function FeedItem({ category, severity, title, source, status, detail, time, exp
       <button onClick={onToggle} className="w-full flex items-center gap-3 py-3 px-2 text-left hover:bg-background-surface-2/30 rounded-lg transition-colors">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
+<<<<<<< HEAD
             <Icon size={14} className={`${c.text} flex-shrink-0`} weight={category === 'change' ? 'bold' : 'fill'} />
+=======
+>>>>>>> origin/Supriya
             <span className={`text-[10px] font-bold tracking-wider ${c.text}`}>{c.label}</span>
             <span className="text-[10px] text-foreground-muted">{source}</span>
             {status && <span className="text-[10px] text-status-blocked font-medium">{status}</span>}
@@ -114,7 +117,7 @@ function TopoNode({ name, status, x, y }) {
   const colors = { healthy: '#22c55e', warning: '#f59e0b', critical: '#ef4444' }
   return (
     <g>
-      <circle cx={x} cy={y} r="24" fill="#0a0e1a" stroke={colors[status]} strokeWidth="1.5" />
+      <circle cx={x} cy={y} r="24" fill="#161d26" stroke={colors[status]} strokeWidth="1.5" />
       <circle cx={x} cy={y} r="4" fill={colors[status]} fillOpacity="0.3" />
       <text x={x} y={y + 38} textAnchor="middle" fill="white" fillOpacity="0.7" fontSize="9" fontFamily="DM Sans">{name}</text>
     </g>
@@ -265,7 +268,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
               {/* Query */}
               <div className="glass-card p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-heading-xs font-normal text-foreground">Metric query</span>
+                  <span className="text-heading-m font-normal text-foreground">Metric query</span>
                   <span className="text-[10px] text-foreground-muted px-2 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">PromQL</span>
                 </div>
                 <pre className="text-pre font-mono bg-background-surface-2/40 rounded-lg p-3 text-foreground-secondary overflow-x-auto">{'topk(10, container_memory_working_set_bytes{cluster="payment-processing-prod"})'}</pre>
@@ -275,7 +278,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
               {chartVisible && (
                 <div className="glass-card p-4" style={{ animation: 'fadeIn 0.4s ease-out' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-heading-s font-normal text-foreground">Container Memory Usage</h3>
+                    <h3 className="text-heading-m font-normal text-foreground">Container Memory Usage</h3>
                     <span className="text-body-s text-foreground-muted">payment-processing-prod</span>
                   </div>
                   <MemoryChart data={coffee.memoryChartData} threshold={700} />
@@ -313,7 +316,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
               {setupPhase === 3 && (
                 <>
                   <div className="glass-card p-4">
-                    <h3 className="text-heading-s font-normal text-foreground mb-3">Setup complete</h3>
+                    <h3 className="text-heading-m font-normal text-foreground mb-3">Setup complete</h3>
                     <div className="space-y-3">
                       {[
                         { title: 'Dashboard created', desc: '"Payment Service Health" with memory usage widget' },
@@ -351,6 +354,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
 }
 
 const feedItems = [
+<<<<<<< HEAD
   // Incidents (the investigations — what's broken right now)
   { category: 'incident', severity: 'critical', title: 'order-service is timing out', source: 'INC-2847', status: 'In progress', detail: 'ECS tasks on order-service-east-2 hit 512 MB memory limit. 6 OOM kills since 1:52 AM, stuck in restart loop. ~2,400 orders failed.', time: '35m ago', aiSummary: 'Memory exhaustion causing restart loop. No deploys in 6h — workload outgrew allocation. Recommended fix: scale memory 512 MB → 1 GB.', path: '/console' },
   { category: 'incident', severity: 'critical', title: 'Payments service down', source: 'INC-3102', status: 'In progress', detail: 'Deploy #847 references PaymentsTable-v2 which doesn\'t exist. 847 payment attempts failed, all retryable.', time: '20m ago', aiSummary: 'Code shipped before infrastructure. Terraform change to create PaymentsTable-v2 is pending approval. Roll back deploy #847 or apply Terraform.', path: '/devops-console' },
@@ -362,6 +366,12 @@ const feedItems = [
   { category: 'change', severity: 'info', title: 'Deploy #847 — payment-service', source: 'CodeDeploy', detail: 'Deployed by Raj Patel at 1:45 AM. Commit a3f7c2d: table reference migration.', time: '45m ago', aiSummary: 'This deploy changed the DynamoDB table reference from PaymentsTable to PaymentsTable-v2. The target table does not exist yet.' },
   { category: 'change', severity: 'info', title: 'DynamoDB auto-scaling activated — UsersTable', source: 'DynamoDB', detail: 'Read capacity scaling from 100 to 400 RCU. Triggered by sustained throttling.', time: '2m ago', aiSummary: null },
   { category: 'change', severity: 'info', title: 'Analytics DB connection pool cleanup', source: 'RDS', detail: 'Connection pool dropped from 85% to 62% after idle connection cleanup. Automated maintenance.', time: '18m ago', aiSummary: null },
+=======
+  { severity: 'critical', title: 'DynamoDB UsersTable ReadThrottles', source: 'DynamoDB', detail: 'ReadThrottleEvents spiked to 847 (threshold: 0). Auto-scaling triggered but not yet effective.', time: 'just now', aiSummary: 'This correlates with the PaymentService fault rate increase. The UsersTable is receiving 3× normal read traffic from the payment validation path. Auto-scaling should resolve within 5 minutes.' },
+  { severity: 'warning', title: 'API Gateway 5xx Errors above threshold', source: 'ApiGateway', detail: '5XXError rate is 5.2% (threshold: 1%). Correlated with upstream PaymentService faults.', time: '4m ago', aiSummary: 'These 5xx errors are downstream effects of the PaymentService issue. No action needed on API Gateway itself — fixing the upstream will resolve this.' },
+  { severity: 'info', title: 'Checkout canary all steps passing', source: 'Synthetics', detail: 'All 5 steps completed in 2.3s. Performance within baseline.', time: '6m ago', aiSummary: null },
+  { severity: 'resolved', title: 'Analytics DB connection pool normalized', source: 'RDS', detail: 'Connection pool dropped from 85% to 62% after idle connection cleanup.', time: '18m ago', aiSummary: null },
+>>>>>>> origin/Supriya
 ]
 
 const pendingTasks = [
@@ -370,6 +380,15 @@ const pendingTasks = [
   { id: 'T-3', title: 'Archive 23 unused custom metrics', description: 'Metrics not queried in 90+ days. Estimated savings: $47/month', priority: 'low', source: 'Cost optimization' },
 ]
 
+<<<<<<< HEAD
+=======
+const investigations = [
+  { id: 'INC-2847', title: 'order-service is timing out', status: 'active', progress: '3 findings', started: '35m ago', path: '/console' },
+  { id: 'INC-3102', title: 'Payments service down', status: 'active', progress: '2 findings', started: '20m ago', path: '/devops-console' },
+  { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', progress: '7 findings', started: 'Yesterday' },
+]
+
+>>>>>>> origin/Supriya
 const monitoredSystems = {
   applications: [
     { name: 'payment-service', type: 'Lambda', status: 'degraded', metrics: '24 metrics' },
@@ -497,12 +516,21 @@ export default function CoffeeView() {
               <div className="lg:col-span-2 glass-card p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
+<<<<<<< HEAD
                   <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
                   <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-background-surface-2/50">
                     {['all', 'investigations', 'anomalies', 'changes'].map(f => (
+=======
+                  <h3 className="text-heading-m font-normal text-foreground">Observability Feed</h3>
+                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{investigations.length + feedItems.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-background-surface-2/50">
+                    {['all', 'investigations', 'alarms', 'resolved'].map(f => (
+>>>>>>> origin/Supriya
                       <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
                         {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
                       </button>
@@ -512,6 +540,27 @@ export default function CoffeeView() {
                 </div>
               </div>
               <div className="space-y-0">
+<<<<<<< HEAD
+=======
+                {/* Investigations at the top */}
+                {(feedFilter === 'all' || feedFilter === 'investigations') && investigations.map(inv => (
+                  <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-2 px-2 -mx-2 border-b border-border-muted/50 last:border-0 hover:bg-background-surface-2/30 rounded-lg transition-colors cursor-pointer">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
+                        <span className="text-[10px] text-foreground-disabled">{inv.id}</span>
+                      </div>
+                      <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
+                      <span className="text-[10px] text-foreground-disabled">{inv.started}</span>
+                      <CaretRight size={12} className="text-foreground-disabled" />
+                    </div>
+                  </div>
+                ))}
+                {/* Feed items */}
+>>>>>>> origin/Supriya
                 {feedItems
                   .filter(item => {
                     if (feedFilter === 'all') return true
@@ -530,7 +579,12 @@ export default function CoffeeView() {
               <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
+<<<<<<< HEAD
                     <h3 className="text-heading-xs font-normal text-foreground">Recommendations</h3>
+=======
+                    <ListChecks size={14} className="text-foreground-muted" />
+                    <h3 className="text-heading-m font-normal text-foreground">Recommendations</h3>
+>>>>>>> origin/Supriya
                     <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
                   </div>
                   <TileMenu id="recommendations" />
@@ -543,8 +597,17 @@ export default function CoffeeView() {
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
                       </div>
                       <p className="text-[10px] text-foreground-muted mb-2">{task.description}</p>
+<<<<<<< HEAD
                       <div className="flex items-center justify-end">
                           <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="h-5 px-2 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Show details</button>
+=======
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-foreground-disabled">{task.source}</span>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="text-[10px] text-link hover:underline">View details</button>
+                          <button className="h-5 px-2 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
+                        </div>
+>>>>>>> origin/Supriya
                       </div>
                     </div>
                   ))}
@@ -558,11 +621,18 @@ export default function CoffeeView() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
               {/* Agent Insight Cards */}
               <div className="glass-card p-3">
+<<<<<<< HEAD
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Trends & signals</h3>
                   <TileMenu id="trends" />
+=======
+                <div className="flex items-center justify-between mb-0.5">
+                  <h3 className="text-heading-m font-normal text-foreground">Monitored Systems</h3>
+                  <TileMenu id="monitored" />
+>>>>>>> origin/Supriya
                 </div>
 
+<<<<<<< HEAD
                 {/* Agent insight */}
                 <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/[0.04] border border-primary/10 mb-2">
                   <Sparkle size={12} className="text-primary mt-0.5 flex-shrink-0" weight="fill" />
@@ -579,6 +649,25 @@ export default function CoffeeView() {
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-heading-l font-normal text-foreground">~12 days</span>
                         <span className="text-[10px] text-foreground">until scaling needed</span>
+=======
+                <div className="mb-2">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
+                  <div>
+                    {setupComplete && (
+                      <div className="flex items-center gap-1.5 py-1 border-b border-status-active/20 bg-status-active/[0.04] -mx-1 px-1 rounded" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+                        <ChartBar size={12} className="text-status-active flex-shrink-0" />
+                        <span className="text-[11px] text-status-active flex-1 font-medium">Payment Service Health</span>
+                        <span className="text-[10px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
+                        <span className="text-[10px] text-status-active/70">NEW</span>
+                      </div>
+                    )}
+                    {monitoredSystems.applications.map(app => (
+                      <div key={app.name} className="flex items-center gap-1.5 py-1 border-b border-border-muted/50 last:border-0">
+                        <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)} flex-shrink-0`} />
+                        <span className="text-[11px] text-foreground flex-1 font-mono">{app.name}</span>
+                        <span className="text-[10px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
+                        <span className="text-[10px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
+>>>>>>> origin/Supriya
                       </div>
                       <p className="text-[11px] text-foreground-muted mt-1">DynamoDB UsersTable read capacity trending up. At current growth rate, will exceed provisioned capacity.</p>
                     </div>
@@ -596,6 +685,7 @@ export default function CoffeeView() {
                   </div>
                 </div>
 
+<<<<<<< HEAD
                 {/* Positive Signal */}
                 <div className="py-2 border-b border-border-muted">
                   <div className="flex items-start gap-3">
@@ -649,6 +739,48 @@ export default function CoffeeView() {
                     </div>
                   </div>
                 </div>
+=======
+                <div className="mb-2">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Infrastructure</span>
+                  <div className="grid grid-cols-3 gap-1">
+                    {monitoredSystems.infrastructure.map(infra => {
+                      const { critical, warning, ok } = infra.health
+                      const total = critical + warning + ok
+                      return (
+                        <div key={infra.name} className="px-2 py-1.5 rounded-md border border-border-muted/50 relative">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <div className={`w-1.5 h-1.5 rounded-full ${statusDot(infra.status)}`} />
+                            <span className="text-[11px] text-foreground font-medium flex-1">{infra.name}</span>
+                            <TileMenu id={`infra-${infra.name}`} />
+                          </div>
+                          <span className="text-[10px] text-foreground-disabled block mb-1">{infra.count}</span>
+                          <div className="flex h-1.5 rounded-full overflow-hidden bg-background-surface-2">
+                            {critical > 0 && <div className="bg-status-outage" style={{ width: `${(critical/total)*100}%` }} />}
+                            {warning > 0 && <div className="bg-status-blocked" style={{ width: `${(warning/total)*100}%` }} />}
+                            {ok > 0 && <div className="bg-primary" style={{ width: `${(ok/total)*100}%` }} />}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {critical > 0 && <span className="text-[10px] text-status-outage">{critical} critical</span>}
+                            {warning > 0 && <span className="text-[10px] text-status-blocked">{warning} warning</span>}
+                            <span className="text-[10px] text-primary">{ok} ok</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Compact recommendation */}
+                <div className="p-2 rounded-md bg-purple-500/[0.06] border border-purple-400/20 flex items-center gap-2">
+                  <Sparkle size={12} className="text-purple-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] text-foreground font-medium">Create recommended alarms</span>
+                    <span className="text-[10px] text-foreground-muted ml-2">6 alarms found</span>
+                  </div>
+                  <button onClick={() => openChat('__alarms__')} className="h-5 px-2 rounded text-[10px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
+                    <Sparkle size={8} /> Set up
+                  </button>
+>>>>>>> origin/Supriya
                 </div>
               </div>
 
@@ -661,8 +793,13 @@ export default function CoffeeView() {
 
               {/* Service Topology */}
               <div className="glass-card p-3 flex flex-col" style={{ height: '460px' }}>
+<<<<<<< HEAD
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Application map</h3>
+=======
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-heading-m font-normal text-foreground">Application map</h3>
+>>>>>>> origin/Supriya
                   <TileMenu id="topology" />
                 </div>
 
@@ -691,14 +828,14 @@ export default function CoffeeView() {
             </div>
             <div className="glass-card p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-heading-xs font-normal text-foreground">Metric query</span>
+                <span className="text-heading-m font-normal text-foreground">Metric query</span>
                 <span className="text-[10px] text-foreground-muted px-2 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{coffee.metricQuery.language}</span>
               </div>
               <pre className="text-pre font-mono bg-background-surface-2/40 rounded-lg p-3 text-foreground-secondary overflow-x-auto mb-2">{coffee.metricQuery.query}</pre>
             </div>
             {showChart && (
               <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}>
-                <div className="flex items-center justify-between mb-3"><h3 className="text-heading-s font-normal text-foreground">Container Memory Usage</h3><span className="text-body-s text-foreground-muted">payment-processing-prod</span></div>
+                <div className="flex items-center justify-between mb-3"><h3 className="text-heading-m font-normal text-foreground">Container Memory Usage</h3><span className="text-body-s text-foreground-muted">payment-processing-prod</span></div>
                 <MemoryChart data={coffee.memoryChartData} threshold={700} />
                 <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-status-blocked/[0.06] border border-status-blocked/[0.15]"><Warning size={14} className="text-status-blocked" /><span className="text-body-s text-status-blocked">{coffee.metricQuery.highlight}</span></div>
               </div>
@@ -723,7 +860,7 @@ export default function CoffeeView() {
           <div className="space-y-3">
             {settingUp && <div className="ai-glass-card p-4 flex items-center gap-3"><ArrowClockwise size={16} className="text-primary animate-spin"/><div><span className="text-body-s font-semibold text-primary block">Setting up monitoring...</span><span className="text-body-s text-foreground-muted">Creating dashboard, alarm, and notifications</span></div></div>}
             {setupDone && (<>
-              <div className="glass-card p-4"><h3 className="text-heading-s font-normal text-foreground mb-3">Setup complete</h3><div className="space-y-3">{[{title:'Dashboard created',desc:`"${coffee.setup.dashboard.name}" with memory usage widget`},{title:'Alarm configured',desc:`"${coffee.setup.alarm.name}" — triggers at ${coffee.setup.alarm.threshold} for ${coffee.setup.alarm.evaluationPeriods} × ${coffee.setup.alarm.period}`},{title:'Notifications active',desc:`${coffee.setup.notification.type} → ${coffee.setup.notification.channel}`}].map((item,i)=><div key={i} className={`flex items-start gap-3 py-2 ${i<2?'border-b border-border-muted':''}`}><CheckCircle size={16} className="text-status-active mt-0.5" weight="fill"/><div><span className="text-body-s text-foreground font-medium block">{item.title}</span><span className="text-body-s text-foreground-muted">{item.desc}</span></div></div>)}</div></div>
+              <div className="glass-card p-4"><h3 className="text-heading-m font-normal text-foreground mb-3">Setup complete</h3><div className="space-y-3">{[{title:'Dashboard created',desc:`"${coffee.setup.dashboard.name}" with memory usage widget`},{title:'Alarm configured',desc:`"${coffee.setup.alarm.name}" — triggers at ${coffee.setup.alarm.threshold} for ${coffee.setup.alarm.evaluationPeriods} × ${coffee.setup.alarm.period}`},{title:'Notifications active',desc:`${coffee.setup.notification.type} → ${coffee.setup.notification.channel}`}].map((item,i)=><div key={i} className={`flex items-start gap-3 py-2 ${i<2?'border-b border-border-muted':''}`}><CheckCircle size={16} className="text-status-active mt-0.5" weight="fill"/><div><span className="text-body-s text-foreground font-medium block">{item.title}</span><span className="text-body-s text-foreground-muted">{item.desc}</span></div></div>)}</div></div>
               <div className="ai-glass-card p-4"><div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary"/><span className="text-body-s font-semibold text-primary">AI assistant</span></div><p className="text-body-m text-foreground leading-relaxed"><TypedText text={coffee.setup.confirmationMessage} speed={15} onDone={()=>setConfirmTypingDone(true)}/></p></div>
               {confirmTypingDone && <div className="flex justify-end" style={{animation:'fadeIn 0.3s ease-out'}}><button onClick={()=>setAct(3)} className="h-8 px-4 rounded-lg bg-primary border border-white/10 text-body-s font-medium text-primary-foreground hover:bg-slate-200 active:bg-slate-300 transition-all flex items-center gap-2">Back to homepage <ArrowRight size={14}/></button></div>}
             </>)}
@@ -739,7 +876,11 @@ export default function CoffeeView() {
                 <div className="glass-card p-4"><h3 className="text-heading-m font-normal text-foreground mb-3">Live Updates</h3><div className="flex items-center gap-2 py-2"><CheckCircle size={14} className="text-status-active"/><span className="text-body-s text-foreground-muted">{coffee.updatedState.liveUpdates}</span></div></div>
               </div>
               <div className="space-y-3">
+<<<<<<< HEAD
                 <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-s font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
+=======
+                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-m font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
+>>>>>>> origin/Supriya
                 <div className="ai-glass-card p-4"><div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary"/><span className="text-body-s font-semibold text-primary">Weekend readiness</span></div><div className="space-y-2">{['Memory monitoring active','Alarm threshold set at 87.5%','Team notifications configured'].map(t=><div key={t} className="flex items-center gap-2"><CheckCircle size={12} className="text-status-active" weight="fill"/><span className="text-body-s text-foreground-secondary">{t}</span></div>)}</div><p className="text-body-s text-foreground-muted mt-3">You're covered for the weekend. Enjoy it.</p></div>
                 <button onClick={()=>{setAct(0);setExpandedFeed(null);setAiTypingDone(false);setSettingUp(false);setSetupDone(false);setShowChart(false);setShowSuggestion(false);setConfirmTypingDone(false)}} className="w-full h-8 rounded-lg border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center justify-center gap-2"><ArrowClockwise size={14}/> Restart demo</button>
               </div>

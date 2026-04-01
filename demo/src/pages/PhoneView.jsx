@@ -65,17 +65,17 @@ export default function PhoneView() {
               <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
                 <span className="text-[10px] text-foreground-disabled uppercase tracking-wider block">Impact</span>
                 <span className="text-[16px] font-semibold text-foreground">2.4K</span>
-                <span className="text-[8px] text-foreground-disabled block">failed orders</span>
+                <span className="text-[10px] text-foreground-disabled block">failed orders</span>
               </div>
               <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
                 <span className="text-[10px] text-foreground-disabled uppercase tracking-wider block">p99</span>
                 <span className="text-[16px] font-semibold text-foreground">2.4s</span>
-                <span className="text-[8px] text-foreground-disabled block">baseline 200ms</span>
+                <span className="text-[10px] text-foreground-disabled block">baseline 200ms</span>
               </div>
               <div className="flex-1 rounded-lg bg-background-surface-1 border border-border-muted p-2.5 text-center">
                 <span className="text-[10px] text-foreground-disabled uppercase tracking-wider block">Memory</span>
                 <span className="text-[16px] font-semibold text-status-outage">98%</span>
-                <span className="text-[8px] text-foreground-disabled block">512 MB limit</span>
+                <span className="text-[10px] text-foreground-disabled block">512 MB limit</span>
               </div>
             </div>
 
@@ -120,12 +120,12 @@ export default function PhoneView() {
               <div className="flex gap-2">
                 {RESPONDERS.map((r) => (
                   <div key={r.initials} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-background-surface-1 border border-border-muted">
-                    <div className={`w-5 h-5 rounded-full ${r.color} flex items-center justify-center text-[8px] font-bold text-white`}>{r.initials}</div>
+                    <div className={`w-5 h-5 rounded-full ${r.color} flex items-center justify-center text-[10px] font-bold text-white`}>{r.initials}</div>
                     <div>
                       <span className="text-[10px] text-foreground-secondary block leading-tight">{r.name}</span>
                       {r.status === 'acked'
-                        ? <span className="text-[8px] text-status-active">Acknowledged</span>
-                        : <button className="text-[8px] text-status-outage hover:underline">Escalate</button>
+                        ? <span className="text-[10px] text-status-active">Acknowledged</span>
+                        : <button className="text-[10px] text-status-outage hover:underline">Escalate</button>
                       }
                     </div>
                   </div>

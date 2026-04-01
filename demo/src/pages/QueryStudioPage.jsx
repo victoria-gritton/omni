@@ -153,7 +153,7 @@ export default function QueryStudioPage() {
         {/* Sidebar — saved queries */}
         <div className="w-56 space-y-3">
           <div className="glass-card p-4">
-            <h3 className="text-heading-xs font-normal text-foreground mb-3">Saved queries</h3>
+            <h3 className="text-heading-m font-normal text-foreground mb-3">Saved queries</h3>
             <div className="space-y-0">
               {savedQueries.map((q) => (
                 <div key={q.name} className="py-2 border-b border-border-muted last:border-0 cursor-pointer">

@@ -42,7 +42,7 @@ export default function ConfigurePage() {
       <div className="space-y-6">
         {configSections.map((section) => (
           <div key={section.title}>
-            <h3 className="text-heading-s font-normal text-foreground mb-3">{section.title}</h3>
+            <h3 className="text-heading-m font-normal text-foreground mb-3">{section.title}</h3>
             <div className="space-y-2">
               {section.items.map((item) => {
                 const Icon = item.icon

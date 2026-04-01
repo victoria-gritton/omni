@@ -148,7 +148,7 @@ function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state
         <Icon size={16} className={color} style={{ opacity: 0.5 }} />
         <h3 className="text-body-s font-semibold text-foreground/50">{title}</h3>
         {needsAgent && (
-          <span className="text-[8px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+          <span className="text-[10px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
             <Cpu size={8} /> Requires CW Agent
           </span>
         )}
@@ -289,7 +289,7 @@ function FilledServiceMapWidget() {
       <div className="flex items-center justify-center gap-1 py-2">
         {nodes.map((n, i) => (
           <div key={n} className="flex items-center gap-1">
-            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[8px] text-foreground-muted">{n}</div>
+            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[10px] text-foreground-muted">{n}</div>
             {i < nodes.length - 1 && <div className="w-3 h-px bg-cyan-400/40" />}
           </div>
         ))}

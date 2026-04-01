@@ -88,7 +88,7 @@ export default function BitchatView() {
                 {/* Mesh delivery indicator — subtle, not the main event */}
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <Bluetooth size={8} className="text-purple-400/60" />
-                  <span className="text-[8px] text-purple-400/60">Delivered via mesh</span>
+                  <span className="text-[10px] text-purple-400/60">Delivered via mesh</span>
                 </div>
 
                 <div className="flex-1" />

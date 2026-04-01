@@ -2,7 +2,11 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   House, MagnifyingGlass, Pulse, MagnifyingGlassPlus,
+<<<<<<< HEAD
   GearSix, Star, Clock, Sparkle, Bell, User, CaretLeft,
+=======
+  CodeBlock, GearSix, Star, Clock, Sparkle, Bell, User,
+>>>>>>> origin/Supriya
   ChatTeardropDots, X, PaperPlaneRight, List
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
@@ -13,7 +17,11 @@ export function useChatPanel() { return useContext(ChatContext) }
 
 const navItems = [
   { icon: House, label: 'Home', subtitle: 'Overview', path: '/home' },
+<<<<<<< HEAD
   { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Logs, metrics, traces', path: '/explore', also: ['/query'] },
+=======
+  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Search & query', path: '/explore' },
+>>>>>>> origin/Supriya
   { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/monitor' },
   { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Active investigations', path: '/investigate', also: ['/console', '/devops-console'] },
   { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources', path: '/configure' },
@@ -375,7 +383,7 @@ function PersonaCard({ onClose }) {
       <div className="flex items-center gap-2 mb-4">
         {personaList.map(p => (
           <button key={p.id} onClick={() => setActiveId(p.id)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${p.id === activeId ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-semibold text-primary">{p.user.name.split(' ').map(n => n[0]).join('')}</div>
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-semibold text-primary">{p.user.name.split(' ').map(n => n[0]).join('')}</div>
             {p.user.name.split(' ')[0]}
           </button>
         ))}
@@ -457,7 +465,7 @@ export default function ConsoleLayout({ children }) {
       <div className="gradient-bg-dark" />
       <div className="content-layer h-full flex w-full">
         {/* Sidebar */}
-        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
+        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted bg-[#0f141a] flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
           <div className="px-3 pt-4 pb-3 flex items-center gap-2 cursor-pointer" onClick={() => setNavOpen(!navOpen)}>
             {navOpen
               ? <><CaretLeft size={14} className="text-foreground-muted" /><span className="text-body-s font-semibold text-foreground">CloudWatch<sup className="text-primary text-[14px]">+</sup></span></>
@@ -533,7 +541,7 @@ export default function ConsoleLayout({ children }) {
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
+          <header className="h-12 border-b border-border-muted bg-[#0f141a] px-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2 bg-background-surface-1 rounded-lg px-3 py-1.5 w-80">
               <MagnifyingGlass size={14} className="text-foreground-muted" />
               <span className="text-body-s text-foreground-disabled">Search services, metrics, traces...</span>
@@ -544,6 +552,13 @@ export default function ConsoleLayout({ children }) {
               <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
                 <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
               </button>
+<<<<<<< HEAD
+=======
+              <button onClick={() => setChatOpen(!chatOpen)} className={`relative inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s font-medium transition-colors ${chatOpen ? 'bg-[#7300e5] text-white' : 'text-[#bf80ff] hover:bg-[#7300e5]/15'}`} style={!chatOpen ? { background: '#161d26', border: 'double 2px transparent', backgroundImage: 'linear-gradient(#161d26, #161d26), linear-gradient(135deg, #7300e5, #42b4ff, #e040fb)', backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box' } : undefined}>
+                <ChatTeardropDots size={16} className="text-[#e040fb]" />
+                Ask AI
+              </button>
+>>>>>>> origin/Supriya
               <div className="relative">
                 <button onClick={() => setShowPersona(!showPersona)} className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors text-[10px] font-semibold text-primary">
                   {persona.user.name.split(' ').map(n => n[0]).join('')}
@@ -559,7 +574,11 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
+<<<<<<< HEAD
                     {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / payments-service','/query':'Explore / Advanced','/configure':'Configure','/day0':'Welcome','/coffee':'Home','/tiles':'Home'}[location.pathname] || 'Home'
+=======
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / payments-service','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+>>>>>>> origin/Supriya
                   }</span>
                 </nav>
               </div>

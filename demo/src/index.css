@@ -5,21 +5,20 @@
 body {
   margin: 0;
   min-width: 1024px;
-  background: #0a0e1a;
-  color: #f1f5f9;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0f141a;
+  color: #c6c6cd;
+  font-family: 'Amazon Ember', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
+/* Cloudscape dark background — solid */
 .gradient-bg-dark {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(56, 189, 248, 0.15), transparent),
-    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(139, 92, 246, 0.15), transparent),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(99, 102, 241, 0.1), transparent),
-    #0a0e1a;
+  background: #0f141a;
 }
 
 .content-layer {
@@ -27,33 +26,28 @@ body {
   z-index: 1;
 }
 
-/* Glass card base */
+/* Cloudscape container — elevated surface */
 .glass-card {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(51, 65, 85, 0.2);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  background: #161d26;
+  border: 1px solid #424650;
+  border-radius: 8px;
 }
 
-/* AI glass card */
+/* AI card — magenta border, dark container */
 .ai-glass-card {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.5));
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(56, 189, 248, 0.15);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 40px rgba(56, 189, 248, 0.05);
+  background: #06080A;
+  border: 1px solid rgba(224, 64, 251, 0.35);
+  border-radius: 8px;
 }
 
 /* Metric card */
 .metric-card {
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(51, 65, 85, 0.2);
-  border-radius: 12px;
+  background: #161d26;
+  border: 1px solid #424650;
+  border-radius: 8px;
 }
 
-/* Fade in animation for monitoring widgets */
+/* Fade in animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
