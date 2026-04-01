@@ -23,7 +23,7 @@ export default {
         // Cloudscape dark mode tokens
         background: {
           DEFAULT: '#0f141a',       // main content area
-          'surface-1': '#1b232d',   // dropdown bg, hover bg, shaded cells
+          'surface-1': '#192534',   // containers, cards
           'surface-2': '#232b37',   // disabled primary bg, row dividers
         },
         foreground: {

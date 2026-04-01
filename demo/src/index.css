@@ -28,7 +28,7 @@ body {
 
 /* Cloudscape container — elevated surface */
 .glass-card {
-  background: #1b232d;
+  background: #192534;
   border: 1px solid #424650;
   border-radius: 8px;
 }
@@ -42,7 +42,7 @@ body {
 
 /* Metric card */
 .metric-card {
-  background: #1b232d;
+  background: #192534;
   border: 1px solid #424650;
   border-radius: 8px;
 }
