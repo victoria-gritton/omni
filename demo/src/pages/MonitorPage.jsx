@@ -451,6 +451,7 @@ export default function MonitorPage() {
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
+      <button onClick={() => navigate('/day0')} className="text-[11px] text-primary hover:text-primary-hover mb-2 flex items-center gap-1">← Back to overview</button>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">Monitor</h1>
