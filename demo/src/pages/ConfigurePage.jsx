@@ -1,9 +1,16 @@
 import {
   GearSix, Bell, Globe, Shield, Key, Database,
-  Users, Link, ArrowRight, CheckCircle, Warning
+  Users, Link, ArrowRight, CheckCircle, Warning, Robot
 } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
 
 const configSections = [
+  {
+    title: 'Agents',
+    items: [
+      { icon: Robot, label: 'Agent management', description: '5 agents active, 87% trust score', status: 'healthy', path: '/agents' },
+    ],
+  },
   {
     title: 'Monitoring',
     items: [
@@ -30,6 +37,7 @@ const configSections = [
 ]
 
 export default function ConfigurePage() {
+  const navigate = useNavigate()
   return (
     <div className="px-6 py-6">
       <h1 className="text-[22px] leading-[28px] font-normal tracking-tighter text-foreground mb-1">
@@ -49,6 +57,7 @@ export default function ConfigurePage() {
                 return (
                   <div
                     key={item.label}
+                    onClick={() => item.path && navigate(item.path)}
                     className="glass-card p-4 flex items-center gap-4 cursor-pointer hover:border-primary/20 transition-colors"
                     style={{ borderColor: 'rgba(51,65,85,0.2)' }}
                   >
