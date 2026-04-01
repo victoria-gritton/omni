@@ -326,6 +326,7 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
 // ─── Deployed Section ─────────────────────────────────────────────
 function DeployedSection({ deployedLog }) {
   const [expanded, setExpanded] = useState(false)
+  const [expandedCats, setExpandedCats] = useState(new Set())
   const prevCountRef = useRef(0)
 
   useEffect(() => {
@@ -335,71 +336,73 @@ function DeployedSection({ deployedLog }) {
 
   if (deployedLog.length === 0) return null
 
-  // Flatten all deployed items and group by category → severity
   const allItems = deployedLog.flatMap(e => e.items)
   const totalItems = allItems.length
   const catLabels = { alarms: 'Alarms', logs: 'Logs', traces: 'Traces', dashboards: 'Dashboards', anomaly: 'Anomaly Detection', slos: 'SLOs', 'cross-account': 'Cross-Account', 'cw-agent': 'CW Agent', 'alarm-actions': 'Alarm Actions' }
   const sevOrder = ['critical', 'high', 'medium', 'low']
   const sevLabels = { critical: 'Critical', high: 'High Priority', medium: 'Recommended', low: 'Nice to Have' }
 
-  // Group: { alarms: { critical: [...], high: [...] }, logs: { ... } }
   const grouped = {}
-  for (const item of allItems) {
-    const cat = item.category || 'other'
-    const sev = item.severity || 'medium'
-    if (!grouped[cat]) grouped[cat] = {}
-    if (!grouped[cat][sev]) grouped[cat][sev] = []
-    grouped[cat][sev].push(item)
-  }
+  for (const item of allItems) { const cat = item.category || 'other'; const sev = item.severity || 'medium'; if (!grouped[cat]) grouped[cat] = {}; if (!grouped[cat][sev]) grouped[cat][sev] = []; grouped[cat][sev].push(item) }
   const categories = Object.keys(grouped).sort((a, b) => {
     const order = ['alarms', 'logs', 'traces', 'cw-agent', 'dashboards', 'anomaly', 'slos', 'cross-account', 'alarm-actions']
     return (order.indexOf(a) === -1 ? 99 : order.indexOf(a)) - (order.indexOf(b) === -1 ? 99 : order.indexOf(b))
   })
 
-  const isNewDeploy = deployedLog.length > 0
-  const CatIcon = (cat) => categoryIcons[cat] || Lightning
+  const toggleCat = (cat) => setExpandedCats(prev => { const n = new Set(prev); n.has(cat) ? n.delete(cat) : n.add(cat); return n })
 
   return (
-    <div className="mt-6">
-      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-status-active/20 bg-status-active/5 transition-all hover:bg-status-active/10">
+    <div className="mt-6 rounded-xl border border-status-active/20 bg-status-active/5">
+      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center gap-3 px-4 py-3 transition-all hover:bg-status-active/10">
         <CheckCircle size={16} weight="fill" className="text-status-active" />
         <span className="text-body-s font-semibold text-status-active">Deployed</span>
         <span className="text-[10px] text-foreground-disabled">{totalItems} items · {categories.length} categories</span>
         <span className="flex-1" />
         {expanded ? <CaretDown size={12} className="text-foreground-muted" /> : <CaretRight size={12} className="text-foreground-muted" />}
       </button>
-      {expanded && (
-        <div className="mt-2 pl-2 flex flex-col gap-3" style={isNewDeploy ? { animation: 'slideUp 0.5s ease-out' } : undefined}>
-          {categories.map(cat => {
-            const Icon = CatIcon(cat)
-            const sevGroups = grouped[cat]
-            const catTotal = Object.values(sevGroups).reduce((s, arr) => s + arr.length, 0)
-            return (
-              <div key={cat} className="rounded-xl border border-status-active/10 bg-status-active/5 p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon size={14} className="text-status-active" />
-                  <span className="text-[11px] font-medium text-status-active">{catLabels[cat] || cat}</span>
-                  <span className="text-[9px] text-foreground-disabled">{catTotal} items</span>
-                </div>
-                {sevOrder.filter(s => sevGroups[s]?.length > 0).map(sev => (
-                  <div key={sev} className="ml-4 mb-1.5 last:mb-0">
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${severityColors[sev]}`}>{sevLabels[sev]}</span>
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      {sevGroups[sev].map((item, ii) => (
-                        <div key={ii} className="flex items-center gap-2 py-0.5">
-                          <CheckCircle size={10} weight="fill" className="text-status-active flex-shrink-0" />
-                          <span className="text-[10px] text-foreground-disabled">{item.name || item.id}</span>
-                          {item.service && <span className="text-[8px] text-foreground-disabled">· {item.service}</span>}
-                        </div>
-                      ))}
+      <div className="grid transition-all duration-300 ease-out" style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}>
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-2 px-3 pb-3">
+            {categories.map(cat => {
+              const Icon = categoryIcons[cat] || Lightning
+              const sevGroups = grouped[cat]
+              const catTotal = Object.values(sevGroups).reduce((s, arr) => s + arr.length, 0)
+              const catExpanded = expandedCats.has(cat)
+              return (
+                <div key={cat} className="rounded-lg border border-status-active/10 bg-status-active/5 overflow-hidden">
+                  <button onClick={() => toggleCat(cat)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-status-active/10 transition-colors">
+                    <Icon size={14} className="text-status-active" />
+                    <span className="text-[11px] font-medium text-status-active">{catLabels[cat] || cat}</span>
+                    <span className="text-[9px] text-foreground-disabled">{catTotal} items</span>
+                    <span className="flex-1" />
+                    {catExpanded ? <CaretDown size={10} className="text-foreground-muted" /> : <CaretRight size={10} className="text-foreground-muted" />}
+                  </button>
+                  <div className="grid transition-all duration-200 ease-out" style={{ gridTemplateRows: catExpanded ? '1fr' : '0fr' }}>
+                    <div className="overflow-hidden">
+                      <div className="px-3 pb-2">
+                        {sevOrder.filter(s => sevGroups[s]?.length > 0).map(sev => (
+                          <div key={sev} className="ml-4 mb-1.5 last:mb-0">
+                            <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-medium ${severityColors[sev]}`}>{sevLabels[sev]}</span>
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              {sevGroups[sev].map((item, ii) => (
+                                <div key={ii} className="flex items-center gap-2 py-0.5">
+                                  <CheckCircle size={10} weight="fill" className="text-status-active flex-shrink-0" />
+                                  <span className="text-[10px] text-foreground-disabled">{item.name || item.id}</span>
+                                  {item.service && <span className="text-[8px] text-foreground-disabled">· {item.service}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )
-          })}
+                </div>
+              )
+            })}
+          </div>
         </div>
-      )}
+      </div>
       <style>{`
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(-20px) scale(0.97); }
