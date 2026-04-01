@@ -337,7 +337,7 @@ function buildMonitorInvestigation(type, context, persona) {
         { type: 'text', content: isWarning ? `${r.name} needs attention. Here's what I found:` : `${r.name} is operating normally. Here's the current state:` },
         { type: 'finding', severity: isWarning ? 'warning' : 'info', title: r.note, content: `${r.type} resource in ${r.app}` },
         { type: 'chart', label: `${r.name} — ${m.metric} (24h)`, base: m.base, variance: m.base * 0.3, color: m.color, unit: m.unit },
-        ...(isWarning ? [{ type: 'text', content: 'I recommend investigating the root cause. This could indicate a capacity issue or a workload change.' }, { type: 'actions' }] : []),
+        ...(isWarning ? [{ type: 'text', content: 'I recommend investigating the root cause. This could indicate a capacity issue or a workload change.' }] : []),
       ],
       followUps: [`What's the trend over the past week?`, `Show me connected services`, `Create an alarm for ${r.name}`, `Is this normal for this time of day?`],
     }
@@ -361,7 +361,7 @@ function buildMonitorInvestigation(type, context, persona) {
           { action: `Analyzed ${a.metric} trend`, result: isActive ? `Trending toward threshold over the past hour` : 'Brief spike, now back to normal', status: isActive ? 'found' : 'clear' },
           { action: 'Checked correlated metrics', result: isActive ? 'Connection count also elevated' : 'No correlated anomalies', status: isActive ? 'found' : 'clear' },
         ]},
-        ...(isActive ? [{ type: 'actions' }] : []),
+        ...(isActive ? [] : []),
       ],
       followUps: [`What caused this?`, `Show me the error logs`, `Should I adjust the threshold?`, `What's the blast radius?`],
     }
@@ -384,7 +384,6 @@ function buildMonitorInvestigation(type, context, persona) {
             { action: 'Identified contributing errors', result: 'Intermittent 5xx from upstream dependency', status: 'found' },
             { action: 'Checked recent changes', result: 'No deployments in the window', status: 'clear' },
           ]},
-          { type: 'actions' },
         ] : []),
       ],
       followUps: [atRisk ? `What's burning the error budget?` : `What would put this at risk?`, `Show me the error breakdown`, `Compare with last month`, `Set up an alert at 50% budget consumed`],
