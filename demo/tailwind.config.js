@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+        sans: ['Open Sans', 'Amazon Ember', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       fontSize: {
@@ -21,37 +21,45 @@ export default {
       },
       colors: {
         background: {
-          DEFAULT: '#0a0e1a',
-          'surface-1': '#111827',
-          'surface-2': '#1e293b',
+          DEFAULT: '#0f1b2d',
+          'surface-1': '#192534',
+          'surface-2': '#232f3e',
         },
         foreground: {
-          DEFAULT: '#f1f5f9',
-          secondary: '#e2e8f0',
-          muted: '#cbd5e1',
-          disabled: '#94a3b8',
+          DEFAULT: '#d1d5db',
+          secondary: '#b6bec9',
+          muted: '#8d99a8',
+          disabled: '#5f6b7a',
         },
-        link: '#38bdf8',
+        link: '#0972d3',
         border: {
-          DEFAULT: 'rgba(51, 65, 85, 0.5)',
-          muted: 'rgba(51, 65, 85, 0.2)',
+          DEFAULT: '#414d5c',
+          muted: '#354150',
         },
-        primary: '#0ea5e9',
-        destructive: '#ef4444',
+        input: {
+          DEFAULT: '#192534',
+          border: '#414d5c',
+        },
+        primary: {
+          DEFAULT: '#0972d3',
+          foreground: '#ffffff',
+        },
+        'primary-foreground': '#ffffff',
+        destructive: '#d91515',
         status: {
-          active: '#22c55e',
-          blocked: '#f59e0b',
-          outage: '#ef4444',
-          inactive: '#64748b',
+          active: '#2ea043',
+          blocked: '#ff9900',
+          outage: '#d91515',
+          inactive: '#5f6b7a',
         },
       },
       borderRadius: {
-        xl: '12px',
-        lg: '8px',
+        xl: '8px',
+        lg: '4px',
       },
       boxShadow: {
-        'glass': '0 4px 24px rgba(0, 0, 0, 0.3)',
-        'glass-light': '0 2px 12px rgba(0, 0, 0, 0.08)',
+        'glass': '0 2px 8px rgba(0, 0, 0, 0.3)',
+        'glass-light': '0 1px 4px rgba(0, 0, 0, 0.08)',
       },
       transitionDuration: {
         'panel': '160ms',
