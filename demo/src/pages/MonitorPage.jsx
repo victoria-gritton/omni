@@ -216,10 +216,10 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
                 <p className="text-[9px] text-foreground-muted">{alarm.resource} · {alarm.metric}: {alarm.value}</p>
                 {!isAcked && <div className="flex items-center gap-2 mt-0.5"><span className="text-[8px] text-foreground-disabled">{alarm.triggered}</span><span className="text-[8px] text-primary flex items-center gap-0.5"><Sparkle size={7} weight="fill" /> {alarm.recommendation}</span></div>}
               </button>
-              <div className="flex items-center gap-1.5 flex-shrink-0 self-start mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {!isAcked && <button onClick={(e) => { e.stopPropagation(); setAcked(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-status-active px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted hover:border-status-active/30 transition-colors">Acknowledge</button>}
+              <div className="flex items-center gap-1.5 flex-shrink-0 self-start mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {!isAcked && <button onClick={(e) => { e.stopPropagation(); setAcked(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-status-active px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted hover:border-status-active/30 transition-colors leading-tight">Acknowledge</button>}
                 <div className="relative">
-                  <button onClick={(e) => { e.stopPropagation(); setSnoozeMenuOpen(snoozeMenuOpen === alarm.id ? null : alarm.id) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors">Snooze</button>
+                  <button onClick={(e) => { e.stopPropagation(); setSnoozeMenuOpen(snoozeMenuOpen === alarm.id ? null : alarm.id) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors leading-tight">Snooze</button>
                   {snoozeMenuOpen === alarm.id && (
                     <div className="absolute right-0 top-full mt-1 w-32 rounded-lg bg-[#0c1120] border border-border-muted shadow-xl z-20 py-1" style={{ animation: 'fadeIn 0.15s ease-out' }}>
                       <p className="text-[8px] text-foreground-disabled px-2.5 py-1 uppercase tracking-wider">Snooze for</p>
