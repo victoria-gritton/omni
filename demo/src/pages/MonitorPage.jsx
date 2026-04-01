@@ -245,7 +245,6 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
 function SLOsCard({ slos, onInvestigate }) {
   const trendIcons = { up: TrendUp, down: TrendDown, stable: Minus }
   const trendColors = { up: 'text-status-active', down: 'text-red-400', stable: 'text-foreground-muted' }
-  const [showHealthy, setShowHealthy] = useState(false)
   const atRisk = slos.filter(s => s.status === 'at-risk')
   const healthy = slos.filter(s => s.status === 'healthy')
 
@@ -253,7 +252,7 @@ function SLOsCard({ slos, onInvestigate }) {
     const TrendIcon = trendIcons[slo.trend] || Minus
     const isAtRisk = slo.status === 'at-risk'
     return (
-      <button key={slo.id} onClick={() => onInvestigate('slo', { slo })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-status-degraded/5' : ''} ${dimmed ? 'opacity-50' : ''}`}>
+      <button key={slo.id} onClick={() => onInvestigate('slo', { slo })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-status-degraded/5' : ''} ${dimmed ? 'opacity-40' : ''}`}>
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAtRisk ? 'bg-orange-400' : 'bg-green-400'}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -277,20 +276,9 @@ function SLOsCard({ slos, onInvestigate }) {
         <div className="flex items-center gap-1.5"><Gauge size={14} className="text-purple-400" /><span className="text-[11px] font-medium text-foreground">SLOs</span></div>
         <span className="text-[9px] text-foreground-disabled">{healthy.length}/{slos.length} on target</span>
       </div>
-      <div className="flex flex-col gap-1">
-        {/* At-risk SLOs always visible */}
+      <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto scrollbar-hide">
         {atRisk.map(slo => renderSlo(slo))}
-
-        {/* Healthy SLOs — collapsed by default */}
-        {healthy.length > 0 && (
-          <>
-            <button onClick={() => setShowHealthy(!showHealthy)} className="flex items-center gap-1.5 py-1.5 px-2 text-[9px] text-foreground-disabled hover:text-foreground-muted transition-colors">
-              {showHealthy ? <CaretDown size={10} /> : <CaretRight size={10} />}
-              {healthy.length} healthy SLO{healthy.length > 1 ? 's' : ''}
-            </button>
-            {showHealthy && healthy.map(slo => renderSlo(slo, true))}
-          </>
-        )}
+        {healthy.map(slo => renderSlo(slo, true))}
       </div>
     </div>
   )
