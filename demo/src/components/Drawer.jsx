@@ -147,7 +147,7 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
   const allMessages = [...investigation.messages, ...extraMessages]
 
   return (
-    <div className="fixed inset-y-0 left-14 w-[480px] z-50 flex flex-col bg-[#0c1120] border-r border-border-muted shadow-2xl">
+    <div className="fixed inset-y-0 left-14 w-[480px] z-50 flex flex-col bg-[#0c1120] border-r border-border-muted shadow-2xl animate-drawerIn" style={{ animation: 'drawerSlideIn 0.3s ease-out' }}>
       <div className="flex items-center justify-between px-5 py-3 border-b border-border-muted flex-shrink-0">
         <div className="flex items-center gap-2"><Sparkle size={16} className="text-primary" weight="fill" /><span className="text-body-s font-semibold text-foreground">Agent Investigation</span></div>
         <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted"><X size={16} /></button>
@@ -235,6 +235,9 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
       </div>
 
       {alarmConfigItem && <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => setAlarmConfigItem(null)} />}
+      <style>{`
+        @keyframes drawerSlideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      `}</style>
     </div>
   )
 }

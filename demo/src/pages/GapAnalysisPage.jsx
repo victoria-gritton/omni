@@ -311,7 +311,7 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
         {isActive ? <CaretDown size={12} className="text-foreground-muted" /> : <CaretRight size={12} className="text-foreground-muted" />}
       </button>
       {isActive && (
-        <div className="flex flex-col gap-2 px-3 pb-3">
+        <div className="flex flex-col gap-2 px-3 pb-3" style={{ animation: 'expandIn 0.3s ease-out' }}>
           {activeGaps.map(gap => (
             <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureItem={onConfigureItem} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} onInvestigate={onInvestigate} />
           ))}
@@ -402,6 +402,14 @@ function DeployedSection({ deployedLog }) {
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(-20px) scale(0.97); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes expandIn {
+          from { opacity: 0; max-height: 0; transform: translateY(-8px); }
+          to { opacity: 1; max-height: 2000px; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>
@@ -681,7 +689,7 @@ export default function Day0Page() {
 
       {drawerInvestigation && (
         <>
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setDrawerInvestigation(null)} />
+          <div className="fixed inset-0 bg-black/40 z-40 animate-fadeIn" style={{ animation: 'fadeIn 0.2s ease-out' }} onClick={() => setDrawerInvestigation(null)} />
           <AgentDrawer investigation={drawerInvestigation} onClose={() => setDrawerInvestigation(null)} onExportCode={() => setShowIaCModal(true)} />
         </>
       )}
