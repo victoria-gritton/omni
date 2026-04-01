@@ -31,9 +31,25 @@ const tierConfig = {
 }
 
 const agentBlurbs = {
-  alarms: (gap) => gap.title.includes('stale') ? 'Stale alarms create noise that masks real incidents. Your team will start ignoring alerts.' : 'Without alarms, a 5xx spike or CPU saturation could go unnoticed for hours.',
-  logs: () => 'Without logs, you\'re debugging blind. When something breaks at 3 AM, you need logs to understand what happened.',
-  traces: () => 'Without distributed tracing, you can\'t see how a request flows across services.',
+  alarms: (gap) => {
+    if (gap.title.includes('stale')) return 'Stale alarms create noise that masks real incidents. Your team will start ignoring alerts.'
+    if (gap.severity === 'critical') return 'These are your customer-facing and data services — API gateways, databases. Without alarms here, an outage or data corruption could go undetected for hours.'
+    if (gap.severity === 'high') return 'Your compute workloads (ECS, EKS, Lambda) need alarms to catch CPU spikes, memory pressure, and task failures before they cascade.'
+    if (gap.severity === 'medium') return 'Alarms on caching, messaging, and ML services help you catch degradation early — before it impacts the critical path.'
+    return 'These are nice-to-have alarms for edge services like CDN and storage. Lower risk, but still good hygiene.'
+  },
+  logs: (gap) => {
+    if (gap.severity === 'critical') return 'Your API gateways and databases need logs for audit trails and debugging. Without them, you can\'t investigate data issues or trace API failures.'
+    if (gap.severity === 'high') return 'Compute services generate the bulk of your application logs. Without them, you\'re debugging blind when containers crash or functions error.'
+    if (gap.severity === 'medium') return 'Logs on caching and messaging services help with capacity planning and debugging intermittent issues.'
+    return 'Edge service logs (CDN, S3) are useful for access auditing but lower priority for operational debugging.'
+  },
+  traces: (gap) => {
+    if (gap.severity === 'critical') return 'Tracing on your API gateways and databases shows you the full request path. Without it, you can\'t pinpoint where latency or errors originate.'
+    if (gap.severity === 'high') return 'Your compute services are the middle of every request chain. Tracing here connects the dots between entry points and data stores.'
+    if (gap.severity === 'medium') return 'Tracing on supporting services helps complete the picture — useful for deep investigations but not the first priority.'
+    return 'Edge service tracing adds completeness but is rarely the bottleneck in investigations.'
+  },
   dashboards: () => 'Dashboards give your team a shared view of system health.',
   anomaly: () => 'Anomaly detection learns your traffic patterns and alerts on deviations.',
   slos: () => 'SLOs formalize your reliability targets.',
