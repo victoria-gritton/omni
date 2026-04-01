@@ -332,9 +332,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
 
 const feedItems = [
   { severity: 'critical', title: 'DynamoDB UsersTable ReadThrottles', source: 'DynamoDB', detail: 'ReadThrottleEvents spiked to 847 (threshold: 0). Auto-scaling triggered but not yet effective.', time: 'just now', aiSummary: 'This correlates with the PaymentService fault rate increase. The UsersTable is receiving 3× normal read traffic from the payment validation path. Auto-scaling should resolve within 5 minutes.' },
-  { severity: 'critical', title: 'PaymentService — 12.3% fault rate', source: 'Lambda', detail: '847 faults out of 6,891 requests in the last 5 minutes. Timeout errors dominating.', time: '2m ago', aiSummary: 'Root cause appears to be DynamoDB throttling on UsersTable. Payment validation calls are timing out waiting for user lookups. This should self-resolve once DynamoDB auto-scaling completes.' },
   { severity: 'warning', title: 'API Gateway 5xx Errors above threshold', source: 'ApiGateway', detail: '5XXError rate is 5.2% (threshold: 1%). Correlated with upstream PaymentService faults.', time: '4m ago', aiSummary: 'These 5xx errors are downstream effects of the PaymentService issue. No action needed on API Gateway itself — fixing the upstream will resolve this.' },
-  { severity: 'warning', title: 'Container memory approaching limit', source: 'ECS', detail: 'payment-processing-prod top container at 680 MB (85% of 800 MB limit). No alarm configured.', time: '12m ago', aiSummary: 'Weekend traffic typically increases 40-60%. Without monitoring, OOM kills are likely. I recommend setting up memory alarms before the weekend.' },
   { severity: 'info', title: 'Checkout canary all steps passing', source: 'Synthetics', detail: 'All 5 steps completed in 2.3s. Performance within baseline.', time: '6m ago', aiSummary: null },
   { severity: 'resolved', title: 'Analytics DB connection pool normalized', source: 'RDS', detail: 'Connection pool dropped from 85% to 62% after idle connection cleanup.', time: '18m ago', aiSummary: null },
 ]
@@ -348,7 +346,6 @@ const pendingTasks = [
 const investigations = [
   { id: 'INC-2847', title: 'order-service is timing out', status: 'active', progress: '3 findings', started: '35m ago', path: '/console' },
   { id: 'INC-3102', title: 'Payments service down', status: 'active', progress: '2 findings', started: '20m ago', path: '/devops-console' },
-  { id: 'INV-1023', title: 'Lambda cold start increase after deploy', status: 'paused', progress: '5 findings', started: '2h ago' },
   { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', progress: '7 findings', started: 'Yesterday' },
 ]
 
