@@ -383,20 +383,32 @@ function DeployedSection({ deployedLog }) {
 // ─── Cost Breakdown ───────────────────────────────────────────────
 const UNIT_COSTS = { alarms: 0.10, logs: 2.00, traces: 0.50, dashboards: 3.00, anomaly: 10.00 }
 
-function CostBreakdown({ cost, computedGaps, selectedItems }) {
+function CostBreakdown({ cost, computedGaps, selectedItems, deployedItems }) {
+  // Calculate deployed cost (added to current)
+  const deployedLines = []; let deployedDelta = 0
+  for (const gap of computedGaps) {
+    const uc = UNIT_COSTS[gap.category]; if (!uc) continue
+    if (gap.items?.length > 0) { const c = gap.items.filter(i => deployedItems.has(i.id)).length; if (c > 0) { const a = +(c * uc).toFixed(2); deployedDelta += a; deployedLines.push({ category: gap.category === 'alarms' ? 'Alarms' : gap.category === 'logs' ? 'Logs' : gap.category === 'traces' ? 'Traces' : gap.category, amount: a, note: `${c} deployed` }) } }
+    else if (deployedItems.has(gap.id)) { const a = +(gap.fixCount * uc).toFixed(2); deployedDelta += a; deployedLines.push({ category: gap.category === 'dashboards' ? 'Dashboards' : gap.category === 'anomaly' ? 'Anomaly detection' : gap.category, amount: a, note: `${gap.fixCount} deployed` }) }
+  }
+  const currentTotal = cost.current.total + deployedDelta
+
+  // Calculate projected cost from selected (not yet deployed)
   const projectedLines = []; let projectedDelta = 0
   for (const gap of computedGaps) {
     const uc = UNIT_COSTS[gap.category]; if (!uc) continue
-    if (gap.items?.length > 0) { const c = gap.items.filter(i => selectedItems.has(i.id)).length; if (c > 0) { const a = +(c * uc).toFixed(2); projectedDelta += a; projectedLines.push({ category: gap.category === 'alarms' ? 'Alarms' : gap.category === 'logs' ? 'Logs' : gap.category === 'traces' ? 'Traces' : gap.category, amount: a, note: `${c} × ${uc}` }) } }
-    else if (selectedItems.has(gap.id)) { const a = +(gap.fixCount * uc).toFixed(2); projectedDelta += a; projectedLines.push({ category: gap.category === 'dashboards' ? 'Dashboards' : gap.category === 'anomaly' ? 'Anomaly detection' : gap.category, amount: a, note: `${gap.fixCount} × ${uc}` }) }
+    if (gap.items?.length > 0) { const c = gap.items.filter(i => selectedItems.has(i.id) && !deployedItems.has(i.id)).length; if (c > 0) { const a = +(c * uc).toFixed(2); projectedDelta += a; projectedLines.push({ category: gap.category === 'alarms' ? 'Alarms' : gap.category === 'logs' ? 'Logs' : gap.category === 'traces' ? 'Traces' : gap.category, amount: a, note: `${c} × ${uc}` }) } }
+    else if (selectedItems.has(gap.id) && !deployedItems.has(gap.id)) { const a = +(gap.fixCount * uc).toFixed(2); projectedDelta += a; projectedLines.push({ category: gap.category === 'dashboards' ? 'Dashboards' : gap.category === 'anomaly' ? 'Anomaly detection' : gap.category, amount: a, note: `${gap.fixCount} × ${uc}` }) }
   }
-  for (const p of cost.projected) { if (selectedItems.has(p.gapId)) { projectedDelta += p.amount; projectedLines.push({ category: p.category, amount: p.amount, note: p.note }) } }
-  const projectedTotal = cost.current.total + projectedDelta
+  for (const p of cost.projected) { if (selectedItems.has(p.gapId) && !deployedItems.has(p.gapId)) { projectedDelta += p.amount; projectedLines.push({ category: p.category, amount: p.amount, note: p.note }) } }
+  const projectedTotal = currentTotal + projectedDelta
+
   return (
     <div className="glass-card p-4">
       <h3 className="text-body-s font-semibold text-foreground mb-3">CloudWatch Cost</h3>
-      <div className="flex items-baseline justify-between mb-1"><span className="text-[10px] text-foreground-disabled uppercase tracking-wider">Current</span><span className="text-body-m font-semibold text-foreground">${cost.current.total.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span></span></div>
+      <div className="flex items-baseline justify-between mb-1"><span className="text-[10px] text-foreground-disabled uppercase tracking-wider">Current</span><span className="text-body-m font-semibold text-foreground">${currentTotal.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span>{deployedDelta > 0 && <span className="text-[10px] text-status-degraded ml-1">+${deployedDelta.toFixed(2)} from deploys</span>}</span></div>
       {cost.current.breakdown.map((item, i) => <div key={i} className="flex items-center justify-between py-0.5"><span className="text-[10px] text-foreground-muted">{item.category}</span><span className="text-[10px] text-foreground">${item.amount.toLocaleString()}</span></div>)}
+      {deployedLines.map((item, i) => <div key={`d-${i}`} className="flex items-center justify-between py-0.5"><span className="text-[10px] text-status-active">{item.category}</span><div className="flex items-center gap-2"><span className="text-[10px] text-foreground">+${item.amount.toFixed(2)}</span><span className="text-[9px] text-status-active">{item.note}</span></div></div>)}
       {projectedLines.length > 0 && (<div className="mt-3 pt-3 border-t border-border-muted/30"><div className="flex items-baseline justify-between mb-1"><span className="text-[10px] text-foreground-disabled uppercase tracking-wider">With selected</span><span className="text-body-m font-semibold text-foreground">${projectedTotal.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span><span className={`text-[10px] ml-1 ${projectedDelta >= 0 ? 'text-status-degraded' : 'text-status-active'}`}>{projectedDelta >= 0 ? '+' : ''}${projectedDelta.toFixed(2)}</span></span></div>{projectedLines.map((item, i) => <div key={i} className="flex items-center justify-between py-0.5"><span className="text-[10px] text-foreground-muted">{item.category}</span><div className="flex items-center gap-2"><span className={`text-[10px] ${item.amount >= 0 ? 'text-foreground' : 'text-status-active'}`}>{item.amount >= 0 ? '+' : ''}${item.amount.toFixed(2)}</span><span className="text-[9px] text-foreground-disabled">{item.note}</span></div></div>)}</div>)}
       {cost.savings?.length > 0 && (<div className="mt-3 pt-3 border-t border-border-muted/30"><p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Potential savings</p>{cost.savings.map((s, i) => <div key={i} className="flex items-center justify-between py-0.5"><span className="text-[10px] text-foreground-muted">{s.description}</span><span className="text-[10px] text-status-active">-${s.amount.toLocaleString()}/mo</span></div>)}</div>)}
     </div>
@@ -592,7 +604,7 @@ export default function Day0Page() {
               </div>
             </>) : (<p className="text-[10px] text-foreground-disabled">Select gaps to see a summary and take action.</p>)}
           </div>
-          <CostBreakdown cost={cost} computedGaps={computedGaps} selectedItems={selectedItems} />
+          <CostBreakdown cost={cost} computedGaps={computedGaps} selectedItems={selectedItems} deployedItems={deployedItems} />
           <div className="glass-card p-4">
             <div className="flex items-center gap-2 mb-3"><Robot size={16} className="text-primary" /><h3 className="text-body-s font-semibold text-foreground">Ask the agent</h3></div>
             <div className="relative"><input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. 'Why no tracing?'" className="w-full h-9 rounded-lg bg-background-surface-1 border border-border-muted px-3 pr-9 text-[12px] text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40" /><button className="absolute right-1.5 top-1.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20"><PaperPlaneRight size={12} /></button></div>
