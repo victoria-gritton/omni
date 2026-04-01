@@ -70,6 +70,50 @@ const CHAT_RESPONSES = {
     text: <><p className="text-foreground font-medium">4 active alarms</p><div className="mt-1.5 space-y-1.5"><div className="flex items-start gap-2"><span className="text-status-outage">●</span><div><p className="text-foreground">DynamoDB ReadThrottles</p><p className="text-foreground-muted">just now</p></div></div><div className="flex items-start gap-2"><span className="text-status-outage">●</span><div><p className="text-foreground">PaymentService Fault Rate 12.3%</p><p className="text-foreground-muted">2m ago</p></div></div><div className="flex items-start gap-2"><span className="text-status-blocked">●</span><div><p className="text-foreground">API Gateway 5xx — 5.2%</p><p className="text-foreground-muted">4m ago</p></div></div><div className="flex items-start gap-2"><span className="text-status-blocked">●</span><div><p className="text-foreground">Container Memory — 85%</p><p className="text-foreground-muted">anomaly detected</p></div></div></div></>,
     followUps: ['Tell me about payment-service', 'Show error logs', 'Which is most critical?'],
   },
+  'compare': {
+    text: <>
+      <p className="text-foreground font-medium">Traffic comparison: now vs last Tuesday</p>
+      <p className="mt-1 text-foreground-muted">Same window (2:00–2:30 AM)</p>
+      {/* Inline sparkline comparison chart */}
+      <div className="mt-2 rounded-lg bg-background-surface-2/50 p-2.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[10px] text-foreground-muted">Requests/min</span>
+          <div className="flex items-center gap-3 text-[10px]">
+            <span className="flex items-center gap-1"><span className="w-2 h-0.5 bg-primary inline-block rounded" /> Today</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-0.5 bg-foreground-disabled inline-block rounded" /> Last Tue</span>
+          </div>
+        </div>
+        <svg viewBox="0 0 200 50" className="w-full" style={{ height: 50 }}>
+          {/* Last Tuesday - dashed gray */}
+          <polyline points="0,38 20,36 40,34 60,30 80,28 100,26 120,24 140,22 160,20 180,18 200,16" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeDasharray="3,3" opacity="0.5" />
+          {/* Today - solid primary */}
+          <polyline points="0,40 20,37 40,32 60,28 80,25 100,22 120,20 140,17 160,14 180,12 200,10" fill="none" stroke="#0ea5e9" strokeWidth="1.5" />
+          {/* Subtle fill under today */}
+          <path d="M0,40 L20,37 L40,32 L60,28 L80,25 L100,22 L120,20 L140,17 L160,14 L180,12 L200,10 L200,50 L0,50 Z" fill="#0ea5e9" fillOpacity="0.08" />
+        </svg>
+        <div className="flex justify-between text-[10px] text-foreground-disabled mt-0.5">
+          <span>2:00 AM</span><span>2:15 AM</span><span>2:30 AM</span>
+        </div>
+      </div>
+      {/* Metric comparison */}
+      <div className="mt-2 space-y-1 text-[11px]">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-baseline">
+          <span>Requests/min</span><span className="font-mono text-right">8,420</span><span className="text-foreground-muted font-mono">vs 8,180</span><span className="text-status-active font-mono">+2.9%</span>
+        </div>
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-baseline">
+          <span>Error rate</span><span className="font-mono text-right">0.3%</span><span className="text-foreground-muted font-mono">vs 0.2%</span><span />
+        </div>
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-baseline">
+          <span>p99 latency</span><span className="font-mono text-right">210ms</span><span className="text-foreground-muted font-mono">vs 195ms</span><span className="text-status-blocked font-mono">+7.7%</span>
+        </div>
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 items-baseline">
+          <span>Unique users</span><span className="font-mono text-right">1,240</span><span className="text-foreground-muted font-mono">vs 1,190</span><span />
+        </div>
+      </div>
+      <p className="mt-2 text-foreground-muted">Traffic is tracking close to last Tuesday. The slight latency bump correlates with DynamoDB throttling on UsersTable.</p>
+    </>,
+    followUps: ['Why is latency higher?', 'Compare to last 7 Tuesdays', 'Show error breakdown'],
+  },
   'error rate': {
     text: <><p className="text-foreground font-medium">Error rates (last hour)</p><div className="mt-1.5 space-y-1"><div className="flex justify-between"><span>payment-service</span><span className="text-status-outage font-mono">12.3%</span></div><div className="flex justify-between"><span>API Gateway</span><span className="text-status-blocked font-mono">5.2%</span></div><div className="flex justify-between"><span>order-service</span><span className="text-foreground-muted font-mono">0.8%</span></div><div className="flex justify-between"><span>checkout-service</span><span className="text-foreground-muted font-mono">0.3%</span></div></div><p className="mt-1.5 text-foreground-muted">Root cause: DynamoDB throttling on UsersTable</p></>,
     followUps: ['Show payment-service details', 'Show error logs', 'What caused the throttling?'],
@@ -358,7 +402,7 @@ export default function ConsoleLayout({ children }) {
           </div>
 
           <div className="px-3 pt-2">
-            {navOpen && <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted px-2 mb-2 block">Navigation</span>}
+            {navOpen && <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-muted px-2 mb-2 block">Navigation</span>}
             <div className="space-y-0.5">
               {navItems.map(({ icon: Icon, label, subtitle, path, also }) => {
                 const active = path && (location.pathname === path || (also && also.includes(location.pathname)))
@@ -382,7 +426,7 @@ export default function ConsoleLayout({ children }) {
               <div className="px-3 pt-4">
                 <div className="flex items-center gap-1.5 px-2 mb-2">
                   <Star size={10} className="text-foreground-muted" />
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Favorites</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-muted">Favorites</span>
                 </div>
                 <div className="space-y-0.5">
                   {favorites.map(({ label }) => (
@@ -424,7 +468,7 @@ export default function ConsoleLayout({ children }) {
                 Ask AI
               </button>
               <div className="relative">
-                <button onClick={() => setShowPersona(!showPersona)} className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors text-[9px] font-semibold text-primary">
+                <button onClick={() => setShowPersona(!showPersona)} className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors text-[10px] font-semibold text-primary">
                   {persona.user.name.split(' ').map(n => n[0]).join('')}
                 </button>
                 {showPersona && <PersonaCard onClose={() => setShowPersona(false)} />}

@@ -199,7 +199,7 @@ export default function SlackView() {
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#1164a3]/30 text-[13px] text-white font-medium">
                   <Hash size={12} /> <span>incidents</span>
-                  <div className="ml-auto w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[9px] text-white font-bold">1</div>
+                  <div className="ml-auto w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-[10px] text-white font-bold">1</div>
                 </div>
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded text-[13px] text-white/40">
                   <Hash size={12} /> <span>deploys</span>

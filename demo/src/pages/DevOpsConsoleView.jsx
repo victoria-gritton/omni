@@ -62,12 +62,12 @@ function ErrorRateChart() {
             const y = PAD.t + ch - (v / maxVal) * ch
             return <g key={v}>
               <line x1={PAD.l} y1={y} x2={W - PAD.r} y2={y} stroke="white" strokeOpacity="0.04" strokeWidth="1"/>
-              <text x={PAD.l - 6} y={y + 3} fill="#555" fontSize="8" fontFamily="sans-serif" textAnchor="end">{v}%</text>
+              <text x={PAD.l - 6} y={y + 3} fill="#94a3b8" fontSize="8" fontFamily="sans-serif" textAnchor="end">{v}%</text>
             </g>
           })}
           {/* X axis labels */}
           {pts.filter((_, i) => i % 4 === 0).map(p => (
-            <text key={p.i} x={p.x} y={H - 4} fill="#555" fontSize="8" fontFamily="sans-serif" textAnchor="middle">{p.time}</text>
+            <text key={p.i} x={p.x} y={H - 4} fill="#94a3b8" fontSize="8" fontFamily="sans-serif" textAnchor="middle">{p.time}</text>
           ))}
           {/* Baseline */}
           <line x1={PAD.l} y1={PAD.t + ch - (0.1 / maxVal) * ch} x2={W - PAD.r} y2={PAD.t + ch - (0.1 / maxVal) * ch} stroke="#3b82f6" strokeWidth="1" strokeDasharray="4,3" opacity="0.35"/>
@@ -241,7 +241,7 @@ export default function DevOpsConsoleView() {
                   <div key={i} className="flex gap-4">
                     {/* Timeline column */}
                     <div className="flex flex-col items-center w-6 flex-shrink-0">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${step.s === 'err' ? 'bg-status-outage/15 text-status-outage ring-1 ring-status-outage/30' : 'bg-status-blocked/15 text-status-blocked ring-1 ring-status-blocked/30'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${step.s === 'err' ? 'bg-status-outage/15 text-status-outage ring-1 ring-status-outage/30' : 'bg-status-blocked/15 text-status-blocked ring-1 ring-status-blocked/30'}`}>
                         {i + 1}
                       </div>
                       {i < arr.length - 1 && <div className={`w-px flex-1 my-1 ${step.s === 'err' ? 'bg-status-outage/20' : 'bg-status-blocked/20'}`} />}
@@ -250,7 +250,7 @@ export default function DevOpsConsoleView() {
                     <div className={`flex-1 pb-4 ${i < arr.length - 1 ? '' : 'pb-0'}`}>
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-body-s text-foreground font-semibold">{step.e}</span>
-                        <span className="text-[9px] text-foreground-disabled ml-auto flex-shrink-0">{step.t}</span>
+                        <span className="text-[10px] text-foreground-disabled ml-auto flex-shrink-0">{step.t}</span>
                       </div>
                       <p className="text-[11px] text-foreground-muted leading-relaxed">{step.d}</p>
                     </div>
@@ -279,11 +279,11 @@ export default function DevOpsConsoleView() {
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <div className="p-2.5 rounded-lg bg-status-outage/10 border border-status-outage/20 text-center">
                     <div className="text-xl font-bold text-status-outage">847</div>
-                    <div className="text-[9px] text-foreground-muted mt-0.5">failed checkouts</div>
+                    <div className="text-[10px] text-foreground-muted mt-0.5">failed checkouts</div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-status-blocked/10 border border-status-blocked/20 text-center">
                     <div className="text-xl font-bold text-status-blocked">~$12.4k</div>
-                    <div className="text-[9px] text-foreground-muted mt-0.5">est. revenue impact</div>
+                    <div className="text-[10px] text-foreground-muted mt-0.5">est. revenue impact</div>
                   </div>
                 </div>
                 <div className="space-y-2">

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   CheckCircle, Warning, Sparkle, ChartBar, Bell, Clock,
   CaretDown, CaretUp, ArrowRight, Lightning, ShieldCheck,
-  Coffee, ArrowClockwise, Microphone, WarningCircle, Globe,
+  Coffee, ArrowClockwise, WarningCircle, Globe,
   ChatTeardropDots, Cpu, HardDrives, Database, CloudArrowUp,
   ListChecks, MagnifyingGlassPlus, CaretRight, Eye, X,
   DotsThree, MagnifyingGlass, Trash, SquaresFour
@@ -34,32 +34,31 @@ function ActIndicator({ current, total }) {
 
 function PromptPill({ text, onClick }) {
   return (
-    <button onClick={onClick} className="px-3 py-1.5 rounded-full border border-primary/20 text-body-s text-primary hover:bg-primary/5 hover:border-primary/40 transition-all whitespace-nowrap">
+    <button onClick={onClick} className="px-2.5 py-1 rounded-full border border-primary/20 bg-primary/5 text-[11px] text-primary hover:bg-primary/10 hover:border-primary/40 transition-all whitespace-nowrap">
       {text}
     </button>
   )
 }
 
 /* ── Observability Feed Item (expandable) ── */
-function FeedItem({ severity, title, source, detail, time, expanded, onToggle, aiSummary }) {
-  const sevConfig = {
-    critical: { bg: 'bg-status-outage/10', border: 'border-status-outage/20', text: 'text-status-outage', icon: WarningCircle, label: 'CRITICAL' },
-    warning: { bg: 'bg-status-blocked/10', border: 'border-status-blocked/20', text: 'text-status-blocked', icon: Warning, label: 'WARNING' },
-    info: { bg: 'bg-primary/10', border: 'border-primary/20', text: 'text-primary', icon: Eye, label: 'INFO' },
-    resolved: { bg: 'bg-status-active/10', border: 'border-status-active/20', text: 'text-status-active', icon: CheckCircle, label: 'RESOLVED' },
+function FeedItem({ category, severity, title, source, status, detail, time, expanded, onToggle, aiSummary, path }) {
+  const navigate = useNavigate()
+  const catConfig = {
+    incident: { bg: 'bg-status-outage/10', border: 'border-status-outage/20', text: 'text-status-outage', icon: WarningCircle, label: 'INVESTIGATION' },
+    anomaly: { bg: 'bg-status-blocked/10', border: 'border-status-blocked/20', text: 'text-status-blocked', icon: Warning, label: 'ANOMALY' },
+    change: { bg: 'bg-primary/10', border: 'border-primary/20', text: 'text-primary', icon: ArrowRight, label: 'CHANGE' },
   }
-  const c = sevConfig[severity]
+  const c = catConfig[category] || catConfig.change
   const Icon = c.icon
   return (
     <div className={`border-b border-border-muted last:border-0 transition-all ${expanded ? 'bg-background-surface-1/30' : ''}`}>
       <button onClick={onToggle} className="w-full flex items-center gap-3 py-3 px-2 text-left hover:bg-background-surface-2/30 rounded-lg transition-colors">
-        <div className={`w-7 h-7 rounded-lg ${c.bg} border ${c.border} flex items-center justify-center flex-shrink-0`}>
-          <Icon size={14} className={c.text} weight="fill" />
-        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className={`text-[9px] font-bold tracking-wider ${c.text}`}>{c.label}</span>
+            <Icon size={14} className={`${c.text} flex-shrink-0`} weight={category === 'change' ? 'bold' : 'fill'} />
+            <span className={`text-[10px] font-bold tracking-wider ${c.text}`}>{c.label}</span>
             <span className="text-[10px] text-foreground-muted">{source}</span>
+            {status && <span className="text-[10px] text-status-blocked font-medium">{status}</span>}
           </div>
           <span className="text-body-s text-foreground font-medium">{title}</span>
         </div>
@@ -76,12 +75,19 @@ function FeedItem({ severity, title, source, detail, time, expanded, onToggle, a
             </div>
           )}
           <div className="flex gap-2">
+            {path && (
+              <button onClick={() => navigate(path)} className="h-6 px-2.5 rounded-md bg-primary/10 border border-primary/20 text-[10px] text-primary font-medium hover:bg-primary/20 transition-colors flex items-center gap-1">
+                <MagnifyingGlassPlus size={10} /> View investigation
+              </button>
+            )}
             <button className="h-6 px-2.5 rounded-md border border-border-muted text-[10px] text-foreground-secondary hover:bg-background-surface-2 transition-colors flex items-center gap-1">
               <ChatTeardropDots size={10} /> Chat with agent
             </button>
-            <button className="h-6 px-2.5 rounded-md border border-border-muted text-[10px] text-foreground-secondary hover:bg-background-surface-2 transition-colors flex items-center gap-1">
-              <MagnifyingGlassPlus size={10} /> Investigate
-            </button>
+            {!path && (
+              <button className="h-6 px-2.5 rounded-md border border-border-muted text-[10px] text-foreground-secondary hover:bg-background-surface-2 transition-colors flex items-center gap-1">
+                <MagnifyingGlassPlus size={10} /> Investigate
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -153,12 +159,13 @@ function TypedText({ text, speed=20, onDone }) {
 
 /* ── Data ── */
 const promptPills = [
-  "Show me recent errors in my logs",
+  "Compare current traffic to last Tuesday at this time",
   "List my dashboards",
   "Top invoked Lambda functions", "Check my database instances health",
 ]
 
 const chatResponses = {
+  "Compare current traffic to last Tuesday at this time": "Comparing traffic for this window (2:00–2:30 AM) vs last Tuesday:\n\n• **Requests/min:** 8,420 now vs 8,180 last Tue — **+2.9%** (normal variance)\n• **Error rate:** 0.3% now vs 0.2% last Tue — slightly elevated but within SLA\n• **p99 latency:** 210ms now vs 195ms last Tue — **+7.7%**\n• **Unique users:** 1,240 now vs 1,190 last Tue\n\nOverall traffic is tracking close to last Tuesday. The slight latency increase correlates with the DynamoDB read throttling on UsersTable.",
   "What's the health of my services?": "All 12 services are currently operational. However, **payment-service** is showing elevated latency (245ms avg, baseline 80ms) and **DynamoDB UsersTable** is experiencing read throttling. The remaining 10 services are within normal parameters.\n\nKey metrics:\n• 12M requests/hr across all services\n• 99.2% overall availability\n• 2 active situations requiring attention",
   "Show me all active alarms": "You have **4 active alarms**:\n\n1. 🔴 **DynamoDB UsersTable ReadThrottles** — ReadThrottleEvents is 847 (threshold: 0) — triggered just now\n2. 🔴 **PaymentService Fault Rate** — 12.3% fault rate (threshold: 5%) — triggered 2m ago\n3. 🟡 **API Gateway 5xx Errors** — 5.2% error rate (threshold: 1%) — triggered 4m ago\n4. 🟡 **Container Memory Warning** — 85% utilization (no alarm configured, detected by anomaly detection)",
   "Which services have the highest error rates?": "Top services by error rate in the last hour:\n\n1. **payment-service** — 12.3% fault rate (847 faults / 6,891 requests)\n2. **API Gateway** — 5.2% 5xx error rate (correlated with payment-service)\n3. **order-service** — 0.8% error rate (within normal range)\n4. **checkout-service** — 0.3% error rate (within normal range)\n\nThe payment-service errors are caused by DynamoDB throttling on UsersTable. This should self-resolve once auto-scaling completes (~3 minutes).",
@@ -322,7 +329,6 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
           <div className="flex items-center gap-2 h-10 rounded-lg bg-background-surface-1 border border-border-muted px-3">
             <Sparkle size={14} className="text-primary flex-shrink-0" />
             <input type="text" placeholder="Ask a question about your system" className="flex-1 bg-transparent text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none" />
-            <Microphone size={14} className="text-foreground-muted flex-shrink-0" />
           </div>
         </div>
       </div>
@@ -331,25 +337,23 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
 }
 
 const feedItems = [
-  { severity: 'critical', title: 'DynamoDB UsersTable ReadThrottles', source: 'DynamoDB', detail: 'ReadThrottleEvents spiked to 847 (threshold: 0). Auto-scaling triggered but not yet effective.', time: 'just now', aiSummary: 'This correlates with the PaymentService fault rate increase. The UsersTable is receiving 3× normal read traffic from the payment validation path. Auto-scaling should resolve within 5 minutes.' },
-  { severity: 'critical', title: 'PaymentService — 12.3% fault rate', source: 'Lambda', detail: '847 faults out of 6,891 requests in the last 5 minutes. Timeout errors dominating.', time: '2m ago', aiSummary: 'Root cause appears to be DynamoDB throttling on UsersTable. Payment validation calls are timing out waiting for user lookups. This should self-resolve once DynamoDB auto-scaling completes.' },
-  { severity: 'warning', title: 'API Gateway 5xx Errors above threshold', source: 'ApiGateway', detail: '5XXError rate is 5.2% (threshold: 1%). Correlated with upstream PaymentService faults.', time: '4m ago', aiSummary: 'These 5xx errors are downstream effects of the PaymentService issue. No action needed on API Gateway itself — fixing the upstream will resolve this.' },
-  { severity: 'warning', title: 'Container memory approaching limit', source: 'ECS', detail: 'payment-processing-prod top container at 680 MB (85% of 800 MB limit). No alarm configured.', time: '12m ago', aiSummary: 'Weekend traffic typically increases 40-60%. Without monitoring, OOM kills are likely. I recommend setting up memory alarms before the weekend.' },
-  { severity: 'info', title: 'Checkout canary all steps passing', source: 'Synthetics', detail: 'All 5 steps completed in 2.3s. Performance within baseline.', time: '6m ago', aiSummary: null },
-  { severity: 'resolved', title: 'Analytics DB connection pool normalized', source: 'RDS', detail: 'Connection pool dropped from 85% to 62% after idle connection cleanup.', time: '18m ago', aiSummary: null },
+  // Incidents (the investigations — what's broken right now)
+  { category: 'incident', severity: 'critical', title: 'order-service is timing out', source: 'INC-2847', status: 'In progress', detail: 'ECS tasks on order-service-east-2 hit 512 MB memory limit. 6 OOM kills since 1:52 AM, stuck in restart loop. ~2,400 orders failed.', time: '35m ago', aiSummary: 'Memory exhaustion causing restart loop. No deploys in 6h — workload outgrew allocation. Recommended fix: scale memory 512 MB → 1 GB.', path: '/console' },
+  { category: 'incident', severity: 'critical', title: 'Payments service down', source: 'INC-3102', status: 'In progress', detail: 'Deploy #847 references PaymentsTable-v2 which doesn\'t exist. 847 payment attempts failed, all retryable.', time: '20m ago', aiSummary: 'Code shipped before infrastructure. Terraform change to create PaymentsTable-v2 is pending approval. Roll back deploy #847 or apply Terraform.', path: '/devops-console' },
+  // Anomalies (what looks weird)
+  { category: 'anomaly', severity: 'warning', title: 'DynamoDB UsersTable read throttling', source: 'DynamoDB', detail: 'ReadThrottleEvents spiked to 847 (threshold: 0). Auto-scaling triggered but not yet effective.', time: 'just now', aiSummary: 'UsersTable is receiving 3× normal read traffic from the payment validation path. Auto-scaling should resolve within 5 minutes.' },
+  { category: 'anomaly', severity: 'warning', title: 'Container memory at 85% — no alarm configured', source: 'ECS', detail: 'payment-processing-prod top container at 680 MB (85% of 800 MB limit).', time: '12m ago', aiSummary: 'Weekend traffic typically increases 40-60%. Without monitoring, OOM kills are likely. I recommend setting up memory alarms before the weekend.' },
+  { category: 'anomaly', severity: 'warning', title: 'API Gateway 5xx rate 5× above baseline', source: 'ApiGateway', detail: '5XXError rate is 5.2% (threshold: 1%). Pattern correlates with upstream PaymentService faults.', time: '4m ago', aiSummary: 'These 5xx errors are downstream effects of the PaymentService issue. No action needed on API Gateway itself — fixing the upstream will resolve this.' },
+  // Changes (what changed recently)
+  { category: 'change', severity: 'info', title: 'Deploy #847 — payment-service', source: 'CodeDeploy', detail: 'Deployed by Raj Patel at 1:45 AM. Commit a3f7c2d: table reference migration.', time: '45m ago', aiSummary: 'This deploy changed the DynamoDB table reference from PaymentsTable to PaymentsTable-v2. The target table does not exist yet.' },
+  { category: 'change', severity: 'info', title: 'DynamoDB auto-scaling activated — UsersTable', source: 'DynamoDB', detail: 'Read capacity scaling from 100 to 400 RCU. Triggered by sustained throttling.', time: '2m ago', aiSummary: null },
+  { category: 'change', severity: 'info', title: 'Analytics DB connection pool cleanup', source: 'RDS', detail: 'Connection pool dropped from 85% to 62% after idle connection cleanup. Automated maintenance.', time: '18m ago', aiSummary: null },
 ]
 
 const pendingTasks = [
   { id: 'T-1', title: 'Create recommended alarms', description: '6 recommended alarms based on incidents and best practices', priority: 'high', source: 'Recommendation' },
   { id: 'T-2', title: 'Enable DynamoDB auto-scaling alerts', description: 'Add alarm for when auto-scaling events fire on UsersTable', priority: 'medium', source: 'Feed analysis' },
   { id: 'T-3', title: 'Archive 23 unused custom metrics', description: 'Metrics not queried in 90+ days. Estimated savings: $47/month', priority: 'low', source: 'Cost optimization' },
-]
-
-const investigations = [
-  { id: 'INC-2847', title: 'order-service is timing out', status: 'active', progress: '3 findings', started: '35m ago', path: '/console' },
-  { id: 'INC-3102', title: 'Payments service down', status: 'active', progress: '2 findings', started: '20m ago', path: '/devops-console' },
-  { id: 'INV-1023', title: 'Lambda cold start increase after deploy', status: 'paused', progress: '5 findings', started: '2h ago' },
-  { id: 'INV-1021', title: 'DynamoDB throttling in order-service', status: 'resolved', progress: '7 findings', started: 'Yesterday' },
 ]
 
 const monitoredSystems = {
@@ -386,6 +390,7 @@ export default function CoffeeView() {
   const [confirmTypingDone, setConfirmTypingDone] = useState(false)
   const [tileMenu, setTileMenu] = useState(null)
   const [feedFilter, setFeedFilter] = useState('all')
+  const [actionsOpen, setActionsOpen] = useState(false)
 
   useEffect(() => { if (act===1) { const t=setTimeout(()=>setShowChart(true),600); return ()=>clearTimeout(t) } }, [act])
   useEffect(() => { if (showChart) { const t=setTimeout(()=>setShowSuggestion(true),800); return ()=>clearTimeout(t) } }, [showChart])
@@ -419,38 +424,32 @@ export default function CoffeeView() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto" onClick={() => { tileMenu && setTileMenu(null) }}>
+    <main className="flex-1 overflow-y-auto" onClick={() => { tileMenu && setTileMenu(null); actionsOpen && setActionsOpen(false) }}>
       <div className="px-6 py-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[20px] font-normal text-foreground">{coffee.greeting}</h1>
           <div className="flex items-center gap-2">
-            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="all-accounts">
-              <option value="all-accounts">All accounts</option>
-              <option value="prod">Production (us-east-1)</option>
-              <option value="staging">Staging (us-west-2)</option>
-              <option value="dev">Development</option>
-            </select>
-            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="all-teams">
-              <option value="all-teams">All teams</option>
-              <option value="payments">Payments</option>
-              <option value="platform">Platform</option>
-              <option value="checkout">Checkout</option>
-              <option value="infra">Infrastructure</option>
-            </select>
-            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="3h">
-              <option value="1h">Last 1 hour</option>
-              <option value="3h">Last 3 hours</option>
-              <option value="6h">Last 6 hours</option>
-              <option value="12h">Last 12 hours</option>
-              <option value="24h">Last 24 hours</option>
-              <option value="7d">Last 7 days</option>
-            </select>
-            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">
-              Actions ▾
+            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+              All accounts <CaretDown size={12} className="text-foreground-disabled" />
             </button>
-            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary hover:bg-background-surface-2 transition-colors">
-              Customize
+            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+              All teams <CaretDown size={12} className="text-foreground-disabled" />
             </button>
+            <button className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+              Last 3 hours <CaretDown size={12} className="text-foreground-disabled" />
+            </button>
+            <div className="relative">
+              <button onClick={() => setActionsOpen(!actionsOpen)} className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+                Actions <CaretDown size={12} className={`text-foreground-disabled transition-transform ${actionsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {actionsOpen && (
+                <div className="absolute right-0 top-full mt-1 w-40 p-1 rounded-lg border border-border-muted bg-background-surface-2 shadow-md z-50">
+                  <button onClick={() => setActionsOpen(false)} className="w-full text-left px-3 py-1.5 rounded-md text-body-s text-foreground-muted hover:bg-white/5 hover:text-foreground transition-colors">
+                    Customize
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -473,7 +472,6 @@ export default function CoffeeView() {
             <div className="flex items-center gap-2 h-10 rounded-xl bg-background-surface-1 border border-border-muted px-4 focus-within:border-primary/40 transition-colors">
               <Sparkle size={16} className="text-primary flex-shrink-0" />
               <input type="text" placeholder="Ask a question about your system" className="flex-1 bg-transparent text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none" />
-              <Microphone size={16} className="text-foreground-muted flex-shrink-0" />
             </div>
             <div className="flex flex-wrap gap-1.5">
               {promptPills.map(p => <PromptPill key={p} text={p} onClick={() => openChat(p)} />)}
@@ -486,12 +484,12 @@ export default function CoffeeView() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
-                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{investigations.length + feedItems.length}</span>
+                  <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{feedItems.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-background-surface-2/50">
-                    {['all', 'investigations', 'alarms', 'resolved'].map(f => (
-                      <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
+                    {['all', 'investigations', 'anomalies', 'changes'].map(f => (
+                      <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
                         {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
                       </button>
                     ))}
@@ -500,30 +498,12 @@ export default function CoffeeView() {
                 </div>
               </div>
               <div className="space-y-0">
-                {/* Investigations at the top */}
-                {(feedFilter === 'all' || feedFilter === 'investigations') && investigations.map(inv => (
-                  <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-2 px-2 -mx-2 border-b border-border-muted/50 last:border-0 hover:bg-background-surface-2/30 rounded-lg transition-colors cursor-pointer">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
-                        <span className="text-[9px] text-foreground-disabled">{inv.id}</span>
-                      </div>
-                      <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-[10px] text-foreground-muted">{inv.progress}</span>
-                      <span className="text-[10px] text-foreground-disabled">{inv.started}</span>
-                      <CaretRight size={12} className="text-foreground-disabled" />
-                    </div>
-                  </div>
-                ))}
-                {/* Feed items */}
                 {feedItems
                   .filter(item => {
                     if (feedFilter === 'all') return true
-                    if (feedFilter === 'investigations') return false
-                    if (feedFilter === 'alarms') return item.severity === 'critical' || item.severity === 'warning'
-                    if (feedFilter === 'resolved') return item.severity === 'resolved'
+                    if (feedFilter === 'investigations') return item.category === 'incident'
+                    if (feedFilter === 'anomalies') return item.category === 'anomaly'
+                    if (feedFilter === 'changes') return item.category === 'change'
                     return true
                   })
                   .map((item, i) => (
@@ -536,7 +516,6 @@ export default function CoffeeView() {
               <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <ListChecks size={14} className="text-foreground-muted" />
                     <h3 className="text-heading-xs font-normal text-foreground">Recommendations</h3>
                     <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
                   </div>
@@ -547,15 +526,11 @@ export default function CoffeeView() {
                     <div key={task.id} className="p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-body-s text-foreground font-medium">{task.title}</span>
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
                       </div>
                       <p className="text-[10px] text-foreground-muted mb-2">{task.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-foreground-disabled">{task.source}</span>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="text-[9px] text-link hover:underline">View details</button>
-                          <button className="h-5 px-2 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
-                        </div>
+                      <div className="flex items-center justify-end">
+                          <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="h-5 px-2 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Show details</button>
                       </div>
                     </div>
                   ))}
@@ -566,13 +541,20 @@ export default function CoffeeView() {
 
             {/* Monitored Systems + Service Topology */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              {/* Monitored Systems */}
+              {/* What I'm watching */}
               <div className="glass-card p-3">
-                <div className="flex items-center justify-between mb-0.5">
-                  <h3 className="text-heading-xs font-normal text-foreground">Monitored Systems</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-heading-xs font-normal text-foreground">What I'm watching</h3>
                   <TileMenu id="monitored" />
                 </div>
-                <p className="text-[10px] text-foreground-muted mb-2">Applications and infrastructure under observation</p>
+
+                {/* Agent insight */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/[0.04] border border-primary/10 mb-3">
+                  <Sparkle size={12} className="text-orange-400 mt-0.5 flex-shrink-0" weight="fill" />
+                  <div>
+                    <p className="text-[11px] text-foreground leading-relaxed">payment-service has 2× the metrics of other services — it's your most instrumented. <span className="text-foreground-muted">3 services have no alarms configured.</span></p>
+                  </div>
+                </div>
 
                 <div className="mb-2">
                   <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
@@ -581,16 +563,16 @@ export default function CoffeeView() {
                       <div className="flex items-center gap-1.5 py-1 border-b border-status-active/20 bg-status-active/[0.04] -mx-1 px-1 rounded" style={{ animation: 'fadeIn 0.3s ease-out' }}>
                         <ChartBar size={12} className="text-status-active flex-shrink-0" />
                         <span className="text-[11px] text-status-active flex-1 font-medium">Payment Service Health</span>
-                        <span className="text-[9px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
-                        <span className="text-[9px] text-status-active/70">NEW</span>
+                        <span className="text-[10px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
+                        <span className="text-[10px] text-status-active/70">NEW</span>
                       </div>
                     )}
                     {monitoredSystems.applications.map(app => (
                       <div key={app.name} className="flex items-center gap-1.5 py-1 border-b border-border-muted/50 last:border-0">
                         <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)} flex-shrink-0`} />
                         <span className="text-[11px] text-foreground flex-1 font-mono">{app.name}</span>
-                        <span className="text-[9px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
-                        <span className="text-[9px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
+                        <span className="text-[10px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
+                        <span className="text-[10px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
                       </div>
                     ))}
                   </div>
@@ -609,7 +591,7 @@ export default function CoffeeView() {
                             <span className="text-[11px] text-foreground font-medium flex-1">{infra.name}</span>
                             <TileMenu id={`infra-${infra.name}`} />
                           </div>
-                          <span className="text-[9px] text-foreground-disabled block mb-1">{infra.count}</span>
+                          <span className="text-[10px] text-foreground-disabled block mb-1">{infra.count}</span>
                           <div className="flex h-1.5 rounded-full overflow-hidden bg-background-surface-2">
                             {critical > 0 && <div className="bg-status-outage" style={{ width: `${(critical/total)*100}%` }} />}
                             {warning > 0 && <div className="bg-status-blocked" style={{ width: `${(warning/total)*100}%` }} />}
@@ -625,26 +607,21 @@ export default function CoffeeView() {
                     })}
                   </div>
                 </div>
-
-                {/* Compact recommendation */}
-                <div className="p-2 rounded-md bg-purple-500/[0.06] border border-purple-400/20 flex items-center gap-2">
-                  <Sparkle size={12} className="text-purple-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[11px] text-foreground font-medium">Create recommended alarms</span>
-                    <span className="text-[9px] text-foreground-muted ml-2">6 alarms found</span>
-                  </div>
-                  <button onClick={() => openChat('__alarms__')} className="h-5 px-2 rounded text-[9px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
-                    <Sparkle size={8} /> Set up
-                  </button>
-                </div>
               </div>
 
               {/* Service Topology */}
               <div className="glass-card p-3 flex flex-col" style={{ height: '460px' }}>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="text-heading-xs font-normal text-foreground">Application map</h3>
                   <TileMenu id="topology" />
                 </div>
+
+                {/* Agent insight */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/[0.04] border border-primary/10 mb-2">
+                  <Sparkle size={12} className="text-orange-400 mt-0.5 flex-shrink-0" weight="fill" />
+                  <p className="text-[11px] text-foreground leading-relaxed">I'm watching 2 anomalies on the payment path — Order Management is degraded and cascading into Payments.</p>
+                </div>
+
                 <div className="flex-1 min-h-0">
                   <TopologyMap />
                 </div>
@@ -712,7 +689,7 @@ export default function CoffeeView() {
                 <div className="glass-card p-4"><h3 className="text-heading-m font-normal text-foreground mb-3">Live Updates</h3><div className="flex items-center gap-2 py-2"><CheckCircle size={14} className="text-status-active"/><span className="text-body-s text-foreground-muted">{coffee.updatedState.liveUpdates}</span></div></div>
               </div>
               <div className="space-y-3">
-                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-s font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[9px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
+                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-s font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
                 <div className="ai-glass-card p-4"><div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary"/><span className="text-body-s font-semibold text-primary">Weekend readiness</span></div><div className="space-y-2">{['Memory monitoring active','Alarm threshold set at 87.5%','Team notifications configured'].map(t=><div key={t} className="flex items-center gap-2"><CheckCircle size={12} className="text-status-active" weight="fill"/><span className="text-body-s text-foreground-secondary">{t}</span></div>)}</div><p className="text-body-s text-foreground-muted mt-3">You're covered for the weekend. Enjoy it.</p></div>
                 <button onClick={()=>{setAct(0);setExpandedFeed(null);setAiTypingDone(false);setSettingUp(false);setSetupDone(false);setShowChart(false);setShowSuggestion(false);setConfirmTypingDone(false)}} className="w-full h-8 rounded-lg border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center justify-center gap-2"><ArrowClockwise size={14}/> Restart demo</button>
               </div>

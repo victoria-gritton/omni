@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PaperPlaneRight, Lightning, ChartBar, Bell, Globe } from '@phosphor-icons/react'
 
 const prompts = [
-  { text: 'Why is payment-service slow?' },
+  { text: 'Compare current traffic to last Tuesday at this time' },
   { text: 'Show me all critical alarms' },
   { text: 'What changed in payment-service?', path: '/console' },
   { text: 'Show me top five services by errors' },
