@@ -4,7 +4,7 @@ import { House, Atom, Bell, ChartBar, Globe, TrendUp, Database, Gear, Lifebuoy, 
 import { usePersona } from '../data/persona'
 
 const navItems = [
-  { icon: House, label: 'Home', path: '/home' },
+  { icon: House, label: 'Home', path: '/day0' },
   { icon: Atom, label: 'Agents' },
   { icon: Bell, label: 'Alarms', path: '/console' },
   { icon: ChartBar, label: 'Dashboards' },
