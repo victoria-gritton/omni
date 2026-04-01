@@ -26,16 +26,16 @@ body {
   z-index: 1;
 }
 
-/* Cloudscape container — solid surface */
+/* Cloudscape container — elevated surface */
 .glass-card {
-  background: #161d26;
+  background: #1b232d;
   border: 1px solid #424650;
   border-radius: 8px;
 }
 
 /* AI card — left accent border (Cloudscape info style) */
 .ai-glass-card {
-  background: #161d26;
+  background: #1b232d;
   border: 1px solid #424650;
   border-left: 3px solid #42b4ff;
   border-radius: 8px;
@@ -43,7 +43,7 @@ body {
 
 /* Metric card */
 .metric-card {
-  background: #161d26;
+  background: #1b232d;
   border: 1px solid #424650;
   border-radius: 8px;
 }
