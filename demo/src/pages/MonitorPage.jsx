@@ -42,7 +42,7 @@ function HealthGlance({ applications, activeAlarms, slos }) {
     <div className="glass-card p-5 mb-6">
       <div className="flex items-center gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${overallStatus === 'critical' ? 'bg-red-400/20' : overallStatus === 'warning' ? 'bg-status-degraded/20' : 'bg-status-active/20'}`}>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${overallStatus === 'critical' ? 'bg-red-400/20' : overallStatus === 'warning' ? 'bg-orange-400/20' : 'bg-green-400/20'}`}>
             <div className={`w-4 h-4 rounded-full ${statusDots[overallStatus]}`} style={overallStatus !== 'healthy' ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
           </div>
           <div>
@@ -92,7 +92,7 @@ function ApplicationsCard({ applications, onInvestigate }) {
           const hasWarning = flags.some(f => f.severity === 'warning')
           return (
             <button key={app.id} onClick={() => onInvestigate('alarms', { appName: app.name, services: app.services })} className="flex items-start gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group">
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${hasWarning ? 'bg-status-degraded' : 'bg-status-active'}`} />
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${hasWarning ? 'bg-orange-400' : 'bg-green-400'}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="text-[11px] font-medium text-foreground">{app.name}</p>
@@ -143,7 +143,7 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
         <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors ${activeType === 'all' ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>All</button>
         {sortedTypes.map(type => {
           const hasIssue = byType[type].some(r => r.status !== 'healthy')
-          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors relative ${activeType === type ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>{typeLabels[type] || type}{hasIssue && activeType !== type && <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-status-degraded" />}</button>
+          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors relative ${activeType === type ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>{typeLabels[type] || type}{hasIssue && activeType !== type && <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400" />}</button>
         })}
       </div>
       {/* Scrollable list */}
@@ -182,7 +182,7 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
         <div className="flex items-center gap-1.5"><Bell size={14} className="text-red-400" /><span className="text-[11px] font-medium text-foreground">Alarms</span></div>
         <div className="flex items-center gap-2">
           <span className="text-[9px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">{alarming.length} active</span>
-          <span className="text-[9px] text-status-active bg-status-active/10 px-1.5 py-0.5 rounded">{ok.length} OK</span>
+          <span className="text-[9px] text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded">{ok.length} OK</span>
           {snoozed.size > 0 && <span className="text-[9px] text-foreground-muted bg-foreground-muted/10 px-1.5 py-0.5 rounded">{snoozed.size} snoozed</span>}
         </div>
       </div>
@@ -195,7 +195,7 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
           const isAcked = acked.has(alarm.id)
           return (
             <div key={alarm.id} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-all text-left group ${isAcked ? 'opacity-50' : ''}`}>
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAcked ? 'bg-status-active' : alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-status-active'}`} />
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAcked ? 'bg-green-400' : alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-green-400'}`} />
               <button onClick={() => onInvestigate('error-rate', { service: alarm.resource, label: alarm.name })} className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
                   <span className={`text-[8px] px-1 py-0 rounded font-medium ${sevColors[alarm.severity]}`}>{alarm.severity}</span>
@@ -235,7 +235,7 @@ function SLOsCard({ slos, onInvestigate }) {
     const isAtRisk = slo.status === 'at-risk'
     return (
       <button key={slo.id} onClick={() => onInvestigate('latency-waterfall', { appName: slo.service, label: slo.name })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-status-degraded/5' : ''} ${dimmed ? 'opacity-50' : ''}`}>
-        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAtRisk ? 'bg-status-degraded' : 'bg-status-active'}`} />
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAtRisk ? 'bg-orange-400' : 'bg-green-400'}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <p className="text-[11px] font-medium text-foreground">{slo.name}</p>
