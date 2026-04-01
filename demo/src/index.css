@@ -33,10 +33,10 @@ body {
   border-radius: 8px;
 }
 
-/* AI card — subtle purple border, same bg as regular cards */
+/* AI card — magenta border, dark container */
 .ai-glass-card {
-  background: #1b232d;
-  border: 1px solid rgba(115, 0, 229, 0.35);
+  background: #06080A;
+  border: 1px solid rgba(224, 64, 251, 0.35);
   border-radius: 8px;
 }
 

@@ -735,19 +735,19 @@ export default function ExplorePage() {
                 {activeTab === 'transactions' && <TransactionsPanel filter={filter} />}
 
                 {/* Suggested explorations */}
-                <div className="mt-4 p-4 rounded-xl bg-purple-500/[0.06] border border-purple-400/20">
+                <div className="mt-4 p-4 rounded-xl bg-[#06080A] border border-[#e040fb]/30">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkle size={14} className="text-purple-400" />
+                    <Sparkle size={14} className="text-[#e040fb]" />
                     <h3 className="text-heading-s font-normal text-foreground">AI-suggested explorations</h3>
                   </div>
                   <div className="space-y-0">
                     {suggestedExplorations.map((item) => (
-                      <div key={item.title} className="flex items-start gap-3 py-3 border-b border-purple-400/10 last:border-0 cursor-pointer hover:bg-purple-500/[0.04] -mx-2 px-2 rounded-lg transition-colors">
+                      <div key={item.title} className="flex items-start gap-3 py-3 border-b border-[#e040fb]/10 last:border-0 cursor-pointer hover:bg-[#e040fb]/[0.04] -mx-2 px-2 rounded-lg transition-colors">
                         <div>
                           <span className="text-body-s text-foreground font-medium block">{item.title}</span>
                           <span className="text-body-s text-foreground-muted">{item.subtitle}</span>
                         </div>
-                        <ArrowRight size={14} className="text-purple-400/60 mt-0.5 ml-auto flex-shrink-0" />
+                        <ArrowRight size={14} className="text-[#e040fb]/40 mt-0.5 ml-auto flex-shrink-0" />
                       </div>
                     ))}
                   </div>
