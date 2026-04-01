@@ -267,7 +267,7 @@ function PersonaCard({ onClose }) {
       <div className="flex items-center gap-2 mb-4">
         {personaList.map(p => (
           <button key={p.id} onClick={() => setActiveId(p.id)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${p.id === activeId ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[8px] font-semibold text-primary">{p.user.name.split(' ').map(n => n[0]).join('')}</div>
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-semibold text-primary">{p.user.name.split(' ').map(n => n[0]).join('')}</div>
             {p.user.name.split(' ')[0]}
           </button>
         ))}
@@ -358,7 +358,7 @@ export default function ConsoleLayout({ children }) {
           </div>
 
           <div className="px-3 pt-2">
-            {navOpen && <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted px-2 mb-2 block">Navigation</span>}
+            {navOpen && <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-muted px-2 mb-2 block">Navigation</span>}
             <div className="space-y-0.5">
               {navItems.map(({ icon: Icon, label, subtitle, path, also }) => {
                 const active = path && (location.pathname === path || (also && also.includes(location.pathname)))
@@ -382,7 +382,7 @@ export default function ConsoleLayout({ children }) {
               <div className="px-3 pt-4">
                 <div className="flex items-center gap-1.5 px-2 mb-2">
                   <Star size={10} className="text-foreground-muted" />
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted">Favorites</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-muted">Favorites</span>
                 </div>
                 <div className="space-y-0.5">
                   {favorites.map(({ label }) => (
@@ -424,7 +424,7 @@ export default function ConsoleLayout({ children }) {
                 Ask AI
               </button>
               <div className="relative">
-                <button onClick={() => setShowPersona(!showPersona)} className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors text-[9px] font-semibold text-primary">
+                <button onClick={() => setShowPersona(!showPersona)} className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors text-[10px] font-semibold text-primary">
                   {persona.user.name.split(' ').map(n => n[0]).join('')}
                 </button>
                 {showPersona && <PersonaCard onClose={() => setShowPersona(false)} />}

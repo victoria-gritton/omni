@@ -38,8 +38,8 @@ function MetricCard({ label, value, unit, points, color, max, alert }) {
       </div>
       <Sparkline points={points} color={color} max={max} height={32} />
       <div className="flex justify-between mt-1">
-        <span className="text-[9px] text-foreground-disabled">1:47 AM</span>
-        <span className="text-[9px] text-foreground-disabled">now</span>
+        <span className="text-[10px] text-foreground-disabled">1:47 AM</span>
+        <span className="text-[10px] text-foreground-disabled">now</span>
       </div>
     </div>
   )
@@ -88,15 +88,15 @@ export default function ConsoleView() {
               <div className="grid grid-cols-3 gap-2 mt-3">
                 <div className="text-center p-2 rounded-lg bg-background-surface-2/30">
                   <div className="text-lg font-bold text-foreground">2.4K</div>
-                  <div className="text-[9px] text-foreground-muted">Failed Orders</div>
+                  <div className="text-[10px] text-foreground-muted">Failed Orders</div>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-background-surface-2/30">
                   <div className="text-lg font-bold text-foreground">16 min</div>
-                  <div className="text-[9px] text-foreground-muted">Duration</div>
+                  <div className="text-[10px] text-foreground-muted">Duration</div>
                 </div>
                 <div className="text-center p-2 rounded-lg bg-background-surface-2/30">
                   <div className="text-lg font-bold text-foreground">0</div>
-                  <div className="text-[9px] text-foreground-muted">Data Loss</div>
+                  <div className="text-[10px] text-foreground-muted">Data Loss</div>
                 </div>
               </div>
 
@@ -155,12 +155,12 @@ export default function ConsoleView() {
                 <div className="space-y-2">
                   {RESPONDERS.map((r) => (
                     <div key={r.initials} className="flex items-center gap-2">
-                      <div className={`w-6 h-6 rounded-full ${r.color} flex items-center justify-center text-[9px] font-bold text-white`}>{r.initials}</div>
+                      <div className={`w-6 h-6 rounded-full ${r.color} flex items-center justify-center text-[10px] font-bold text-white`}>{r.initials}</div>
                       <div>
                         <span className="text-body-s text-foreground block leading-tight">{r.name}</span>
                         {r.status === 'acked'
-                          ? <span className="text-[9px] text-status-active">Acknowledged</span>
-                          : <button className="text-[9px] text-status-outage hover:underline">Escalate</button>
+                          ? <span className="text-[10px] text-status-active">Acknowledged</span>
+                          : <button className="text-[10px] text-status-outage hover:underline">Escalate</button>
                         }
                       </div>
                     </div>

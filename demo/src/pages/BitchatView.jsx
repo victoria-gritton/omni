@@ -48,7 +48,7 @@ export default function BitchatView() {
                     <line x1="14" y1="10.5" x2="14" y2="15.5" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
                     <line x1="11.5" y1="13" x2="16.5" y2="13" stroke="#0ea5e9" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
-                  <span className="text-[9px] font-bold tracking-wider uppercase text-white/70">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-white/70">
                     CloudWatch<sup className="text-primary">+</sup>
                   </span>
                 </div>
@@ -68,19 +68,19 @@ export default function BitchatView() {
                 <p className="text-[12px] leading-[16px] text-white font-medium text-center mb-1">
                   payment-service is timing out
                 </p>
-                <p className="text-[9px] leading-[12px] text-orange-400/70 text-center italic mb-2">
+                <p className="text-[10px] leading-[12px] text-orange-400/70 text-center italic mb-2">
                   AI: likely ECS memory exhaustion
                 </p>
 
                 {/* Quick stats */}
                 <div className="flex justify-center gap-4 mb-2">
                   <div className="flex flex-col items-center">
-                    <span className="text-[9px] text-white/40 uppercase tracking-wider">Impact</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider">Impact</span>
                     <span className="text-[13px] font-semibold text-status-outage">2.4K</span>
                   </div>
                   <div className="w-px h-6 bg-white/10" />
                   <div className="flex flex-col items-center">
-                    <span className="text-[9px] text-white/40 uppercase tracking-wider">p99</span>
+                    <span className="text-[10px] text-white/40 uppercase tracking-wider">p99</span>
                     <span className="text-[13px] font-semibold text-red-400">2.4s</span>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export default function BitchatView() {
                 {/* Mesh delivery indicator — subtle, not the main event */}
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <Bluetooth size={8} className="text-purple-400/60" />
-                  <span className="text-[8px] text-purple-400/60">Delivered via mesh</span>
+                  <span className="text-[10px] text-purple-400/60">Delivered via mesh</span>
                 </div>
 
                 <div className="flex-1" />

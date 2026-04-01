@@ -191,7 +191,7 @@ function ContentOutline({ activeTab, advanced, queries }) {
   return (
     <div className="w-48 flex-shrink-0 space-y-3">
       <div className="glass-card p-3">
-        <h4 className="text-[9px] font-bold tracking-wider uppercase text-foreground-muted mb-2">Outline</h4>
+        <h4 className="text-[10px] font-bold tracking-wider uppercase text-foreground-muted mb-2">Outline</h4>
         <div className="space-y-1">
           {!advanced && TABS.map(({ id, label, icon: Icon }) => (
             <div key={id} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-body-s cursor-pointer transition-colors ${activeTab === id ? 'bg-primary/10 text-primary' : 'text-foreground-muted hover:text-foreground hover:bg-background-surface-2'}`}>

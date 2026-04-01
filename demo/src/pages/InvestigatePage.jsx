@@ -94,7 +94,7 @@ export default function InvestigatePage() {
                 {inv.acknowledgedBy.length > 0 ? (
                   <div className="flex -space-x-1.5">
                     {inv.acknowledgedBy.map((a) => (
-                      <div key={a.initials} title={a.name} className={`w-6 h-6 rounded-full ${a.color} flex items-center justify-center text-[9px] font-bold text-white ring-1 ring-background`}>
+                      <div key={a.initials} title={a.name} className={`w-6 h-6 rounded-full ${a.color} flex items-center justify-center text-[10px] font-bold text-white ring-1 ring-background`}>
                         {a.initials}
                       </div>
                     ))}

@@ -58,7 +58,7 @@ function FeedItem({ severity, title, source, detail, time, expanded, onToggle, a
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className={`text-[9px] font-bold tracking-wider ${c.text}`}>{c.label}</span>
+            <span className={`text-[10px] font-bold tracking-wider ${c.text}`}>{c.label}</span>
             <span className="text-[10px] text-foreground-muted">{source}</span>
           </div>
           <span className="text-body-s text-foreground font-medium">{title}</span>
@@ -491,7 +491,7 @@ export default function CoffeeView() {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-background-surface-2/50">
                     {['all', 'investigations', 'alarms', 'resolved'].map(f => (
-                      <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[9px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
+                      <button key={f} onClick={() => setFeedFilter(f)} className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${feedFilter === f ? 'bg-primary/15 text-primary' : 'text-foreground-muted hover:text-foreground'}`}>
                         {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
                       </button>
                     ))}
@@ -505,8 +505,8 @@ export default function CoffeeView() {
                   <div key={inv.id} onClick={() => inv.path && navigate(inv.path)} className="flex items-center gap-3 py-2 px-2 -mx-2 border-b border-border-muted/50 last:border-0 hover:bg-background-surface-2/30 rounded-lg transition-colors cursor-pointer">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
-                        <span className="text-[9px] text-foreground-disabled">{inv.id}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Investigation</span>
+                        <span className="text-[10px] text-foreground-disabled">{inv.id}</span>
                       </div>
                       <span className="text-body-s text-foreground font-medium block truncate">{inv.title}</span>
                     </div>
@@ -547,14 +547,14 @@ export default function CoffeeView() {
                     <div key={task.id} className="p-2 rounded-lg border border-border-muted hover:bg-background-surface-2/30 transition-colors cursor-pointer">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-body-s text-foreground font-medium">{task.title}</span>
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${priorityStyle(task.priority)}`}>{task.priority}</span>
                       </div>
                       <p className="text-[10px] text-foreground-muted mb-2">{task.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-foreground-disabled">{task.source}</span>
+                        <span className="text-[10px] text-foreground-disabled">{task.source}</span>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="text-[9px] text-link hover:underline">View details</button>
-                          <button className="h-5 px-2 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
+                          <button onClick={() => openChat(task.id === 'T-1' ? '__alarms__' : task.title)} className="text-[10px] text-link hover:underline">View details</button>
+                          <button className="h-5 px-2 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">Approve</button>
                         </div>
                       </div>
                     </div>
@@ -575,29 +575,29 @@ export default function CoffeeView() {
                 <p className="text-[10px] text-foreground-muted mb-2">Applications and infrastructure under observation</p>
 
                 <div className="mb-2">
-                  <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
                   <div>
                     {setupComplete && (
                       <div className="flex items-center gap-1.5 py-1 border-b border-status-active/20 bg-status-active/[0.04] -mx-1 px-1 rounded" style={{ animation: 'fadeIn 0.3s ease-out' }}>
                         <ChartBar size={12} className="text-status-active flex-shrink-0" />
                         <span className="text-[11px] text-status-active flex-1 font-medium">Payment Service Health</span>
-                        <span className="text-[9px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
-                        <span className="text-[9px] text-status-active/70">NEW</span>
+                        <span className="text-[10px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
+                        <span className="text-[10px] text-status-active/70">NEW</span>
                       </div>
                     )}
                     {monitoredSystems.applications.map(app => (
                       <div key={app.name} className="flex items-center gap-1.5 py-1 border-b border-border-muted/50 last:border-0">
                         <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)} flex-shrink-0`} />
                         <span className="text-[11px] text-foreground flex-1 font-mono">{app.name}</span>
-                        <span className="text-[9px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
-                        <span className="text-[9px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
+                        <span className="text-[10px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
+                        <span className="text-[10px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <div className="mb-2">
-                  <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Infrastructure</span>
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Infrastructure</span>
                   <div className="grid grid-cols-3 gap-1">
                     {monitoredSystems.infrastructure.map(infra => {
                       const { critical, warning, ok } = infra.health
@@ -609,16 +609,16 @@ export default function CoffeeView() {
                             <span className="text-[11px] text-foreground font-medium flex-1">{infra.name}</span>
                             <TileMenu id={`infra-${infra.name}`} />
                           </div>
-                          <span className="text-[9px] text-foreground-disabled block mb-1">{infra.count}</span>
+                          <span className="text-[10px] text-foreground-disabled block mb-1">{infra.count}</span>
                           <div className="flex h-1.5 rounded-full overflow-hidden bg-background-surface-2">
                             {critical > 0 && <div className="bg-status-outage" style={{ width: `${(critical/total)*100}%` }} />}
                             {warning > 0 && <div className="bg-status-blocked" style={{ width: `${(warning/total)*100}%` }} />}
                             {ok > 0 && <div className="bg-primary" style={{ width: `${(ok/total)*100}%` }} />}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            {critical > 0 && <span className="text-[8px] text-status-outage">{critical} critical</span>}
-                            {warning > 0 && <span className="text-[8px] text-status-blocked">{warning} warning</span>}
-                            <span className="text-[8px] text-primary">{ok} ok</span>
+                            {critical > 0 && <span className="text-[10px] text-status-outage">{critical} critical</span>}
+                            {warning > 0 && <span className="text-[10px] text-status-blocked">{warning} warning</span>}
+                            <span className="text-[10px] text-primary">{ok} ok</span>
                           </div>
                         </div>
                       )
@@ -631,9 +631,9 @@ export default function CoffeeView() {
                   <Sparkle size={12} className="text-purple-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-[11px] text-foreground font-medium">Create recommended alarms</span>
-                    <span className="text-[9px] text-foreground-muted ml-2">6 alarms found</span>
+                    <span className="text-[10px] text-foreground-muted ml-2">6 alarms found</span>
                   </div>
-                  <button onClick={() => openChat('__alarms__')} className="h-5 px-2 rounded text-[9px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => openChat('__alarms__')} className="h-5 px-2 rounded text-[10px] font-medium bg-purple-500 text-white hover:bg-purple-400 transition-colors flex items-center gap-1 flex-shrink-0">
                     <Sparkle size={8} /> Set up
                   </button>
                 </div>
@@ -712,7 +712,7 @@ export default function CoffeeView() {
                 <div className="glass-card p-4"><h3 className="text-heading-m font-normal text-foreground mb-3">Live Updates</h3><div className="flex items-center gap-2 py-2"><CheckCircle size={14} className="text-status-active"/><span className="text-body-s text-foreground-muted">{coffee.updatedState.liveUpdates}</span></div></div>
               </div>
               <div className="space-y-3">
-                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-s font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[9px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
+                <div className="glass-card p-4" style={{animation:'fadeIn 0.4s ease-out'}}><h3 className="text-heading-s font-normal text-foreground mb-3">Quick access</h3>{coffee.updatedState.quickAccess.map(item=><div key={item.name} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-background-surface-2 transition-colors cursor-pointer"><ChartBar size={16} className="text-primary"/><div className="flex-1"><span className="text-body-s text-foreground block">{item.name}</span><span className="text-[10px] text-foreground-muted">{item.type}</span></div>{item.isNew&&<span className="text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded-full bg-primary/10 border border-primary/20">NEW</span>}</div>)}</div>
                 <div className="ai-glass-card p-4"><div className="flex items-center gap-2 mb-2"><Sparkle size={14} className="text-primary"/><span className="text-body-s font-semibold text-primary">Weekend readiness</span></div><div className="space-y-2">{['Memory monitoring active','Alarm threshold set at 87.5%','Team notifications configured'].map(t=><div key={t} className="flex items-center gap-2"><CheckCircle size={12} className="text-status-active" weight="fill"/><span className="text-body-s text-foreground-secondary">{t}</span></div>)}</div><p className="text-body-s text-foreground-muted mt-3">You're covered for the weekend. Enjoy it.</p></div>
                 <button onClick={()=>{setAct(0);setExpandedFeed(null);setAiTypingDone(false);setSettingUp(false);setSetupDone(false);setShowChart(false);setShowSuggestion(false);setConfirmTypingDone(false)}} className="w-full h-8 rounded-lg border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center justify-center gap-2"><ArrowClockwise size={14}/> Restart demo</button>
               </div>

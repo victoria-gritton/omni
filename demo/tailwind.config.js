@@ -14,10 +14,10 @@ export default {
         'heading-m': ['16px', '20px'],
         'heading-s': ['14px', '18px'],
         'heading-xs': ['12px', '16px'],
-        'body-m': ['14px', '24px'],
-        'body-s': ['12px', '20px'],
-        'code': ['12px', '16px'],
-        'pre': ['14px', '20px'],
+        'body-m': ['13px', '20px'],
+        'body-s': ['11px', '18px'],
+        'code': ['11px', '16px'],
+        'pre': ['13px', '20px'],
       },
       colors: {
         // Cloudscape dark mode tokens

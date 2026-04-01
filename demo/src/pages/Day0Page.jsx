@@ -148,7 +148,7 @@ function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state
         <Icon size={16} className={color} style={{ opacity: 0.5 }} />
         <h3 className="text-body-s font-semibold text-foreground/50">{title}</h3>
         {needsAgent && (
-          <span className="text-[8px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+          <span className="text-[10px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
             <Cpu size={8} /> Requires CW Agent
           </span>
         )}
@@ -181,16 +181,16 @@ function FilledAlarmWidget({ data }) {
         <span className="text-[10px] text-foreground-disabled">{d.total} configured</span>
       </div>
       <div className="flex gap-2 mb-3">
-        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center"><p className="text-body-l font-semibold text-status-active">{d.ok}</p><p className="text-[9px] text-foreground-muted">OK</p></div>
-        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center"><p className="text-body-l font-semibold text-status-degraded">{d.alarm}</p><p className="text-[9px] text-foreground-muted">In alarm</p></div>
-        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">{d.insufficient}</p><p className="text-[9px] text-foreground-muted">Insufficient</p></div>
+        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center"><p className="text-body-l font-semibold text-status-active">{d.ok}</p><p className="text-[10px] text-foreground-muted">OK</p></div>
+        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center"><p className="text-body-l font-semibold text-status-degraded">{d.alarm}</p><p className="text-[10px] text-foreground-muted">In alarm</p></div>
+        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">{d.insufficient}</p><p className="text-[10px] text-foreground-muted">Insufficient</p></div>
       </div>
-      <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Closest to threshold</p>
+      <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-1.5">Closest to threshold</p>
       {d.nearThreshold.slice(0, 3).map(a => (
         <div key={a.name} className="flex items-center gap-2 py-1">
           <span className="text-[10px] text-foreground w-28 truncate">{a.name}</span>
           <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-status-degraded/60" style={{ width: `${(a.value / a.threshold) * 100}%` }} /></div>
-          <span className="text-[9px] text-foreground-muted w-16 text-right">{a.value}/{a.threshold}{a.unit}</span>
+          <span className="text-[10px] text-foreground-muted w-16 text-right">{a.value}/{a.threshold}{a.unit}</span>
         </div>
       ))}
     </div>
@@ -208,7 +208,7 @@ function FilledDashboardWidget({ data }) {
       <div className={`grid gap-2 ${metrics.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {metrics.map(m => (
           <div key={m.name} className="rounded-lg bg-background/40 border border-border-muted/30 p-2">
-            <p className="text-[9px] text-foreground-muted mb-1">{m.name}</p>
+            <p className="text-[10px] text-foreground-muted mb-1">{m.name}</p>
             <Sparkline color={m.color} height={20} />
           </div>
         ))}
@@ -225,15 +225,15 @@ function FilledLogsWidget({ data }) {
         <div className="flex items-center gap-2"><FileText size={16} className="text-green-400" /><h3 className="text-body-s font-semibold text-foreground">Logs</h3></div>
         <span className="text-[10px] text-foreground-disabled">{d.total} services</span>
       </div>
-      <div className="flex gap-2 mb-2 text-[9px]">
+      <div className="flex gap-2 mb-2 text-[10px]">
         <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400">Standard: {d.standard}</span>
         <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">IA: {d.ia}</span>
       </div>
-      <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1">Top by volume</p>
+      <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-1">Top by volume</p>
       {d.topByVolume.slice(0, 3).map(g => (
         <div key={g.name} className="flex items-center justify-between py-0.5">
           <span className="text-[10px] text-foreground">{g.name}</span>
-          <span className="text-[9px] text-foreground-muted">{g.volume}</span>
+          <span className="text-[10px] text-foreground-muted">{g.volume}</span>
         </div>
       ))}
     </div>
@@ -248,10 +248,10 @@ function FilledTracesWidget({ data }) {
         <div className="flex items-center gap-2"><Path size={16} className="text-orange-400" /><h3 className="text-body-s font-semibold text-foreground">Traces</h3></div>
         <span className="text-[10px] text-foreground-disabled">X-Ray active</span>
       </div>
-      <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">Critical path latency</p>
+      <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-1.5">Critical path latency</p>
       <div className="flex gap-3">
         {latency.map(p => (
-          <div key={p.label} className="flex-1 text-center"><p className="text-body-s font-semibold text-foreground">{p.value}</p><p className="text-[9px] text-foreground-muted">{p.label}</p></div>
+          <div key={p.label} className="flex-1 text-center"><p className="text-body-s font-semibold text-foreground">{p.value}</p><p className="text-[10px] text-foreground-muted">{p.label}</p></div>
         ))}
       </div>
       <div className="mt-2"><Sparkline color="#fb923c" height={16} /></div>
@@ -271,7 +271,7 @@ function FilledAnomalyWidget({ data }) {
         <div key={d.metric} className="flex items-center gap-2 py-0.5">
           <div className="w-1.5 h-1.5 rounded-full bg-status-active" />
           <span className="text-[10px] text-foreground flex-1">{d.metric}</span>
-          <span className="text-[9px] text-foreground-disabled">{d.distance} from band</span>
+          <span className="text-[10px] text-foreground-disabled">{d.distance} from band</span>
         </div>
       ))}
     </div>
@@ -289,7 +289,7 @@ function FilledServiceMapWidget() {
       <div className="flex items-center justify-center gap-1 py-2">
         {nodes.map((n, i) => (
           <div key={n} className="flex items-center gap-1">
-            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[8px] text-foreground-muted">{n}</div>
+            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[10px] text-foreground-muted">{n}</div>
             {i < nodes.length - 1 && <div className="w-3 h-px bg-cyan-400/40" />}
           </div>
         ))}
@@ -313,8 +313,8 @@ function FilledSLOWidget() {
         <div key={s.name} className="flex items-center gap-2 py-1">
           <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-status-active' : 'bg-status-outage'}`} />
           <span className="text-[10px] text-foreground flex-1">{s.name}</span>
-          <span className="text-[9px] text-foreground-muted">{s.current}</span>
-          <span className="text-[9px] text-foreground-disabled">/ {s.target}</span>
+          <span className="text-[10px] text-foreground-muted">{s.current}</span>
+          <span className="text-[10px] text-foreground-disabled">/ {s.target}</span>
         </div>
       ))}
     </div>
@@ -333,7 +333,7 @@ function FilledContainerInsightsWidget({ data }) {
         {clusters.map(c => (
           <div key={c.name} className="flex-1 rounded-lg bg-background/40 border border-border-muted/30 p-2 text-center">
             <p className="text-body-s font-semibold text-foreground">{c.tasks}</p>
-            <p className="text-[9px] text-foreground-muted">{c.name}</p>
+            <p className="text-[10px] text-foreground-muted">{c.name}</p>
           </div>
         ))}
       </div>
