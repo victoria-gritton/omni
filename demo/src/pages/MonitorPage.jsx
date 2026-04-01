@@ -306,10 +306,10 @@ function DashboardsSection({ dashboards }) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         {dashboards.map(d => (
-          <button key={d.id} className={`p-3 rounded-lg border text-left hover:border-primary/30 transition-colors ${d.stale ? 'border-status-degraded/20 bg-status-degraded/5' : 'border-border-muted/20 hover:bg-primary/5'}`}>
+          <button key={d.id} className={`p-3 rounded-lg border text-left hover:border-primary/30 transition-colors ${d.stale ? 'border-orange-400/30 bg-orange-400/5' : 'border-border-muted/20 hover:bg-primary/5'}`}>
             <p className="text-[11px] font-medium text-foreground">{d.name}</p>
             <p className="text-[9px] text-foreground-muted">{d.widgets} widgets · {d.lastViewed}</p>
-            {d.stale && <span className="text-[8px] text-status-degraded">Stale — last updated 4 months ago</span>}
+            {d.stale && <span className="text-[8px] text-orange-400">Stale — last updated 4 months ago</span>}
           </button>
         ))}
       </div>
