@@ -424,12 +424,12 @@ const james = {
   ],
 
   slos: [
-    { id: "slo-payments-avail", service: "Payments Platform", name: "Availability", target: 99.95, current: 99.92, trend: "down", status: "at-risk", window: "30d rolling" },
-    { id: "slo-payments-latency", service: "Payments Platform", name: "Latency p99 < 500ms", target: 99.5, current: 99.8, trend: "stable", status: "healthy", window: "30d rolling" },
-    { id: "slo-trading-avail", service: "Trading Engine", name: "Availability", target: 99.99, current: 99.995, trend: "stable", status: "healthy", window: "30d rolling" },
-    { id: "slo-trading-latency", service: "Trading Engine", name: "Order latency p99 < 50ms", target: 99.0, current: 99.2, trend: "stable", status: "healthy", window: "30d rolling" },
-    { id: "slo-core-auth", service: "Core Services", name: "Auth availability", target: 99.9, current: 99.95, trend: "up", status: "healthy", window: "30d rolling" },
-    { id: "slo-compliance-audit", service: "Compliance & Analytics", name: "Audit log completeness", target: 100, current: 100, trend: "stable", status: "healthy", window: "7d rolling" },
+    { id: "slo-payments-avail", service: "Payments Platform", name: "Availability", target: 99.95, current: 99.92, trend: "down", status: "at-risk", window: "30d rolling", burnRate: 3.2, budgetRemaining: 12 },
+    { id: "slo-payments-latency", service: "Payments Platform", name: "Latency p99 < 500ms", target: 99.5, current: 99.8, trend: "stable", status: "healthy", window: "30d rolling", burnRate: 0.4, budgetRemaining: 78 },
+    { id: "slo-trading-avail", service: "Trading Engine", name: "Availability", target: 99.99, current: 99.995, trend: "stable", status: "healthy", window: "30d rolling", burnRate: 0.1, budgetRemaining: 95 },
+    { id: "slo-trading-latency", service: "Trading Engine", name: "Order latency p99 < 50ms", target: 99.0, current: 99.2, trend: "stable", status: "healthy", window: "30d rolling", burnRate: 0.8, budgetRemaining: 62 },
+    { id: "slo-core-auth", service: "Core Services", name: "Auth availability", target: 99.9, current: 99.95, trend: "up", status: "healthy", window: "30d rolling", burnRate: 0.2, budgetRemaining: 88 },
+    { id: "slo-compliance-audit", service: "Compliance & Analytics", name: "Audit log completeness", target: 100, current: 100, trend: "stable", status: "healthy", window: "7d rolling", burnRate: 0, budgetRemaining: 100 },
   ],
   activeAlarms: [
     { id: "aa-1", name: "transactions-db-cpu", resource: "transactions-db", severity: "critical", state: "ALARM", triggered: "12 min ago", metric: "CPUUtilization", value: "76%", threshold: "80%", recommendation: "Scale up or optimize queries." },
