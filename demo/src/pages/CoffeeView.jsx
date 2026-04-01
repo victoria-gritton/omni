@@ -424,6 +424,19 @@ export default function CoffeeView() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[20px] font-normal text-foreground">{coffee.greeting}</h1>
           <div className="flex items-center gap-2">
+            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="all-accounts">
+              <option value="all-accounts">All accounts</option>
+              <option value="prod">Production (us-east-1)</option>
+              <option value="staging">Staging (us-west-2)</option>
+              <option value="dev">Development</option>
+            </select>
+            <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="all-teams">
+              <option value="all-teams">All teams</option>
+              <option value="payments">Payments</option>
+              <option value="platform">Platform</option>
+              <option value="checkout">Checkout</option>
+              <option value="infra">Infrastructure</option>
+            </select>
             <select className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-secondary focus:outline-none focus:border-primary/40 appearance-none cursor-pointer" defaultValue="3h">
               <option value="1h">Last 1 hour</option>
               <option value="3h">Last 3 hours</option>
