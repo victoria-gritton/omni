@@ -734,7 +734,7 @@ export default function Day0Page() {
 
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-3 h-3 rounded-full ${overallOk ? 'bg-green-400' : alarming.length > 0 ? 'bg-red-400' : 'bg-orange-400'}`} style={!overallOk ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
-                <span className={`text-[11px] ${overallOk ? 'text-green-400' : 'text-orange-400'}`}>{overallOk ? 'All clear' : 'Attention needed'}</span>
+                <span className={`text-[11px] ${overallOk ? 'text-green-400' : alarming.length > 0 ? 'text-red-400' : 'text-orange-400'}`}>{overallOk ? 'All clear' : 'Attention needed'}</span>
               </div>
 
               <div className="flex gap-3 mb-2">
