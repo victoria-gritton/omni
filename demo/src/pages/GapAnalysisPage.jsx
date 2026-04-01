@@ -171,8 +171,8 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
         })}
       </div>
 
-      {/* Active milestone message */}
-      {activeTier && tierConfig[activeTier] && (
+      {/* Milestone message — only when tier is complete */}
+      {activeTier && tierConfig[activeTier] && segments.find(s => s.key === activeTier)?.allDone && (
         <div className={`flex items-center gap-2 mt-1 px-3 py-2 rounded-lg ${severityColors[activeTier]} border`}>
           <Sparkle size={12} weight="fill" />
           <span className="text-[10px]">{tierConfig[activeTier].milestone}</span>
