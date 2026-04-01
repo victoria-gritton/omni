@@ -397,25 +397,24 @@ export default function ConsoleLayout({ children }) {
 
           <div className="flex-1" />
 
+
           {/* AI Assistant button */}
           <div className="px-3 pb-4">
             <button
               onClick={() => setChatOpen(!chatOpen)}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all ${chatOpen ? "bg-[#00e5cc]/20 shadow-[0_0_20px_rgba(0,229,204,0.15)]" : "hover:bg-[#00e5cc]/10"}`}
+              className="w-full flex items-center justify-center gap-2 py-2 transition-all"
               aria-label="AI Assistant"
             >
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${chatOpen ? "bg-[#00e5cc] shadow-[0_0_16px_rgba(0,229,204,0.4)]" : "bg-[#00e5cc]/80 hover:bg-[#00e5cc] hover:shadow-[0_0_12px_rgba(0,229,204,0.3)]"}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0e1a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0ea5e9] via-[#8b5cf6] to-[#f59e0b] flex items-center justify-center flex-shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z" />
                   <path d="M19 14l.7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14z" />
-                  <path d="M5 17l.5 1.5L7 19l-1.5.5L5 21l-.5-1.5L3 19l1.5-.5L5 17z" />
                 </svg>
               </div>
-              {navOpen && <span className={`text-body-s font-medium ${chatOpen ? "text-[#00e5cc]" : "text-foreground-muted"}`}>AI Assistant</span>}
+              {navOpen && <span className="text-body-s font-medium bg-gradient-to-r from-[#0ea5e9] via-[#8b5cf6] to-[#f59e0b] bg-clip-text text-transparent">AI Assistant</span>}
             </button>
           </div>
         </nav>
-
 
 
         {chatOpen && pendingQuery === "__alarms__" && (
