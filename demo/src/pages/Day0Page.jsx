@@ -691,7 +691,7 @@ export default function Day0Page() {
       </div>
 
       {/* Top row */}
-      <div className={`grid ${!isGreenfield && persona.activeAlarms ? 'grid-cols-3' : 'grid-cols-[1fr_300px]'} gap-4 mb-6 items-start`}>
+      <div className={`grid ${!isGreenfield && persona.activeAlarms ? 'grid-cols-3' : 'grid-cols-[1fr_300px]'} gap-4 mb-6`}>
         {isGreenfield ? (
           <button onClick={() => navigate('/gaps')} className="ai-glass-card p-5 text-left hover:border-primary/40 transition-all">
             <div className="flex items-start gap-3">
