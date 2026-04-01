@@ -54,9 +54,9 @@ function AlarmsW({ services }) {
 
   // Mock 24h status timeline with alarm names
   const segments = useMemo(() => [
-    { start: 0, end: 65, status: 'ok', count: w, alarms: [] },
-    { start: 65, end: 78, status: 'alarm', count: 2, alarms: ['transactions-db-cpu', 'fraud-model-latency'] },
-    { start: 78, end: 100, status: 'ok', count: w, alarms: [] },
+    { start: 0, end: 65, status: 'ok', count: w, alarms: [], timeRange: '6:00 AM – 3:36 PM' },
+    { start: 65, end: 78, status: 'alarm', count: 2, alarms: ['transactions-db-cpu', 'fraud-model-latency'], timeRange: '3:36 PM – 4:43 PM' },
+    { start: 78, end: 100, status: 'ok', count: w, alarms: [], timeRange: '4:43 PM – Now' },
   ], [w])
 
   return (
@@ -84,6 +84,7 @@ function AlarmsW({ services }) {
                 <span className={`font-medium ${seg.status === 'alarm' ? 'text-red-400' : 'text-green-400'}`}>{seg.status === 'alarm' ? 'In Alarm' : 'All OK'}</span>
                 <span className="text-foreground-muted">· {seg.count} alarm{seg.count !== 1 ? 's' : ''}</span>
               </div>
+              <p className="text-foreground-disabled pl-3 mb-0.5">{seg.timeRange}</p>
               {seg.alarms.length > 0 && seg.alarms.map(a => (
                 <p key={a} className="text-foreground-muted pl-3">{a}</p>
               ))}
