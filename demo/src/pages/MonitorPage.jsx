@@ -172,7 +172,16 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
 // ─── Alarms Card ──────────────────────────────────────────────────
 function AlarmsCard({ activeAlarms, onInvestigate }) {
   const [acked, setAcked] = useState(new Set())
-  const [snoozed, setSnoozed] = useState(new Set())
+  const [snoozed, setSnoozed] = useState(new Set()) // id → label
+  const [snoozeMenuOpen, setSnoozeMenuOpen] = useState(null) // alarm id or null
+
+  const snoozeOptions = [
+    { label: '15 minutes', value: '15m' },
+    { label: '1 hour', value: '1h' },
+    { label: '4 hours', value: '4h' },
+    { label: '1 day', value: '1d' },
+    { label: 'Until resolved', value: 'resolved' },
+  ]
 
   const visibleAlarms = [...activeAlarms].filter(a => !snoozed.has(a.id))
   const alarming = visibleAlarms.filter(a => a.state === 'ALARM' && !acked.has(a.id))
@@ -209,7 +218,17 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
               </button>
               <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!isAcked && <button onClick={(e) => { e.stopPropagation(); setAcked(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-status-active px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted hover:border-status-active/30 transition-colors">Ack</button>}
-                <button onClick={(e) => { e.stopPropagation(); setSnoozed(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors">Snooze</button>
+                <div className="relative">
+                  <button onClick={(e) => { e.stopPropagation(); setSnoozeMenuOpen(snoozeMenuOpen === alarm.id ? null : alarm.id) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors">Snooze</button>
+                  {snoozeMenuOpen === alarm.id && (
+                    <div className="absolute right-0 top-full mt-1 w-32 rounded-lg bg-[#0c1120] border border-border-muted shadow-xl z-20 py-1" style={{ animation: 'fadeIn 0.15s ease-out' }}>
+                      <p className="text-[8px] text-foreground-disabled px-2.5 py-1 uppercase tracking-wider">Snooze for</p>
+                      {snoozeOptions.map(opt => (
+                        <button key={opt.value} onClick={(e) => { e.stopPropagation(); setSnoozed(p => new Set(p).add(alarm.id)); setSnoozeMenuOpen(null) }} className="w-full text-left px-2.5 py-1.5 text-[9px] text-foreground-muted hover:text-foreground hover:bg-primary/10 transition-colors">{opt.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <MagnifyingGlass size={10} className="text-primary cursor-pointer" onClick={() => onInvestigate('alarm', { alarm })} />
               </div>
             </div>
