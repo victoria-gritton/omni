@@ -349,7 +349,7 @@ export default function ConsoleLayout({ children }) {
       <div className="gradient-bg-dark" />
       <div className="content-layer h-full flex w-full">
         {/* Sidebar */}
-        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
+        <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted bg-[#0f141a] flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
           <div className="px-3 pt-4 pb-3 flex items-center gap-2 cursor-pointer" onClick={() => setNavOpen(!navOpen)}>
             {navOpen
               ? <span className="text-body-s font-semibold text-foreground">CloudWatch<sup className="text-primary text-[14px]">+</sup></span>
@@ -408,7 +408,7 @@ export default function ConsoleLayout({ children }) {
 
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-12 border-b border-border-muted px-4 flex items-center justify-between flex-shrink-0">
+          <header className="h-12 border-b border-border-muted bg-[#0f141a] px-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2 bg-background-surface-1 rounded-lg px-3 py-1.5 w-80">
               <MagnifyingGlass size={14} className="text-foreground-muted" />
               <span className="text-body-s text-foreground-disabled">Search services, metrics, traces...</span>
