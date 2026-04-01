@@ -50,7 +50,7 @@ function WidgetHeader({ icon: Icon, title, color, action, actionLabel = 'View al
 function AlarmsW({ services }) {
   const w = services.filter(s => s.hasAlarms).length
   if (w === 0) return <EmptyW icon={Bell} label="No alarms configured" action="Set up alarms →" />
-  const data = useMemo(() => mockTimeSeries(24, w, 0), [w])
+  const data = useMemo(() => mockTimeSeries(24, w, 2), [w])
   return (
     <div className="glass-card p-4 h-full flex flex-col">
       <WidgetHeader icon={Bell} title="Alarms" color="text-status-active" actionLabel="Manage" />
@@ -60,7 +60,7 @@ function AlarmsW({ services }) {
         <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">0</p><p className="text-[8px] text-foreground-muted">Insuff.</p></div>
       </div>
       <p className="text-[9px] text-foreground-disabled mb-1">Alarm state changes (24h)</p>
-      <div className="mt-auto"><LineChart data={data} color="#22c55e" height={64} unit="" showAxes={false} showArea={false} /></div>
+      <div className="mt-auto"><LineChart data={data} color="#22c55e" height={64} unit="" showAxes={false} /></div>
     </div>
   )
 }
