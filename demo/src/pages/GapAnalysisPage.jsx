@@ -179,7 +179,7 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
   const blurb = blurbFn ? blurbFn(gap) : null
 
   return (
-    <div className={`rounded-xl border transition-all duration-500 ${isSliding ? 'opacity-0 translate-y-8 max-h-0 overflow-hidden mb-0 p-0' : 'opacity-100 translate-y-0'} ${isInActiveTier ? 'border-border-muted/40 bg-background-surface-1/50' : 'border-border-muted/10 bg-background/30 opacity-60'} ${selectedCount > 0 || isGapSelected ? 'border-primary/40 bg-primary/5' : ''}`}>
+    <div className={`rounded-xl border transition-all ${isSliding ? 'duration-700 opacity-0 translate-y-24 scale-95 max-h-0 overflow-hidden mb-0 border-status-active/30 bg-status-active/10' : 'duration-300 opacity-100 translate-y-0 scale-100'} ${!isSliding && isInActiveTier ? 'border-border-muted/40 bg-background-surface-1/50' : !isSliding ? 'border-border-muted/10 bg-background/30 opacity-60' : ''} ${!isSliding && (selectedCount > 0 || isGapSelected) ? 'border-primary/40 bg-primary/5' : ''}`}>
       <div className="p-4">
         <div className="flex items-start gap-3">
           <button onClick={() => onToggleGap(gap)} className="mt-0.5 flex-shrink-0">
@@ -296,9 +296,20 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
 // ─── Deployed Section ─────────────────────────────────────────────
 function DeployedSection({ deployedLog }) {
   const [expanded, setExpanded] = useState(false)
+  const prevCountRef = useRef(0)
+
+  // Auto-expand when new deployments arrive
+  useEffect(() => {
+    if (deployedLog.length > prevCountRef.current) {
+      setExpanded(true)
+    }
+    prevCountRef.current = deployedLog.length
+  }, [deployedLog.length])
+
   if (deployedLog.length === 0) return null
 
   const totalItems = deployedLog.reduce((s, entry) => s + entry.items.length, 0)
+  const isNewest = (di) => di === 0 && deployedLog.length > 1
 
   return (
     <div className="mt-6">
@@ -312,7 +323,7 @@ function DeployedSection({ deployedLog }) {
       {expanded && (
         <div className="mt-2 pl-2 flex flex-col gap-2">
           {deployedLog.map((entry, di) => (
-            <div key={di} className="rounded-xl border border-status-active/10 bg-status-active/5 p-3 opacity-70">
+            <div key={di} className={`rounded-xl border border-status-active/10 bg-status-active/5 p-3 opacity-70 transition-all duration-500 ${di === 0 ? 'animate-slideUp' : ''}`} style={di === 0 ? { animation: 'slideUp 0.5s ease-out' } : undefined}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] text-status-active font-medium">{entry.time}</span>
                 <span className="text-[9px] text-foreground-disabled">{entry.items.length} items</span>
@@ -330,6 +341,12 @@ function DeployedSection({ deployedLog }) {
           ))}
         </div>
       )}
+      <style>{`
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+          to { opacity: 0.7; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   )
 }
