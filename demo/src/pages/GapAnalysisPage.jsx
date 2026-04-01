@@ -310,13 +310,15 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
         {selectedCount > 0 && <span className="text-[9px] text-primary">{selectedCount} selected</span>}
         {isActive ? <CaretDown size={12} className="text-foreground-muted" /> : <CaretRight size={12} className="text-foreground-muted" />}
       </button>
-      {isActive && (
-        <div className="flex flex-col gap-2 px-3 pb-3" style={{ animation: 'expandIn 0.3s ease-out' }}>
+      <div className="grid transition-all duration-300 ease-out" style={{ gridTemplateRows: isActive ? '1fr' : '0fr' }}>
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
           {activeGaps.map(gap => (
             <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureItem={onConfigureItem} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} onInvestigate={onInvestigate} />
           ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
