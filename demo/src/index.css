@@ -33,11 +33,10 @@ body {
   border-radius: 8px;
 }
 
-/* AI card — left accent border (Cloudscape info style) */
+/* AI card — subtle purple border, same bg as regular cards */
 .ai-glass-card {
   background: #1b232d;
-  border: 1px solid #424650;
-  border-left: 3px solid #42b4ff;
+  border: 1px solid rgba(115, 0, 229, 0.35);
   border-radius: 8px;
 }
 
