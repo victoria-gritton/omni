@@ -717,21 +717,64 @@ export default function Day0Page() {
         )}
         {/* Monitor widget — only for personas with active monitoring */}
         {!isGreenfield && persona.activeAlarms && (() => {
-          const alarming = persona.activeAlarms.filter(a => a.state === 'ALARM').length
-          const sloAtRisk = (persona.slos || []).filter(s => s.status === 'at-risk').length
-          const sloTotal = (persona.slos || []).length
-          const overallOk = alarming === 0 && sloAtRisk === 0
+          const alarms = persona.activeAlarms
+          const alarming = alarms.filter(a => a.state === 'ALARM')
+          const slosData = persona.slos || []
+          const sloAtRisk = slosData.filter(s => s.status === 'at-risk')
+          const sloTotal = slosData.length
+          const overallOk = alarming.length === 0 && sloAtRisk.length === 0
+          const regions = persona.regionHealth || []
+          const topAlarms = alarming.sort((a, b) => ({ critical: 0, high: 1, medium: 2, low: 3 }[a.severity] ?? 3) - ({ critical: 0, high: 1, medium: 2, low: 3 }[b.severity] ?? 3)).slice(0, 2)
+          const sevColors = { critical: 'text-red-400 bg-red-400/10', high: 'text-orange-400 bg-orange-400/10', medium: 'text-primary bg-primary/10', low: 'text-foreground-muted bg-foreground-muted/10' }
+
           return (
             <button onClick={() => navigate('/monitor')} className="glass-card p-4 text-left hover:border-primary/30 transition-all">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`w-3 h-3 rounded-full ${overallOk ? 'bg-status-active' : alarming > 0 ? 'bg-red-400' : 'bg-status-degraded'}`} style={!overallOk ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-3 h-3 rounded-full ${overallOk ? 'bg-green-400' : alarming.length > 0 ? 'bg-red-400' : 'bg-orange-400'}`} style={!overallOk ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
                 <span className="text-body-s font-semibold text-foreground">{overallOk ? 'Systems Healthy' : 'Attention Needed'}</span>
+                <span className="flex-1" />
+                <span className="text-[10px] text-primary inline-flex items-center gap-1">Monitor <ArrowRight size={10} /></span>
               </div>
-              <div className="flex gap-3 mb-2">
-                <div><p className={`text-heading-m font-semibold ${alarming > 0 ? 'text-red-400' : 'text-status-active'}`}>{alarming}</p><p className="text-[8px] text-foreground-muted">Active alarms</p></div>
-                <div><p className={`text-heading-m font-semibold ${sloAtRisk > 0 ? 'text-status-degraded' : 'text-status-active'}`}>{sloTotal - sloAtRisk}/{sloTotal}</p><p className="text-[8px] text-foreground-muted">SLOs on target</p></div>
+
+              <div className="flex gap-3 mb-3">
+                <div><p className={`text-heading-m font-semibold ${alarming.length > 0 ? 'text-red-400' : 'text-green-400'}`}>{alarming.length}</p><p className="text-[8px] text-foreground-muted">Active alarms</p></div>
+                <div><p className={`text-heading-m font-semibold ${sloAtRisk.length > 0 ? 'text-orange-400' : 'text-green-400'}`}>{sloTotal - sloAtRisk.length}/{sloTotal}</p><p className="text-[8px] text-foreground-muted">SLOs on target</p></div>
               </div>
-              <span className="text-[10px] text-primary inline-flex items-center gap-1">Open Monitor <ArrowRight size={10} /></span>
+
+              {topAlarms.length > 0 && (
+                <div className="flex flex-col gap-1 mb-3">
+                  {topAlarms.map(a => (
+                    <div key={a.id} className="flex items-center gap-2 py-1 px-2 rounded-lg bg-background/30">
+                      <span className={`text-[7px] px-1 py-0 rounded font-medium ${sevColors[a.severity]}`}>{a.severity}</span>
+                      <span className="text-[10px] text-foreground truncate flex-1">{a.name}</span>
+                      <span className="text-[9px] text-foreground-muted">{a.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {sloAtRisk.length > 0 && (
+                <div className="flex flex-col gap-1 mb-3">
+                  {sloAtRisk.map(slo => (
+                    <div key={slo.id} className="flex items-center gap-2 py-1 px-2 rounded-lg bg-orange-400/5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                      <span className="text-[10px] text-foreground truncate flex-1">{slo.name} — {slo.service}</span>
+                      {slo.burnRate != null && <span className="text-[9px] text-orange-400">Burn: {slo.burnRate}×</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {regions.length > 0 && (
+                <div className="flex gap-1.5 flex-wrap">
+                  {regions.map(r => (
+                    <span key={r.region} className={`text-[8px] px-1.5 py-0.5 rounded flex items-center gap-1 ${r.status === 'warning' ? 'bg-orange-400/10 text-orange-400' : r.status === 'critical' ? 'bg-red-400/10 text-red-400' : 'bg-green-400/10 text-green-400'}`}>
+                      <span className={`w-1 h-1 rounded-full ${r.status === 'warning' ? 'bg-orange-400' : r.status === 'critical' ? 'bg-red-400' : 'bg-green-400'}`} />
+                      {r.region}
+                    </span>
+                  ))}
+                </div>
+              )}
             </button>
           )
         })()}
