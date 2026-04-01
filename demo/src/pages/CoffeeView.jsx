@@ -539,75 +539,105 @@ export default function CoffeeView() {
 
             </div>
 
-            {/* Monitored Systems + Service Topology */}
+            {/* Proactive Intelligence */}
+            <h2 className="text-heading-s font-normal text-foreground-muted mt-2 mb-1">Early signals</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              {/* What I'm watching */}
+              {/* Agent Insight Cards */}
               <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-heading-xs font-normal text-foreground">What I'm watching</h3>
-                  <TileMenu id="monitored" />
+                  <h3 className="text-heading-xs font-normal text-foreground flex items-center gap-1.5"><Sparkle size={12} className="text-orange-400" weight="fill" /> Trends & signals</h3>
+                  <TileMenu id="trends" />
                 </div>
-
-                {/* Agent insight */}
-                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/[0.04] border border-primary/10 mb-3">
-                  <Sparkle size={12} className="text-orange-400 mt-0.5 flex-shrink-0" weight="fill" />
-                  <div>
-                    <p className="text-[11px] text-foreground leading-relaxed">payment-service has 2× the metrics of other services — it's your most instrumented. <span className="text-foreground-muted">3 services have no alarms configured.</span></p>
-                  </div>
-                </div>
-
-                <div className="mb-2">
-                  <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Applications</span>
-                  <div>
-                    {setupComplete && (
-                      <div className="flex items-center gap-1.5 py-1 border-b border-status-active/20 bg-status-active/[0.04] -mx-1 px-1 rounded" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-                        <ChartBar size={12} className="text-status-active flex-shrink-0" />
-                        <span className="text-[11px] text-status-active flex-1 font-medium">Payment Service Health</span>
-                        <span className="text-[10px] text-status-active/70 px-1 py-0.5 rounded bg-status-active/10">Dashboard</span>
-                        <span className="text-[10px] text-status-active/70">NEW</span>
+                <div className="space-y-2">
+                {/* Capacity Trend */}
+                <div className="pb-2 border-b border-border-muted">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[10px] text-foreground-muted">Capacity trend</span>
                       </div>
-                    )}
-                    {monitoredSystems.applications.map(app => (
-                      <div key={app.name} className="flex items-center gap-1.5 py-1 border-b border-border-muted/50 last:border-0">
-                        <div className={`w-1.5 h-1.5 rounded-full ${statusDot(app.status)} flex-shrink-0`} />
-                        <span className="text-[11px] text-foreground flex-1 font-mono">{app.name}</span>
-                        <span className="text-[10px] text-foreground-disabled px-1 py-0.5 rounded bg-background-surface-2/50">{app.type}</span>
-                        <span className="text-[10px] text-foreground-disabled w-14 text-right">{app.metrics}</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-heading-l font-normal text-foreground">~12 days</span>
+                        <span className="text-[10px] text-foreground">until scaling needed</span>
                       </div>
-                    ))}
+                      <p className="text-[11px] text-foreground-muted mt-1">DynamoDB UsersTable read capacity trending up. At current growth rate, will exceed provisioned capacity.</p>
+                    </div>
+                    <div className="w-[120px] flex-shrink-0">
+                      <svg viewBox="0 0 120 48" className="w-full" style={{ height: 48 }}>
+                        <path d="M0,42 L10,40 L20,38 L30,37 L40,35 L50,32 L60,28 L70,24 L80,20 L90,16 L100,12 L110,8 L120,4" fill="none" stroke="#0ea5e9" strokeWidth="1.5" />
+                        <path d="M0,42 L10,40 L20,38 L30,37 L40,35 L50,32 L60,28 L70,24 L80,20 L90,16 L100,12 L110,8 L120,4 L120,48 L0,48 Z" fill="#0ea5e9" fillOpacity="0.08" />
+                        <line x1="0" y1="10" x2="120" y2="10" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" opacity="0.4" />
+                        <text x="122" y="13" fontSize="7" fill="#ef4444" opacity="0.6">limit</text>
+                      </svg>
+                      <div className="flex justify-between text-[8px] text-foreground-disabled mt-0.5">
+                        <span>14d ago</span><span>now</span><span>+12d</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mb-2">
-                  <span className="text-[8px] font-bold tracking-wider uppercase text-foreground-disabled mb-1 block">Infrastructure</span>
-                  <div className="grid grid-cols-3 gap-1">
-                    {monitoredSystems.infrastructure.map(infra => {
-                      const { critical, warning, ok } = infra.health
-                      const total = critical + warning + ok
-                      return (
-                        <div key={infra.name} className="px-2 py-1.5 rounded-md border border-border-muted/50 relative">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <div className={`w-1.5 h-1.5 rounded-full ${statusDot(infra.status)}`} />
-                            <span className="text-[11px] text-foreground font-medium flex-1">{infra.name}</span>
-                            <TileMenu id={`infra-${infra.name}`} />
-                          </div>
-                          <span className="text-[10px] text-foreground-disabled block mb-1">{infra.count}</span>
-                          <div className="flex h-1.5 rounded-full overflow-hidden bg-background-surface-2">
-                            {critical > 0 && <div className="bg-status-outage" style={{ width: `${(critical/total)*100}%` }} />}
-                            {warning > 0 && <div className="bg-status-blocked" style={{ width: `${(warning/total)*100}%` }} />}
-                            {ok > 0 && <div className="bg-primary" style={{ width: `${(ok/total)*100}%` }} />}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            {critical > 0 && <span className="text-[8px] text-status-outage">{critical} critical</span>}
-                            {warning > 0 && <span className="text-[8px] text-status-blocked">{warning} warning</span>}
-                            <span className="text-[8px] text-primary">{ok} ok</span>
-                          </div>
-                        </div>
-                      )
-                    })}
+                {/* Positive Signal */}
+                <div className="py-2 border-b border-border-muted">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[10px] text-foreground-muted">Improvement detected</span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-heading-l font-normal text-foreground">−77%</span>
+                        <span className="text-[10px] text-foreground-muted">auth latency</span>
+                      </div>
+                      <p className="text-[11px] text-foreground-muted mt-1">Identity Provider p99 dropped from 180ms to 42ms after connection pooling. Sustained for 7 days.</p>
+                    </div>
+                    <div className="w-[120px] flex-shrink-0">
+                      <svg viewBox="0 0 120 48" className="w-full" style={{ height: 48 }}>
+                        <path d="M0,4 L15,6 L30,8 L45,10 L55,28 L65,36 L75,40 L85,42 L95,43 L105,43 L120,44" fill="none" stroke="#0ea5e9" strokeWidth="1.5" />
+                        <path d="M0,4 L15,6 L30,8 L45,10 L55,28 L65,36 L75,40 L85,42 L95,43 L105,43 L120,44 L120,48 L0,48 Z" fill="#0ea5e9" fillOpacity="0.08" />
+                      </svg>
+                      <div className="flex justify-between text-[8px] text-foreground-disabled mt-0.5">
+                        <span>180ms</span><span>42ms</span>
+                      </div>
+                    </div>
                   </div>
+                </div>
+
+                {/* Week-over-Week */}
+                <div className="pt-2">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[10px] text-foreground-muted">Week-over-week</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-heading-l font-normal text-foreground">p99 −40%</span>
+                        <span className="text-body-s text-foreground">errors −18%</span>
+                      </div>
+                      <p className="text-[11px] text-foreground-muted mt-1">Your services are healthier than last week. Latency and error rates both trending down.</p>
+                    </div>
+                    <div className="w-[120px] flex-shrink-0">
+                      <svg viewBox="0 0 120 48" className="w-full" style={{ height: 48 }}>
+                        {/* Last week - dashed gray */}
+                        <polyline points="0,10 15,12 30,14 45,18 60,22 75,20 90,24 105,22 120,20" fill="none" stroke="#94a3b8" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
+                        {/* This week - solid */}
+                        <polyline points="0,22 15,24 30,28 45,30 60,32 75,34 90,36 105,38 120,40" fill="none" stroke="#0ea5e9" strokeWidth="1.5" />
+                        <path d="M0,22 L15,24 L30,28 L45,30 L60,32 L75,34 L90,36 L105,38 L120,40 L120,48 L0,48 Z" fill="#0ea5e9" fillOpacity="0.08" />
+                      </svg>
+                      <div className="flex justify-between text-[8px] text-foreground-disabled mt-0.5">
+                        <span className="flex items-center gap-1"><span className="w-2 h-0.5 bg-primary inline-block rounded" />this wk</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-0.5 bg-foreground-disabled inline-block rounded" />last wk</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 </div>
               </div>
+
+              {/* SAVED: What I'm watching panel — commented out for potential reuse */}
+              {/*
+              <div className="glass-card p-3">
+                ... What I'm watching content preserved ...
+              </div>
+              */}
 
               {/* Service Topology */}
               <div className="glass-card p-3 flex flex-col" style={{ height: '460px' }}>
