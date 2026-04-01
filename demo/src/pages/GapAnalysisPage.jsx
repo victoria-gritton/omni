@@ -93,24 +93,8 @@ function IaCModal({ onClose, selectedGaps }) {
 }
 
 
-// ─── Deploy Progress Overlay ──────────────────────────────────────
-function DeployOverlay({ count, progress, onDone }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="glass-card p-8 w-[400px] text-center">
-        <CircleNotch size={32} className="text-primary animate-spin mx-auto mb-4" />
-        <h3 className="text-body-m font-semibold text-foreground mb-2">Deploying {count} items...</h3>
-        <div className="h-2 rounded-full bg-border-muted/30 overflow-hidden mb-3">
-          <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-        </div>
-        <p className="text-[11px] text-foreground-muted">{progress < 100 ? 'Configuring resources...' : 'Done!'}</p>
-      </div>
-    </div>
-  )
-}
-
 // ─── Progress Bar ─────────────────────────────────────────────────
-function ProgressBar({ tiers, activeTier, onTierClick }) {
+function ProgressBar({ tiers, activeTier, onTierClick, deploying }) {
   const tierKeys = ['critical', 'high', 'medium', 'low']
   const totalGaps = tierKeys.reduce((s, k) => s + (tiers[k]?.total || 0), 0)
   const totalDeployed = tierKeys.reduce((s, k) => s + (tiers[k]?.deployed || 0), 0)
@@ -132,19 +116,24 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2"><Sparkle size={14} className="text-primary" weight="fill" /><span className="text-body-s font-semibold text-foreground">Observability Journey</span></div>
         <div className="flex items-center gap-3">
-          {totalDeployed > 0 && <span className="text-[10px] text-status-active">{totalDeployed} deployed</span>}
-          {totalSelected > 0 && <span className="text-[10px] text-foreground-muted">{totalSelected} selected</span>}
+          {deploying && <span className="text-[10px] text-primary flex items-center gap-1.5"><CircleNotch size={10} className="animate-spin" /> Deploying {deploying.count} items...</span>}
+          {!deploying && totalDeployed > 0 && <span className="text-[10px] text-status-active">{totalDeployed} deployed</span>}
+          {!deploying && totalSelected > 0 && <span className="text-[10px] text-foreground-muted">{totalSelected} selected</span>}
           <span className="text-[11px] text-foreground-disabled">{totalDeployed + totalSelected} of {totalGaps}</span>
         </div>
       </div>
       <div className="relative h-3 rounded-full bg-border-muted/20 overflow-hidden mb-2 flex">
-        {segments.map((seg, i) => (
-          <div key={seg.key} className="relative h-full" style={{ width: '25%' }}>
-            <div className={`absolute inset-y-0 left-0 ${severityBarMuted[seg.key]} transition-all duration-500 ${i === 0 ? 'rounded-l-full' : ''}`} style={{ width: `${Math.min(seg.selectedPct, 1) * 100}%` }} />
-            <div className={`absolute inset-y-0 left-0 ${severityBarColors[seg.key]} transition-all duration-500 ${i === 0 ? 'rounded-l-full' : ''} ${i === 3 && seg.allDeployed ? 'rounded-r-full' : ''}`} style={{ width: `${seg.deployedPct * 100}%` }} />
-            {i > 0 && <div className="absolute left-0 inset-y-0 w-px bg-border-muted/30 z-10" />}
-          </div>
-        ))}
+        {segments.map((seg, i) => {
+          // During deploy, animate the muted bar filling to solid
+          const deployingPct = deploying ? Math.min(seg.selectedPct, 1) * (deploying.progress / 100) + seg.deployedPct : seg.deployedPct
+          return (
+            <div key={seg.key} className="relative h-full" style={{ width: '25%' }}>
+              <div className={`absolute inset-y-0 left-0 ${severityBarMuted[seg.key]} transition-all duration-500 ${i === 0 ? 'rounded-l-full' : ''}`} style={{ width: `${Math.min(seg.selectedPct, 1) * 100}%` }} />
+              <div className={`absolute inset-y-0 left-0 ${severityBarColors[seg.key]} transition-all ${deploying ? 'duration-200' : 'duration-500'} ${i === 0 ? 'rounded-l-full' : ''} ${i === 3 && seg.allDeployed ? 'rounded-r-full' : ''}`} style={{ width: `${Math.min(deployingPct, 1) * 100}%` }} />
+              {i > 0 && <div className="absolute left-0 inset-y-0 w-px bg-border-muted/30 z-10" />}
+            </div>
+          )
+        })}
       </div>
       <div className="relative h-8">
         {segments.map((seg, i) => {
@@ -532,7 +521,7 @@ export default function Day0Page() {
         {applications.map(app => <button key={app.id} onClick={() => setActiveApp(app.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${activeApp === app.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>{app.name} ({app.services.length})</button>)}
       </div>
 
-      <ProgressBar tiers={tierStats} activeTier={activeTier} onTierClick={(t) => setActiveTier(prev => prev === t ? null : t)} />
+      <ProgressBar tiers={tierStats} activeTier={activeTier} onTierClick={(t) => setActiveTier(prev => prev === t ? null : t)} deploying={deploying} />
 
       <div className="grid grid-cols-[1fr_320px] gap-6">
         <div>
@@ -551,7 +540,7 @@ export default function Day0Page() {
               <div className="flex items-baseline justify-between mb-1"><span className="text-[11px] text-foreground-muted">{totalSelected} items selected</span><span className="text-[11px] text-foreground-disabled">{selectedGapIds.size} categories</span></div>
               <div className="flex flex-col gap-1 mb-3">{computedGaps.filter(g => selectedGapIds.has(g.id)).map(g => { const c = g.items ? g.items.filter(i => selectedItems.has(i.id) && !deployedItems.has(i.id)).length : 1; return <div key={g.id} className="flex items-center justify-between py-0.5"><span className="text-[10px] text-foreground-muted truncate">{g.title}</span><span className="text-[9px] text-foreground-disabled">{c}</span></div> })}</div>
               <div className="flex flex-col gap-2">
-                <button onClick={handleDeploy} className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium transition-colors"><Play size={12} /> Apply now</button>
+                <button onClick={handleDeploy} disabled={!!deploying} className={`w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-white text-[11px] font-medium transition-colors ${deploying ? 'bg-primary/50 cursor-not-allowed' : 'bg-primary hover:bg-primary-hover'}`}>{deploying ? <><CircleNotch size={12} className="animate-spin" /> Deploying...</> : <><Play size={12} /> Apply now</>}</button>
                 <button onClick={() => setShowIaCModal(true)} className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-[11px] text-foreground hover:bg-background-surface-2 transition-colors"><Code size={12} /> Export as code</button>
                 <button onClick={() => setSelectedItems(new Set())} className="text-[10px] text-foreground-muted hover:text-foreground text-center py-1">Clear selection</button>
               </div>
@@ -565,7 +554,6 @@ export default function Day0Page() {
         </div>
       </div>
 
-      {deploying && <DeployOverlay count={deploying.count} progress={deploying.progress} />}
       {showIaCModal && <IaCModal onClose={() => setShowIaCModal(false)} selectedGaps={computedGaps.filter(g => selectedGapIds.has(g.id))} />}
       {alarmConfigItem && <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(alarmConfigItem.id)); setAlarmConfigItem(null) }} />}
       {logConfigItem && <LogConfigModal item={logConfigItem} onClose={() => setLogConfigItem(null)} onSave={() => { setSelectedItems(prev => new Set(prev).add(logConfigItem.id)); setLogConfigItem(null) }} />}
