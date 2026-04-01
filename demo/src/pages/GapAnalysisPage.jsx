@@ -10,6 +10,8 @@ import {
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { AlarmConfigModal } from '../components/AlarmConfigModal'
+import { LogConfigModal } from '../components/LogConfigModal'
+import { TraceConfigModal } from '../components/TraceConfigModal'
 import { getAllRecommendedItems, serviceSeverity } from '../data/recommendations'
 
 const severityColors = {
@@ -165,7 +167,7 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
 
 
 // ─── Gap Card (only shows non-deployed items) ─────────────────────
-function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureAlarm, isInActiveTier, isSliding }) {
+function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, isInActiveTier, isSliding }) {
   const Icon = categoryIcons[gap.category] || Lightning
   const [expanded, setExpanded] = useState(false)
   const colorClass = severityColors[gap.severity] || severityColors.medium
@@ -246,7 +248,8 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
                         {selectedItems.has(item.id) ? <CheckSquare size={12} weight="fill" className="text-primary" /> : <Square size={12} className="text-foreground-disabled hover:text-foreground-muted" />}
                       </button>
                       <span className="text-[10px] text-foreground-muted flex-1">{item.name}</span>
-                      {item.config && <button onClick={() => onConfigureAlarm?.(item)} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}
+                      {item.config && <button onClick={() => onConfigureItem?.(item, gap.category)} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}
+                      {!item.config && (gap.category === 'logs' || gap.category === 'traces') && <button onClick={() => onConfigureItem?.(item, gap.category)} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}
                     </div>
                   ))}
                 </div>
@@ -261,7 +264,7 @@ function GapCard({ gap, selectedItems, deployedItems, onToggleGap, onToggleServi
 
 
 // ─── Tier Section ─────────────────────────────────────────────────
-function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureAlarm, slidingGaps }) {
+function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployedItems, onToggleGap, onToggleService, onToggleItem, scopedServices, onConfigureItem, slidingGaps }) {
   const cfg = tierConfig[tier]
   const Icon = cfg.icon
   // Only count non-deployed items
@@ -293,7 +296,7 @@ function TierSection({ tier, gaps, isActive, onActivate, selectedItems, deployed
       {isActive && (
         <div className="flex flex-col gap-2 mt-2 pl-2">
           {activeGaps.map(gap => (
-            <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureAlarm={onConfigureAlarm} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} />
+            <GapCard key={gap.id} gap={gap} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={onToggleGap} onToggleService={onToggleService} onToggleItem={onToggleItem} scopedServices={scopedServices} onConfigureItem={onConfigureItem} isInActiveTier={true} isSliding={slidingGaps.has(gap.id)} />
           ))}
         </div>
       )}
@@ -380,6 +383,8 @@ export default function Day0Page() {
   const [discoveries, setDiscoveries] = useState([])
   const [showIaCModal, setShowIaCModal] = useState(false)
   const [alarmConfigItem, setAlarmConfigItem] = useState(null)
+  const [logConfigItem, setLogConfigItem] = useState(null)
+  const [traceConfigItem, setTraceConfigItem] = useState(null)
   const [deploying, setDeploying] = useState(null) // { count, progress }
   const [slidingGaps, setSlidingGaps] = useState(new Set())
 
@@ -534,7 +539,7 @@ export default function Day0Page() {
           {['critical', 'high', 'medium', 'low'].map(tier => {
             const gapsInTier = tierGroups[tier]
             if (!gapsInTier || gapsInTier.length === 0) return null
-            return <TierSection key={tier} tier={tier} gaps={gapsInTier} isActive={activeTier === tier} onActivate={() => setActiveTier(prev => prev === tier ? null : tier)} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureAlarm={setAlarmConfigItem} slidingGaps={slidingGaps} />
+            return <TierSection key={tier} tier={tier} gaps={gapsInTier} isActive={activeTier === tier} onActivate={() => setActiveTier(prev => prev === tier ? null : tier)} selectedItems={selectedItems} deployedItems={deployedItems} onToggleGap={toggleGapItems} onToggleService={toggleService} onToggleItem={toggleItem} scopedServices={scopedServices} onConfigureItem={(item, category) => { if (category === 'logs') setLogConfigItem(item); else if (category === 'traces') setTraceConfigItem(item); else setAlarmConfigItem(item) }} slidingGaps={slidingGaps} />
           })}
           <DeployedSection deployedLog={deployedLog} />
         </div>
@@ -563,6 +568,8 @@ export default function Day0Page() {
       {deploying && <DeployOverlay count={deploying.count} progress={deploying.progress} />}
       {showIaCModal && <IaCModal onClose={() => setShowIaCModal(false)} selectedGaps={computedGaps.filter(g => selectedGapIds.has(g.id))} />}
       {alarmConfigItem && <AlarmConfigModal item={alarmConfigItem} onClose={() => setAlarmConfigItem(null)} onSave={() => setAlarmConfigItem(null)} />}
+      {logConfigItem && <LogConfigModal item={logConfigItem} onClose={() => setLogConfigItem(null)} onSave={() => setLogConfigItem(null)} />}
+      {traceConfigItem && <TraceConfigModal item={traceConfigItem} onClose={() => setTraceConfigItem(null)} onSave={() => setTraceConfigItem(null)} />}
     </div>
   )
 }
