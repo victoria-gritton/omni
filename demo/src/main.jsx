@@ -15,6 +15,7 @@ import SlackView from './pages/SlackView'
 import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
 import ConfigurePage from './pages/ConfigurePage'
+import AgentManagementPage from './pages/AgentManagementPage'
 import MonitorPage from './pages/MonitorPage'
 import ConsoleLayout from './components/ConsoleLayout'
 import { PersonaProvider } from './data/persona'
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/investigate" element={<ConsoleLayout><InvestigatePage /></ConsoleLayout>} />
           <Route path="/query" element={<Navigate to="/explore" replace />} />
           <Route path="/configure" element={<ConsoleLayout><ConfigurePage /></ConsoleLayout>} />
+          <Route path="/agents" element={<ConsoleLayout><AgentManagementPage /></ConsoleLayout>} />
         </Routes>
       </HashRouter>
     </PersonaProvider>
