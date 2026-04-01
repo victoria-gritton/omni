@@ -21,7 +21,7 @@ export default {
       },
       colors: {
         background: {
-          DEFAULT: '#0f1b2d',
+          DEFAULT: '#161D26',
           'surface-1': '#192534',
           'surface-2': '#232f3e',
         },

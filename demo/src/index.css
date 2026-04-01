@@ -5,7 +5,7 @@
 body {
   margin: 0;
   min-width: 1024px;
-  background: #0f1b2d;
+  background: #161D26;
   color: #d1d5db;
   font-family: 'Open Sans', 'Amazon Ember', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +18,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #0f1b2d;
+  background: #161D26;
 }
 
 .content-layer {
