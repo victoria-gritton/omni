@@ -178,7 +178,7 @@ function ExploreToolbar({ dataSource, setDataSource, timeRange, setTimeRange, sp
       <div className="flex-1" />
 
       {/* Run query */}
-      <button onClick={onRun} className="h-8 px-4 rounded-lg bg-primary text-body-s font-medium text-primary-foreground hover:bg-slate-200 transition-colors flex items-center gap-1.5">
+      <button onClick={onRun} className="h-8 px-4 rounded-lg bg-[#ec7211] text-body-s font-medium text-white hover:bg-[#eb5f07] transition-colors flex items-center gap-1.5">
         <Play size={12} />
         Run query
       </button>
