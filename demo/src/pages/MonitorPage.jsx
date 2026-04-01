@@ -141,12 +141,12 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
       </div>
       {/* Type tabs */}
       <div className="flex gap-1 mb-2 flex-shrink-0">
-        <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors border ${activeType === 'all' ? 'bg-primary/15 text-primary border-primary/30' : 'text-foreground-disabled hover:text-foreground-muted border-transparent'}`}>All</button>
+        <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors ${activeType === 'all' ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>All</button>
         {sortedTypes.map(type => {
           const hasCritical = byType[type].some(r => r.status === 'critical')
           const hasWarning = byType[type].some(r => r.status === 'warning')
-          const borderColor = hasCritical ? 'border-red-400' : hasWarning ? 'border-orange-400' : 'border-transparent'
-          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors border ${activeType === type ? 'bg-primary/15 text-primary border-primary/30' : `text-foreground-disabled hover:text-foreground-muted ${borderColor}`}`}>{typeLabels[type] || type}</button>
+          const textColor = activeType === type ? 'bg-primary/15 text-primary' : hasCritical ? 'text-red-400 hover:text-red-300' : hasWarning ? 'text-orange-400 hover:text-orange-300' : 'text-foreground-disabled hover:text-foreground-muted'
+          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors ${textColor}`}>{typeLabels[type] || type}</button>
         })}
       </div>
       {/* Scrollable list */}
