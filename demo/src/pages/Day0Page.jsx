@@ -729,7 +729,7 @@ export default function Day0Page() {
             <button onClick={() => navigate('/monitor')} className="glass-card p-4 text-left hover:border-primary/30 transition-all">
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-3 h-3 rounded-full ${overallOk ? 'bg-green-400' : alarming.length > 0 ? 'bg-red-400' : 'bg-orange-400'}`} style={!overallOk ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
-                <span className="text-body-s font-semibold text-foreground">{overallOk ? 'Systems Healthy' : 'Attention Needed'}</span>
+                <span className="text-body-s font-semibold text-foreground">{overallOk ? 'All Clear' : 'System Health'}</span>
                 <span className="flex-1" />
                 <span className="text-[10px] text-primary inline-flex items-center gap-1">Monitor <ArrowRight size={10} /></span>
               </div>
