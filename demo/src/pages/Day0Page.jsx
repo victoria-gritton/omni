@@ -50,7 +50,14 @@ function WidgetHeader({ icon: Icon, title, color, action, actionLabel = 'View al
 function AlarmsW({ services }) {
   const w = services.filter(s => s.hasAlarms).length
   if (w === 0) return <EmptyW icon={Bell} label="No alarms configured" action="Set up alarms →" />
-  const data = useMemo(() => mockTimeSeries(24, w, 2), [w])
+
+  // Mock 24h status timeline: mostly OK, with a brief alarm period
+  const segments = useMemo(() => [
+    { start: 0, end: 65, status: 'ok' },
+    { start: 65, end: 78, status: 'alarm' },
+    { start: 78, end: 100, status: 'ok' },
+  ], [])
+
   return (
     <div className="glass-card p-4 h-full flex flex-col">
       <WidgetHeader icon={Bell} title="Alarms" color="text-status-active" actionLabel="Manage" />
@@ -60,7 +67,17 @@ function AlarmsW({ services }) {
         <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">0</p><p className="text-[8px] text-foreground-muted">Insuff.</p></div>
       </div>
       <p className="text-[9px] text-foreground-disabled mb-1">Alarm state changes (24h)</p>
-      <div className="mt-auto"><LineChart data={data} color="#22c55e" height={64} unit="" showAxes={false} /></div>
+      <div className="mt-auto flex items-center h-8">
+        <svg width="100%" height="4" className="rounded-full overflow-hidden">
+          {segments.map((seg, i) => (
+            <rect key={i} x={`${seg.start}%`} y="0" width={`${seg.end - seg.start}%`} height="4" rx="2" fill={seg.status === 'alarm' ? '#ef4444' : '#22c55e'} />
+          ))}
+        </svg>
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-[7px] text-foreground-disabled">24h ago</span>
+        <span className="text-[7px] text-foreground-disabled">Now</span>
+      </div>
     </div>
   )
 }
