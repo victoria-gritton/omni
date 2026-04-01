@@ -94,7 +94,7 @@ function TopoNode({ name, status, x, y }) {
   const colors = { healthy: '#22c55e', warning: '#f59e0b', critical: '#ef4444' }
   return (
     <g>
-      <circle cx={x} cy={y} r="24" fill="#0a0e1a" stroke={colors[status]} strokeWidth="1.5" />
+      <circle cx={x} cy={y} r="24" fill="#0f1b2d" stroke={colors[status]} strokeWidth="1.5" />
       <circle cx={x} cy={y} r="4" fill={colors[status]} fillOpacity="0.3" />
       <text x={x} y={y + 38} textAnchor="middle" fill="white" fillOpacity="0.7" fontSize="9" fontFamily="DM Sans">{name}</text>
     </g>
