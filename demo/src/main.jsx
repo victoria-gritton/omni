@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import WatchView from './pages/WatchView'
 import PhoneView from './pages/PhoneView'
 import ConsoleView from './pages/ConsoleView'
@@ -13,7 +13,6 @@ import CoffeeView from './pages/CoffeeView'
 import SlackView from './pages/SlackView'
 import ExplorePage from './pages/ExplorePage'
 import InvestigatePage from './pages/InvestigatePage'
-import QueryStudioPage from './pages/QueryStudioPage'
 import ConfigurePage from './pages/ConfigurePage'
 import MonitorPage from './pages/MonitorPage'
 import ConsoleLayout from './components/ConsoleLayout'
@@ -39,7 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/coffee" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
           <Route path="/explore" element={<ConsoleLayout><ExplorePage /></ConsoleLayout>} />
           <Route path="/investigate" element={<ConsoleLayout><InvestigatePage /></ConsoleLayout>} />
-          <Route path="/query" element={<ConsoleLayout><QueryStudioPage /></ConsoleLayout>} />
+          <Route path="/query" element={<Navigate to="/explore" replace />} />
           <Route path="/configure" element={<ConsoleLayout><ConfigurePage /></ConsoleLayout>} />
         </Routes>
       </HashRouter>

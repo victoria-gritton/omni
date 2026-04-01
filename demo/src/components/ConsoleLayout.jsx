@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   House, MagnifyingGlass, Pulse, MagnifyingGlassPlus,
-  CodeBlock, GearSix, Star, Clock, Sparkle, Bell, User,
+  GearSix, Star, Clock, Sparkle, Bell, User,
   ChatTeardropDots, X, PaperPlaneRight, List
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
@@ -13,10 +13,9 @@ export function useChatPanel() { return useContext(ChatContext) }
 
 const navItems = [
   { icon: House, label: 'Home', subtitle: 'Overview', path: '/home' },
-  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Unified search', path: '/explore' },
+  { icon: MagnifyingGlass, label: 'Explore', subtitle: 'Logs, metrics, traces', path: '/explore', also: ['/query'] },
   { icon: Pulse, label: 'Monitor', subtitle: 'Active monitoring & alerts', path: '/monitor' },
   { icon: MagnifyingGlassPlus, label: 'Investigate', subtitle: 'Deep-dive analysis', path: '/investigate', also: ['/console', '/devops-console'] },
-  { icon: CodeBlock, label: 'Query Studio', subtitle: 'SQL & PromQL queries', path: '/query' },
   { icon: GearSix, label: 'Configure', subtitle: 'Settings & resources', path: '/configure' },
 ]
 
@@ -426,7 +425,7 @@ export default function ConsoleLayout({ children }) {
                   <span className="text-foreground-muted">CloudWatch<sup className="text-primary">+</sup></span>
                   <span className="text-foreground-disabled">/</span>
                   <span className="text-foreground">{
-                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / database-failover','/query':'Query Studio','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
+                    {'/home':'Home','/explore':'Explore','/monitor':'Monitor','/investigate':'Investigate','/console':'Investigate / order-service','/devops-console':'Investigate / database-failover','/query':'Explore / Advanced','/configure':'Configure','/day0':'Welcome','/coffee':'Home'}[location.pathname] || 'Home'
                   }</span>
                 </nav>
               </div>
