@@ -297,6 +297,50 @@ export default function DevOpsConsoleView() {
                 </div>
               </div>
             </div>
+
+            {/* Relevant Logs */}
+            <div className="glass-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Relevant Logs
+                </h3>
+                <a href="#/query" className="text-[11px] text-link hover:underline flex items-center gap-1">Explore in Query Studio <span className="text-[10px]">u2192</span></a>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-body-s">
+                  <thead>
+                    <tr className="border-b border-border-muted">
+                      <th className="text-left text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold py-2 pr-4">Timestamp</th>
+                      <th className="text-left text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold py-2 pr-4">Level</th>
+                      <th className="text-left text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold py-2 pr-4">Service</th>
+                      <th className="text-left text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold py-2">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono text-[11px]">
+                    {[
+                      { ts: "02:07:12", lvl: "ERROR", svc: "PaymentsLambda", msg: "ResourceNotFoundException: Table PaymentsTable-v2 does not exist" },
+                      { ts: "02:07:11", lvl: "ERROR", svc: "PaymentsLambda", msg: "ResourceNotFoundException: Table PaymentsTable-v2 does not exist" },
+                      { ts: "02:07:09", lvl: "ERROR", svc: "PaymentsLambda", msg: "DynamoDB.put failed: table not found" },
+                      { ts: "02:07:08", lvl: "WARN", svc: "API Gateway", msg: "Upstream 500 from /process-payment — retry 2/3" },
+                      { ts: "02:07:05", lvl: "ERROR", svc: "PaymentsLambda", msg: "ResourceNotFoundException: Table PaymentsTable-v2 does not exist" },
+                      { ts: "02:07:03", lvl: "WARN", svc: "Checkout", msg: "Payment call failed — returning error to customer" },
+                      { ts: "02:06:58", lvl: "ERROR", svc: "PaymentsLambda", msg: "ResourceNotFoundException: Table PaymentsTable-v2 does not exist" },
+                      { ts: "02:06:55", lvl: "WARN", svc: "API Gateway", msg: "Upstream 500 from /process-payment — retry 1/3" },
+                      { ts: "02:06:51", lvl: "ERROR", svc: "PaymentsLambda", msg: "DynamoDB.put failed: table not found" },
+                      { ts: "02:06:48", lvl: "INFO", svc: "DynamoDB", msg: "Throttling on PaymentsTable reads — elevated latency" },
+                    ].map((log, i) => (
+                      <tr key={i} className="border-b border-border-muted/50 hover:bg-background-surface-2/30 transition-colors">
+                        <td className="py-1.5 pr-4 text-foreground-muted whitespace-nowrap">{log.ts}</td>
+                        <td className={`py-1.5 pr-4 whitespace-nowrap font-semibold ${log.lvl === "ERROR" ? "text-status-outage" : log.lvl === "WARN" ? "text-status-blocked" : "text-primary"}`}>{log.lvl}</td>
+                        <td className="py-1.5 pr-4 text-foreground-secondary whitespace-nowrap">{log.svc}</td>
+                        <td className="py-1.5 text-foreground-muted">{log.msg}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

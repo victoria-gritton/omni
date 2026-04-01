@@ -380,63 +380,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
           </div>
         </div>
 
-        <div class="ws" id="w1" style="display:none;cursor:pointer" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){window.top.location.hash='#/devops-console'}">
-          <div style="padding:10px 12px 16px">
-
-            <!-- Header -->
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-              <div style="width:8px;height:8px;border-radius:50%;background:#ff3b30;animation:pulse 1.5s infinite"></div>
-              <span style="font-size:11px;font-weight:600;color:#ff6b6b">HIGH SEVERITY</span>
-            </div>
-            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:12px">Payments Service</div>
-
-            <!-- What happened -->
-            <div style="font-size:11px;font-weight:600;color:#0a84ff;margin-bottom:4px">What happened</div>
-            <div style="font-size:13px;color:#ccc;line-height:1.45;margin-bottom:6px">Deploy <strong style="color:#fff">#847</strong> landed at 01:45 AM. New code references <strong style="color:#ff9500">PaymentsTable-v2</strong> which does not exist.</div>
-            <div style="height:32px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.03);margin-bottom:16px">
-              <svg width="100%" height="100%" viewBox="0 0 160 28" preserveAspectRatio="none">
-                <defs><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0,26 L20,26 L40,26 L55,26 L65,24 L75,20 L85,8 L95,3 L105,5 L115,3 L125,6 L135,4 L145,3 L160,5" fill="none" stroke="#ff3b30" stroke-width="1.5"/>
-                <path d="M0,26 L20,26 L40,26 L55,26 L65,24 L75,20 L85,8 L95,3 L105,5 L115,3 L125,6 L135,4 L145,3 L160,5 L160,28 L0,28Z" fill="url(#wg2)"/>
-                <line x1="58" y1="0" x2="58" y2="28" stroke="#ff9500" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.6"/>
-                <text x="60" y="7" fill="#ff9500" font-size="5" font-family="sans-serif">deploy</text>
-              </svg>
-            </div>
-
-            <!-- Impact -->
-            <div style="font-size:11px;font-weight:600;color:#ff9500;margin-bottom:8px">Impact</div>
-            <div style="display:flex;gap:6px;margin-bottom:10px">
-              <div style="flex:1;text-align:center;background:rgba(255,59,48,0.1);border-radius:8px;padding:8px 4px">
-                <div style="font-size:18px;font-weight:700;color:#ff3b30">12%</div>
-                <div style="font-size:9px;color:#999;margin-top:2px">error rate</div>
-              </div>
-              <div style="flex:1;text-align:center;background:rgba(255,149,0,0.1);border-radius:8px;padding:8px 4px">
-                <div style="font-size:18px;font-weight:700;color:#ff9500">800</div>
-                <div style="font-size:9px;color:#999;margin-top:2px">failed</div>
-              </div>
-              <div style="flex:1;text-align:center;background:rgba(48,209,88,0.1);border-radius:8px;padding:8px 4px">
-                <div style="font-size:18px;font-weight:700;color:#30d158">0</div>
-                <div style="font-size:9px;color:#999;margin-top:2px">data loss</div>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#ff3b30;display:inline-block"></span>Payments</span><span style="font-size:11px;font-weight:600;color:#ff3b30">down</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#ff9500;display:inline-block"></span>DynamoDB</span><span style="font-size:11px;font-weight:600;color:#ff9500">slow</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#30d158;display:inline-block"></span>Gateway</span><span style="font-size:11px;font-weight:600;color:#30d158">ok</span></div>
-            </div>
-
-            <!-- Root cause -->
-            <div style="font-size:11px;font-weight:600;color:#ff3b30;margin-bottom:4px">Root cause</div>
-            <div style="font-size:13px;color:#ccc;line-height:1.45;margin-bottom:16px">Raj Patel merged at 5:47 PM. Table ref changed to <strong style="color:#ff9500">PaymentsTable-v2</strong> but Terraform not yet applied. No duplicate charges. No data corruption.</div>
-
-            <!-- Next steps -->
-            <div style="background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);border-radius:8px;padding:10px">
-              <div style="font-size:11px;font-weight:600;color:#30d158;margin-bottom:4px">Recommended action</div>
-              <div style="font-size:13px;color:#ddd;line-height:1.45">Roll back deploy #847 to restore working table reference. Apply Terraform before redeploying.</div>
-            </div>
-
-          </div>
-        </div>
     </div>
   </div>
 </section>
