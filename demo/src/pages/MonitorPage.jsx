@@ -130,7 +130,8 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
   const sortedTypes = Object.keys(byType).sort((a, b) => (typeOrder.indexOf(a) === -1 ? 99 : typeOrder.indexOf(a)) - (typeOrder.indexOf(b) === -1 ? 99 : typeOrder.indexOf(b)))
   const typeLabels = { 'EKS': 'EKS', 'Aurora PostgreSQL': 'Aurora', 'DynamoDB': 'DynamoDB', 'ElastiCache Redis': 'Redis', 'ECS Fargate': 'ECS' }
 
-  const filtered = activeType === 'all' ? infraHealth : (byType[activeType] || [])
+  const statusOrder = { critical: 0, warning: 1, healthy: 2 }
+  const filtered = (activeType === 'all' ? infraHealth : (byType[activeType] || [])).sort((a, b) => (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2))
 
   return (
     <div className="glass-card p-4 flex flex-col" style={{ maxHeight: 320 }}>
@@ -140,10 +141,12 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
       </div>
       {/* Type tabs */}
       <div className="flex gap-1 mb-2 flex-shrink-0">
-        <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors ${activeType === 'all' ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>All</button>
+        <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors border ${activeType === 'all' ? 'bg-primary/15 text-primary border-primary/30' : 'text-foreground-disabled hover:text-foreground-muted border-transparent'}`}>All</button>
         {sortedTypes.map(type => {
-          const hasIssue = byType[type].some(r => r.status !== 'healthy')
-          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors relative ${activeType === type ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>{typeLabels[type] || type}{hasIssue && activeType !== type && <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-400" />}</button>
+          const hasCritical = byType[type].some(r => r.status === 'critical')
+          const hasWarning = byType[type].some(r => r.status === 'warning')
+          const borderColor = hasCritical ? 'border-red-400' : hasWarning ? 'border-orange-400' : 'border-transparent'
+          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors border ${activeType === type ? 'bg-primary/15 text-primary border-primary/30' : `text-foreground-disabled hover:text-foreground-muted ${borderColor}`}`}>{typeLabels[type] || type}</button>
         })}
       </div>
       {/* Scrollable list */}
