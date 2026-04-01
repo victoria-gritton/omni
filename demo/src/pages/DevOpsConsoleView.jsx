@@ -99,16 +99,31 @@ function ErrorRateChart() {
 
 export default function DevOpsConsoleView() {
   const navigate = useNavigate()
+  const [actionsOpen, setActionsOpen] = useState(false)
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="px-6 py-6">
-        <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-            Payments Service Incident
-          </h1>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-status-outage/10 border border-status-outage/20 text-[10px] font-semibold text-status-outage">
-            ACTIVE
-          </span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
+              Payments Service Incident
+            </h1>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-status-active/10 border border-status-active/20 text-[10px] font-semibold text-status-active">
+              Ack by SK
+            </span>
+          </div>
+          <div className="relative">
+            <button onClick={() => setActionsOpen(!actionsOpen)} className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+              Actions <CaretDown size={12} className={`text-foreground-disabled transition-transform ${actionsOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {actionsOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 p-1 rounded-lg border border-border-muted bg-background-surface-2 shadow-md z-50">
+                <button onClick={() => setActionsOpen(false)} className="w-full text-left px-3 py-1.5 rounded-md text-body-s text-foreground-muted hover:bg-white/5 hover:text-foreground transition-colors">
+                  Send update to team
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-4">

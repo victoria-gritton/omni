@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CaretRight } from '@phosphor-icons/react'
+import { CaretRight, CaretDown } from '@phosphor-icons/react'
 import { incident } from '../data/incident'
 
 const RESPONDERS = [
@@ -63,14 +63,29 @@ function ServiceRow({ name, status, latency, baseline }) {
 export default function ConsoleView() {
   const [showLogs, setShowLogs] = useState(false)
   const [slackPosted, setSlackPosted] = useState(false)
+  const [actionsOpen, setActionsOpen] = useState(false)
 
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="px-6 py-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-1">
-          <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">{incident.title}</h1>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-status-active/10 border border-status-active/20 text-[10px] font-semibold text-status-active">Ack by MK</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">{incident.title}</h1>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-status-active/10 border border-status-active/20 text-[10px] font-semibold text-status-active">Ack by MK</span>
+          </div>
+          <div className="relative">
+            <button onClick={() => setActionsOpen(!actionsOpen)} className="h-8 px-3 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground-muted hover:bg-background-surface-2 transition-colors flex items-center gap-1.5">
+              Actions <CaretDown size={12} className={`text-foreground-disabled transition-transform ${actionsOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {actionsOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 p-1 rounded-lg border border-border-muted bg-background-surface-2 shadow-md z-50">
+                <button onClick={() => setActionsOpen(false)} className="w-full text-left px-3 py-1.5 rounded-md text-body-s text-foreground-muted hover:bg-white/5 hover:text-foreground transition-colors">
+                  Send update to team
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-[11px] text-foreground-muted">INC-2847 · Alarm: <span className="text-foreground-secondary">order-service-memory-high</span> · Acknowledged 2:04 AM</p>
 
@@ -118,27 +133,6 @@ export default function ConsoleView() {
                 </div>
               </div>
 
-              {/* Log summary */}
-              <div className="mt-3 pt-3 border-t border-border-muted">
-                <span className="text-body-s text-foreground font-medium">From logs</span>
-                <p className="text-body-s text-foreground-muted mt-1">6 OOM kills since 1:47 AM. Memory hitting 512 MB limit every ~5 min. Restart loop. No deploys in 6h.</p>
-                <details open={showLogs} onToggle={(e) => setShowLogs(e.target.open)} className="mt-1.5">
-                  <summary className="text-[11px] text-foreground-muted cursor-pointer hover:text-foreground-secondary transition-colors flex items-center gap-1">
-                    <CaretRight size={10} className={`transition-transform ${showLogs ? 'rotate-90' : ''}`} />
-                    Raw logs · {incident.logSnapshot.logGroup} ({incident.logSnapshot.lines.length} lines)
-                  </summary>
-                  <div className="rounded-lg bg-background-surface-2/40 border border-border-muted p-3 mt-2 overflow-x-auto">
-                    {incident.logSnapshot.lines.map((line, i) => (
-                      <div key={i} className="flex gap-3 text-[11px] font-mono leading-[18px]">
-                        <span className="text-foreground-disabled flex-shrink-0">{line.ts}</span>
-                        <span className={`flex-shrink-0 w-12 ${line.level === 'ERROR' ? 'text-status-outage' : 'text-status-blocked'}`}>{line.level}</span>
-                        <span className="text-foreground-secondary">{line.msg}</span>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              </div>
-
             </div>
 
             {/* Live metric charts — underneath */}
@@ -177,17 +171,6 @@ export default function ConsoleView() {
               </div>
             </div>
 
-            {/* Affected Services */}
-            <div className="glass-card p-4">
-              <h3 className="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold mb-2">Affected Services</h3>
-              {incident.services.filter(s => s.status !== 'healthy').map((s) => (
-                <ServiceRow key={s.name} {...s} />
-              ))}
-              <div className="pt-2 mt-1">
-                <span className="text-[10px] text-foreground-disabled">{incident.services.filter(s => s.status === 'healthy').length} healthy services not shown</span>
-              </div>
-            </div>
-
             {/* What AI checked */}
             <div className="glass-card p-4">
               <h3 className="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold mb-3">What AI checked</h3>
@@ -198,6 +181,50 @@ export default function ConsoleView() {
                     <span className="text-foreground"><strong>{step.action}</strong> — {step.result}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Relevant Logs */}
+            <div className="glass-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[10px] text-foreground-muted uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Relevant Logs
+                </h3>
+                <a href="#/query" className="text-[11px] text-link hover:underline flex items-center gap-1">Explore in Query Studio →</a>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-body-s">
+                  <thead>
+                    <tr className="border-b border-border-muted">
+                      <th className="text-left text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold py-2 pr-4">Timestamp</th>
+                      <th className="text-left text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold py-2 pr-4">Level</th>
+                      <th className="text-left text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold py-2 pr-4">Service</th>
+                      <th className="text-left text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold py-2">Message</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-mono text-[11px]">
+                    {[
+                      { ts: "02:04:18", lvl: "ERROR", svc: "order-service", msg: "OOMKilled: container exceeded 512MB memory limit" },
+                      { ts: "02:04:15", lvl: "ERROR", svc: "order-service", msg: "java.lang.OutOfMemoryError: Java heap space" },
+                      { ts: "02:04:12", lvl: "WARN", svc: "checkout-service", msg: "Upstream timeout from order-service — retry 3/3 failed" },
+                      { ts: "02:03:58", lvl: "ERROR", svc: "order-service", msg: "OOMKilled: container exceeded 512MB memory limit" },
+                      { ts: "02:03:45", lvl: "WARN", svc: "API Gateway", msg: "504 Gateway Timeout on /api/orders — upstream unresponsive" },
+                      { ts: "02:03:30", lvl: "ERROR", svc: "order-service", msg: "ECS task arn:aws:ecs:us-east-2:task/abc123 stopped: OOMKilled" },
+                      { ts: "02:03:12", lvl: "WARN", svc: "inventory-service", msg: "Connection refused from order-service:8080 — service unavailable" },
+                      { ts: "02:02:55", lvl: "ERROR", svc: "order-service", msg: "OOMKilled: container exceeded 512MB memory limit" },
+                      { ts: "02:02:40", lvl: "WARN", svc: "checkout-service", msg: "Upstream timeout from order-service — retry 1/3" },
+                      { ts: "02:02:18", lvl: "INFO", svc: "ECS", msg: "Task restart attempt 4 for order-service-east-2 — memory limit 512MB" },
+                    ].map((log, i) => (
+                      <tr key={i} className="border-b border-border-muted/50 hover:bg-background-surface-2/30 transition-colors">
+                        <td className="py-1.5 pr-4 text-foreground-muted whitespace-nowrap">{log.ts}</td>
+                        <td className={`py-1.5 pr-4 whitespace-nowrap font-semibold ${log.lvl === "ERROR" ? "text-status-outage" : log.lvl === "WARN" ? "text-status-blocked" : "text-primary"}`}>{log.lvl}</td>
+                        <td className="py-1.5 pr-4 text-foreground-secondary whitespace-nowrap">{log.svc}</td>
+                        <td className="py-1.5 text-foreground-muted">{log.msg}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

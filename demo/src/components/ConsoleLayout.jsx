@@ -540,10 +540,6 @@ export default function ConsoleLayout({ children }) {
               <button className="relative p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">
                 <Bell size={16} /><div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-status-outage" />
               </button>
-              <button onClick={() => setChatOpen(!chatOpen)} className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-body-s font-medium transition-colors ${chatOpen ? 'bg-primary text-primary-foreground' : 'bg-primary/15 text-primary border border-primary/30 hover:bg-primary/25'}`}>
-                <ChatTeardropDots size={16} />
-                Ask AI
-              </button>
               <div className="relative">
                 <button onClick={() => setShowPersona(!showPersona)} className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center hover:bg-primary/30 transition-colors text-[10px] font-semibold text-primary">
                   {persona.user.name.split(' ').map(n => n[0]).join('')}
