@@ -31,9 +31,16 @@ function HealthGlance({ applications, activeAlarms, slos }) {
   const sloHealthy = slos.filter(s => s.status === 'healthy').length
   const overallStatus = alarming > 0 && activeAlarms.some(a => a.severity === 'critical') ? 'critical' : alarming > 0 ? 'warning' : 'healthy'
 
+  // Simulated top services data
+  const topServices = [
+    { name: 'transactions-db', metric: 'Latency', value: '24ms', trend: 'up', status: 'warning' },
+    { name: 'public-api', metric: 'Availability', value: '99.97%', trend: 'stable', status: 'healthy' },
+    { name: 'payments-cluster', metric: '5xx rate', value: '0.3%', trend: 'up', status: 'warning' },
+  ]
+
   return (
     <div className="glass-card p-5 mb-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${overallStatus === 'critical' ? 'bg-red-400/20' : overallStatus === 'warning' ? 'bg-status-degraded/20' : 'bg-status-active/20'}`}>
             <div className={`w-4 h-4 rounded-full ${statusDots[overallStatus]}`} style={overallStatus !== 'healthy' ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
@@ -49,6 +56,21 @@ function HealthGlance({ applications, activeAlarms, slos }) {
           <div className="text-center"><p className={`text-heading-m font-semibold ${sloAtRisk > 0 ? 'text-status-degraded' : 'text-status-active'}`}>{sloHealthy}/{slos.length}</p><p className="text-[9px] text-foreground-disabled">SLOs on target</p></div>
           <div className="text-center"><p className="text-heading-m font-semibold text-foreground">{allServices.length}</p><p className="text-[9px] text-foreground-disabled">Services</p></div>
         </div>
+      </div>
+
+      {/* Top services by key metrics */}
+      <div className="flex gap-3 pt-3 border-t border-border-muted/20">
+        <p className="text-[9px] text-foreground-disabled uppercase tracking-wider self-center mr-1">Top services</p>
+        {topServices.map(svc => (
+          <div key={svc.name} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-background/30 border border-border-muted/20">
+            <div className={`w-1.5 h-1.5 rounded-full ${statusDots[svc.status]}`} />
+            <span className="text-[10px] text-foreground">{svc.name}</span>
+            <span className="text-[9px] text-foreground-muted">{svc.metric}:</span>
+            <span className={`text-[10px] font-medium ${svc.status === 'warning' ? 'text-status-degraded' : 'text-foreground'}`}>{svc.value}</span>
+            {svc.trend === 'up' && <TrendUp size={10} className="text-status-degraded" />}
+            {svc.trend === 'down' && <TrendDown size={10} className="text-status-active" />}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -143,8 +165,12 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
 
 // ─── Alarms Card ──────────────────────────────────────────────────
 function AlarmsCard({ activeAlarms, onInvestigate }) {
-  const alarming = activeAlarms.filter(a => a.state === 'ALARM')
-  const ok = activeAlarms.filter(a => a.state === 'OK')
+  const [acked, setAcked] = useState(new Set())
+  const [snoozed, setSnoozed] = useState(new Set())
+
+  const visibleAlarms = [...activeAlarms].filter(a => !snoozed.has(a.id))
+  const alarming = visibleAlarms.filter(a => a.state === 'ALARM' && !acked.has(a.id))
+  const ok = visibleAlarms.filter(a => a.state === 'OK' || acked.has(a.id))
 
   return (
     <div className="glass-card p-4">
@@ -153,31 +179,40 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
         <div className="flex items-center gap-2">
           <span className="text-[9px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">{alarming.length} active</span>
           <span className="text-[9px] text-status-active bg-status-active/10 px-1.5 py-0.5 rounded">{ok.length} OK</span>
+          {snoozed.size > 0 && <span className="text-[9px] text-foreground-muted bg-foreground-muted/10 px-1.5 py-0.5 rounded">{snoozed.size} snoozed</span>}
         </div>
       </div>
       <div className="flex flex-col gap-1">
-        {[...activeAlarms].sort((a, b) => ({ critical: 0, high: 1, medium: 2, low: 3 }[a.severity] ?? 3) - ({ critical: 0, high: 1, medium: 2, low: 3 }[b.severity] ?? 3)).map(alarm => (
-          <button key={alarm.id} onClick={() => onInvestigate('error-rate', { service: alarm.resource, label: alarm.name })} className="flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group">
-            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-status-active'}`} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className={`text-[8px] px-1 py-0 rounded font-medium ${sevColors[alarm.severity]}`}>{alarm.severity}</span>
-                <p className="text-[11px] font-medium text-foreground truncate">{alarm.name}</p>
-              </div>
-              <p className="text-[9px] text-foreground-muted">{alarm.resource} · {alarm.metric}: {alarm.value} (threshold: {alarm.threshold})</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[8px] text-foreground-disabled">{alarm.triggered}</span>
-                <span className="text-[8px] text-primary flex items-center gap-0.5"><Sparkle size={7} weight="fill" /> {alarm.recommendation}</span>
+        {visibleAlarms.sort((a, b) => {
+          if (acked.has(a.id) && !acked.has(b.id)) return 1
+          if (!acked.has(a.id) && acked.has(b.id)) return -1
+          return ({ critical: 0, high: 1, medium: 2, low: 3 }[a.severity] ?? 3) - ({ critical: 0, high: 1, medium: 2, low: 3 }[b.severity] ?? 3)
+        }).map(alarm => {
+          const isAcked = acked.has(alarm.id)
+          return (
+            <div key={alarm.id} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-all text-left group ${isAcked ? 'opacity-50' : ''}`}>
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAcked ? 'bg-status-active' : alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-status-active'}`} />
+              <button onClick={() => onInvestigate('error-rate', { service: alarm.resource, label: alarm.name })} className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[8px] px-1 py-0 rounded font-medium ${sevColors[alarm.severity]}`}>{alarm.severity}</span>
+                  <p className={`text-[11px] font-medium truncate ${isAcked ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{alarm.name}</p>
+                  {isAcked && <span className="text-[8px] text-status-active">acknowledged</span>}
+                </div>
+                <p className="text-[9px] text-foreground-muted">{alarm.resource} · {alarm.metric}: {alarm.value}</p>
+                {!isAcked && <div className="flex items-center gap-2 mt-0.5"><span className="text-[8px] text-foreground-disabled">{alarm.triggered}</span><span className="text-[8px] text-primary flex items-center gap-0.5"><Sparkle size={7} weight="fill" /> {alarm.recommendation}</span></div>}
+              </button>
+              <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                {!isAcked && <button onClick={(e) => { e.stopPropagation(); setAcked(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-status-active px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted hover:border-status-active/30 transition-colors">Ack</button>}
+                <button onClick={(e) => { e.stopPropagation(); setSnoozed(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors">Snooze</button>
+                <MagnifyingGlass size={10} className="text-primary cursor-pointer" onClick={() => onInvestigate('error-rate', { service: alarm.resource, label: alarm.name })} />
               </div>
             </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted">Ack</button>
-              <button className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted">Snooze</button>
-              <MagnifyingGlass size={10} className="text-primary" />
-            </div>
-          </button>
-        ))}
+          )
+        })}
       </div>
+      {snoozed.size > 0 && (
+        <button onClick={() => setSnoozed(new Set())} className="text-[9px] text-foreground-disabled hover:text-foreground-muted mt-2 px-2">Show {snoozed.size} snoozed alarm{snoozed.size > 1 ? 's' : ''}</button>
+      )}
     </div>
   )
 }
