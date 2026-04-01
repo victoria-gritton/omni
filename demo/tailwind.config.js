@@ -11,7 +11,7 @@ export default {
         'display-l': ['42px', '48px'],
         'heading-xl': ['24px', '30px'],
         'heading-l': ['18px', '22px'],
-        'heading-m': ['16px', '20px'],
+        'heading-m': ['20px', '26px'],
         'heading-s': ['14px', '18px'],
         'heading-xs': ['12px', '16px'],
         'body-m': ['13px', '20px'],

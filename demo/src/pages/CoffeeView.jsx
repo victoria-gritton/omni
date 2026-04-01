@@ -244,7 +244,7 @@ function ChatPanel({ query, onClose, onSetupComplete }) {
               {/* Query */}
               <div className="glass-card p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-heading-xs font-normal text-foreground">Metric query</span>
+                  <span className="text-heading-m font-normal text-foreground">Metric query</span>
                   <span className="text-[10px] text-foreground-muted px-2 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">PromQL</span>
                 </div>
                 <pre className="text-pre font-mono bg-background-surface-2/40 rounded-lg p-3 text-foreground-secondary overflow-x-auto">{'topk(10, container_memory_working_set_bytes{cluster="payment-processing-prod"})'}</pre>
@@ -485,7 +485,7 @@ export default function CoffeeView() {
               <div className="lg:col-span-2 glass-card p-3">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-heading-xs font-normal text-foreground">Observability Feed</h3>
+                  <h3 className="text-heading-m font-normal text-foreground">Observability Feed</h3>
                   <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{investigations.length + feedItems.length}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -537,7 +537,7 @@ export default function CoffeeView() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <ListChecks size={14} className="text-foreground-muted" />
-                    <h3 className="text-heading-xs font-normal text-foreground">Recommendations</h3>
+                    <h3 className="text-heading-m font-normal text-foreground">Recommendations</h3>
                     <span className="text-[10px] text-foreground-muted px-1.5 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{pendingTasks.length}</span>
                   </div>
                   <TileMenu id="recommendations" />
@@ -569,7 +569,7 @@ export default function CoffeeView() {
               {/* Monitored Systems */}
               <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-0.5">
-                  <h3 className="text-heading-xs font-normal text-foreground">Monitored Systems</h3>
+                  <h3 className="text-heading-m font-normal text-foreground">Monitored Systems</h3>
                   <TileMenu id="monitored" />
                 </div>
                 <p className="text-[10px] text-foreground-muted mb-2">Applications and infrastructure under observation</p>
@@ -642,7 +642,7 @@ export default function CoffeeView() {
               {/* Service Topology */}
               <div className="glass-card p-3 flex flex-col" style={{ height: '460px' }}>
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="text-heading-xs font-normal text-foreground">Application map</h3>
+                  <h3 className="text-heading-m font-normal text-foreground">Application map</h3>
                   <TileMenu id="topology" />
                 </div>
                 <div className="flex-1 min-h-0">
@@ -664,7 +664,7 @@ export default function CoffeeView() {
             </div>
             <div className="glass-card p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-heading-xs font-normal text-foreground">Metric query</span>
+                <span className="text-heading-m font-normal text-foreground">Metric query</span>
                 <span className="text-[10px] text-foreground-muted px-2 py-0.5 rounded-full bg-background-surface-2 border border-border-muted">{coffee.metricQuery.language}</span>
               </div>
               <pre className="text-pre font-mono bg-background-surface-2/40 rounded-lg p-3 text-foreground-secondary overflow-x-auto mb-2">{coffee.metricQuery.query}</pre>

@@ -231,7 +231,7 @@ function QueryHistoryDrawer({ onClose, onUse }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ClockCounterClockwise size={14} className="text-foreground-muted" />
-          <h3 className="text-heading-xs font-normal text-foreground">Query history</h3>
+          <h3 className="text-heading-m font-normal text-foreground">Query history</h3>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setStarredOnly(!starredOnly)} className={`text-[10px] px-2 py-1 rounded-md transition-colors ${starredOnly ? 'bg-primary/10 text-primary border border-primary/30' : 'text-foreground-muted hover:bg-background-surface-2 border border-border-muted'}`}>
@@ -595,7 +595,7 @@ function QueryEditorBlock({ index, initialQuery }) {
       {index === 0 && (
         <div className="w-52 space-y-3">
           <div className="glass-card p-4">
-            <h3 className="text-heading-xs font-normal text-foreground mb-3">Saved queries</h3>
+            <h3 className="text-heading-m font-normal text-foreground mb-3">Saved queries</h3>
             <div className="space-y-0">
               {savedQueries.map((q) => (
                 <div key={q.name} className="py-2 border-b border-border-muted last:border-0 cursor-pointer">
