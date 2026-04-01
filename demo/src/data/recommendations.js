@@ -1,6 +1,26 @@
 // Recommended observability items per AWS service type
 // Used to generate the tree-select items in gap cards
 
+// Service type → gap severity mapping
+// Determines which tier a gap item lands in based on the service's role
+export const serviceSeverity = {
+  'API Gateway': 'critical',       // customer-facing entry point
+  'ECS Fargate': 'high',           // compute workloads
+  'Lambda': 'high',                // compute workloads
+  'RDS PostgreSQL': 'critical',    // data integrity
+  'Aurora PostgreSQL': 'critical', // data integrity
+  'DynamoDB': 'critical',          // data integrity
+  'ElastiCache Redis': 'medium',   // caching layer
+  'CloudFront': 'low',             // CDN, edge
+  'SNS + SQS': 'medium',           // messaging
+  'S3': 'low',                     // storage
+  'EKS': 'high',                   // compute clusters
+  'SageMaker': 'medium',           // ML inference
+  'Kinesis': 'high',               // streaming, data pipeline
+  'MSK': 'high',                   // streaming, data pipeline
+  'Bedrock Agent': 'medium',       // AI agent
+}
+
 const alarmsByType = {
   'API Gateway': [
     { id: 'alarm-5xx', name: '5xx Error Rate > 1%', metric: '5XXError', threshold: '1%', config: { metric: '5XXError', threshold: 1, unit: '%', period: 300, evalPeriods: 1, comparison: 'GreaterThanThreshold', missingData: 'notBreaching' } },

@@ -11,6 +11,7 @@ import {
 import { usePersona } from '../data/persona'
 import { AlarmConfigModal } from '../components/AlarmConfigModal'
 import { getAllRecommendedItems } from '../data/recommendations'
+import { serviceSeverity } from '../data/recommendations'
 
 const severityColors = {
   critical: 'text-red-400 bg-red-400/10 border-red-400/30',
@@ -377,7 +378,7 @@ export default function Day0Page() {
   const allServices = applications.flatMap(a => a.services)
   const scopedServices = activeApp === 'all' ? allServices : (applications.find(a => a.id === activeApp)?.services || [])
 
-  // Compute gaps dynamically
+  // Compute gaps dynamically — split by per-service severity
   const computedGaps = useMemo(() => {
     const total = scopedServices.length
     const noAlarms = scopedServices.filter(s => !s.hasAlarms)
@@ -388,17 +389,49 @@ export default function Day0Page() {
     const staleGap = gaps.find(g => g.id === 'g-stale')
     if (staleGap && (activeApp === 'all' || staleGap.appIds?.includes('all') || staleGap.appIds?.includes(activeApp))) result.push(staleGap)
 
+    // Helper: split items by service severity into separate gap entries per tier
+    const splitByServiceSeverity = (services, category, titleFn, descFn) => {
+      const allItems = getAllRecommendedItems(services, category)
+      const byTier = { critical: [], high: [], medium: [], low: [] }
+      for (const item of allItems) {
+        const svc = services.find(s => s.name === item.service)
+        const tier = serviceSeverity[svc?.type] || 'medium'
+        byTier[tier].push(item)
+      }
+      for (const [tier, items] of Object.entries(byTier)) {
+        if (items.length === 0) continue
+        const svcNames = [...new Set(items.map(i => i.service))]
+        result.push({
+          id: `g-${category}-${tier}`,
+          category,
+          title: titleFn(svcNames.length, items.length, tier),
+          description: descFn(svcNames, items.length),
+          severity: tier,
+          services: svcNames.length,
+          fixCount: items.length,
+          fixLabel: `${items.length} ${category === 'alarms' ? 'alarms' : category === 'logs' ? 'log configs' : 'trace configs'}`,
+          items,
+        })
+      }
+    }
+
     if (noAlarms.length > 0) {
-      const items = getAllRecommendedItems(noAlarms, 'alarms')
-      result.push({ id: 'g-alarms', category: 'alarms', title: `${noAlarms.length} service${noAlarms.length > 1 ? 's' : ''} have no alarms`, description: `Recommended: ${items.length} alarms for ${noAlarms.length} unmonitored services.`, severity: 'critical', services: noAlarms.length, fixCount: items.length, fixLabel: `${items.length} alarms`, items })
+      splitByServiceSeverity(noAlarms, 'alarms',
+        (svcCount, itemCount, tier) => `${itemCount} ${tier === 'critical' ? 'critical' : tier === 'high' ? 'high priority' : tier === 'medium' ? 'recommended' : 'optional'} alarms`,
+        (svcNames, itemCount) => `${itemCount} alarms for ${svcNames.slice(0, 3).join(', ')}${svcNames.length > 3 ? ` and ${svcNames.length - 3} more` : ''}.`,
+      )
     }
     if (noLogs.length > 0) {
-      const items = getAllRecommendedItems(noLogs, 'logs')
-      result.push({ id: 'g-logs', category: 'logs', title: `Logging missing on ${noLogs.length} service${noLogs.length > 1 ? 's' : ''}`, description: `${noLogs.length} of ${total} services are not sending logs.`, severity: 'high', services: noLogs.length, fixCount: items.length, fixLabel: `${items.length} log configs`, items })
+      splitByServiceSeverity(noLogs, 'logs',
+        (svcCount, itemCount, tier) => `${tier === 'critical' ? 'Critical' : tier === 'high' ? 'High priority' : tier === 'medium' ? 'Recommended' : 'Optional'} logging — ${svcCount} services`,
+        (svcNames, itemCount) => `${svcNames.slice(0, 3).join(', ')}${svcNames.length > 3 ? ` and ${svcNames.length - 3} more` : ''} not sending logs.`,
+      )
     }
     if (noTraces.length > 0) {
-      const items = getAllRecommendedItems(noTraces, 'traces')
-      result.push({ id: 'g-traces', category: 'traces', title: `No tracing on ${noTraces.length} service${noTraces.length > 1 ? 's' : ''}`, description: `${noTraces.length} of ${total} services have no X-Ray tracing.`, severity: 'high', services: noTraces.length, fixCount: items.length, fixLabel: `${items.length} trace configs`, items })
+      splitByServiceSeverity(noTraces, 'traces',
+        (svcCount, itemCount, tier) => `${tier === 'critical' ? 'Critical' : tier === 'high' ? 'High priority' : tier === 'medium' ? 'Recommended' : 'Optional'} tracing — ${svcCount} services`,
+        (svcNames, itemCount) => `${svcNames.slice(0, 3).join(', ')}${svcNames.length > 3 ? ` and ${svcNames.length - 3} more` : ''} have no X-Ray tracing.`,
+      )
     }
 
     const extraIds = ['g-dashboards', 'g-anomaly', 'g-slos', 'g-cross-account', 'g-cw-agent', 'g-no-actions']
