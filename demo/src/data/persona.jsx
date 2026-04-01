@@ -453,6 +453,13 @@ const james = {
     { id: "dash-2", name: "Trading Floor", lastViewed: "1 day ago", widgets: 8 },
     { id: "dash-3", name: "Infrastructure", lastViewed: "4 months ago", stale: true, widgets: 15 },
   ],
+  regionHealth: [
+    { region: "us-east-1", status: "warning", services: 12, alarms: 2, note: "DB CPU high" },
+    { region: "us-west-2", status: "healthy", services: 3, alarms: 0, note: "" },
+    { region: "eu-west-1", status: "healthy", services: 2, alarms: 0, note: "" },
+    { region: "eu-central-1", status: "healthy", services: 1, alarms: 0, note: "" },
+    { region: "ap-southeast-1", status: "healthy", services: 4, alarms: 0, note: "" },
+  ],
 }
 
 // ─── Exports ──────────────────────────────────────────────────────
