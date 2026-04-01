@@ -8,7 +8,6 @@ import {
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { AgentDrawer } from '../components/Drawer'
-import { getInvestigation } from '../data/investigations'
 
 const statusDots = { healthy: 'bg-green-400', warning: 'bg-orange-400', critical: 'bg-red-400', 'at-risk': 'bg-orange-400' }
 const sevColors = { critical: 'text-red-400 bg-red-400/10', high: 'text-orange-400 bg-orange-400/10', medium: 'text-primary bg-primary/10', low: 'text-foreground-muted bg-foreground-muted/10' }
@@ -91,7 +90,7 @@ function ApplicationsCard({ applications, onInvestigate }) {
           const flags = agentFlags[app.name] || []
           const hasWarning = flags.some(f => f.severity === 'warning')
           return (
-            <button key={app.id} onClick={() => onInvestigate('alarms', { appName: app.name, services: app.services })} className="flex items-start gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group">
+            <button key={app.id} onClick={() => onInvestigate('app', { app, flags: agentFlags[app.name] || [] })} className="flex items-start gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group">
               <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${hasWarning ? 'bg-orange-400' : 'bg-green-400'}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -154,7 +153,7 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
         {filtered.map(r => {
           const Icon = typeIcons[r.type] || Cpu
           return (
-            <button key={r.name} onClick={() => onInvestigate('db-connections', { service: r.name, label: r.name })} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group w-full flex-shrink-0">
+            <button key={r.name} onClick={() => onInvestigate('infra', { resource: r })} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group w-full flex-shrink-0">
               <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusDots[r.status] || 'bg-foreground-muted'}`} />
               <Icon size={10} className="text-foreground-disabled flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -199,7 +198,7 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
           return (
             <div key={alarm.id} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-all text-left group ${isAcked ? 'opacity-50' : ''}`}>
               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAcked ? 'bg-green-400' : alarm.state === 'ALARM' ? statusDots[alarm.severity === 'critical' ? 'critical' : 'warning'] : 'bg-green-400'}`} />
-              <button onClick={() => onInvestigate('error-rate', { service: alarm.resource, label: alarm.name })} className="flex-1 min-w-0 text-left">
+              <button onClick={() => onInvestigate('alarm', { alarm })} className="flex-1 min-w-0 text-left">
                 <div className="flex items-center gap-1.5">
                   <span className={`text-[8px] px-1 py-0 rounded font-medium ${sevColors[alarm.severity]}`}>{alarm.severity}</span>
                   <p className={`text-[11px] font-medium truncate ${isAcked ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{alarm.name}</p>
@@ -211,7 +210,7 @@ function AlarmsCard({ activeAlarms, onInvestigate }) {
               <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!isAcked && <button onClick={(e) => { e.stopPropagation(); setAcked(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-status-active px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted hover:border-status-active/30 transition-colors">Ack</button>}
                 <button onClick={(e) => { e.stopPropagation(); setSnoozed(p => new Set(p).add(alarm.id)) }} className="text-[8px] text-foreground-muted hover:text-foreground px-1.5 py-0.5 rounded bg-background-surface-1 border border-border-muted transition-colors">Snooze</button>
-                <MagnifyingGlass size={10} className="text-primary cursor-pointer" onClick={() => onInvestigate('error-rate', { service: alarm.resource, label: alarm.name })} />
+                <MagnifyingGlass size={10} className="text-primary cursor-pointer" onClick={() => onInvestigate('alarm', { alarm })} />
               </div>
             </div>
           )
@@ -237,7 +236,7 @@ function SLOsCard({ slos, onInvestigate }) {
     const TrendIcon = trendIcons[slo.trend] || Minus
     const isAtRisk = slo.status === 'at-risk'
     return (
-      <button key={slo.id} onClick={() => onInvestigate('latency-waterfall', { appName: slo.service, label: slo.name })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-status-degraded/5' : ''} ${dimmed ? 'opacity-50' : ''}`}>
+      <button key={slo.id} onClick={() => onInvestigate('slo', { slo })} className={`flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-primary/5 transition-colors text-left group ${isAtRisk ? 'bg-status-degraded/5' : ''} ${dimmed ? 'opacity-50' : ''}`}>
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAtRisk ? 'bg-orange-400' : 'bg-green-400'}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -305,6 +304,97 @@ function DashboardsSection({ dashboards }) {
   )
 }
 
+// ─── Build contextual investigations for Monitor page ─────────────
+function buildMonitorInvestigation(type, context, persona) {
+  if (type === 'app') {
+    const { app, flags } = context
+    const svcCount = app.services.length
+    const alarmed = app.services.filter(s => s.hasAlarms).length
+    const hasFlags = flags.length > 0
+    return {
+      title: app.name,
+      subtitle: `${svcCount} services · ${alarmed} with alarms`,
+      messages: [
+        { type: 'text', content: hasFlags ? `I'm seeing some issues with ${app.name} that need attention.` : `${app.name} is looking healthy. All services are operating normally.` },
+        ...flags.map(f => ({ type: 'finding', severity: f.severity === 'warning' ? 'warning' : 'info', title: f.text, content: `Detected on ${app.name}` })),
+        ...(alarmed < svcCount ? [{ type: 'finding', severity: 'warning', title: `${svcCount - alarmed} services without alarms`, content: 'These services have no alarm coverage. Issues could go undetected.' }] : []),
+        { type: 'chart', label: `${app.name} — Error rate (24h)`, base: 0.3, variance: 0.4, color: '#f87171', unit: '%', threshold: 1, thresholdLabel: 'Alert: 1%' },
+        { type: 'chart', label: `${app.name} — Latency p99 (24h)`, base: 120, variance: 50, color: '#8b5cf6', unit: 'ms', threshold: 500, thresholdLabel: 'SLA: 500ms' },
+      ],
+      followUps: [`What's causing the issues in ${app.name}?`, `Show me the service map`, `Which services should I prioritize?`, `Create alarms for uncovered services`],
+    }
+  }
+
+  if (type === 'infra') {
+    const { resource: r } = context
+    const metricMap = { 'EKS': { base: 55, unit: '%', metric: 'CPU', color: '#0ea5e9' }, 'Aurora PostgreSQL': { base: 45, unit: '%', metric: 'CPU', color: '#22c55e' }, 'DynamoDB': { base: 120, unit: ' RCU', metric: 'Read capacity', color: '#60a5fa' }, 'ElastiCache Redis': { base: 92, unit: '%', metric: 'Hit ratio', color: '#facc15' }, 'ECS Fargate': { base: 35, unit: '%', metric: 'CPU', color: '#0ea5e9' } }
+    const m = metricMap[r.type] || { base: 50, unit: '%', metric: 'Utilization', color: '#0ea5e9' }
+    const isWarning = r.status === 'warning'
+    return {
+      title: r.name,
+      subtitle: `${r.type} · ${r.app}`,
+      messages: [
+        { type: 'text', content: isWarning ? `${r.name} needs attention. Here's what I found:` : `${r.name} is operating normally. Here's the current state:` },
+        { type: 'finding', severity: isWarning ? 'warning' : 'info', title: r.note, content: `${r.type} resource in ${r.app}` },
+        { type: 'chart', label: `${r.name} — ${m.metric} (24h)`, base: m.base, variance: m.base * 0.3, color: m.color, unit: m.unit },
+        ...(isWarning ? [{ type: 'text', content: 'I recommend investigating the root cause. This could indicate a capacity issue or a workload change.' }, { type: 'actions' }] : []),
+      ],
+      followUps: [`What's the trend over the past week?`, `Show me connected services`, `Create an alarm for ${r.name}`, `Is this normal for this time of day?`],
+    }
+  }
+
+  if (type === 'alarm') {
+    const { alarm: a } = context
+    const isActive = a.state === 'ALARM'
+    const chartBase = a.value.includes('%') ? parseFloat(a.value) : a.value.includes('ms') ? parseFloat(a.value) : 50
+    const chartUnit = a.value.includes('%') ? '%' : a.value.includes('ms') ? 'ms' : ''
+    const thresholdVal = parseFloat(a.threshold)
+    return {
+      title: `Alarm: ${a.name}`,
+      subtitle: `${a.resource} · ${a.metric}`,
+      messages: [
+        { type: 'text', content: isActive ? `This alarm is currently firing. Here's my analysis:` : `This alarm recently resolved. Here's what happened:` },
+        { type: 'chart', label: `${a.resource} — ${a.metric} (24h)`, base: chartBase * 0.8, variance: chartBase * 0.3, color: isActive ? '#f87171' : '#22c55e', unit: chartUnit, threshold: thresholdVal, thresholdLabel: `Threshold: ${a.threshold}` },
+        { type: 'finding', severity: isActive ? 'critical' : 'info', title: isActive ? `${a.metric}: ${a.value} (threshold: ${a.threshold})` : 'Resolved', content: a.recommendation },
+        { type: 'steps', steps: [
+          { action: 'Checked deployment history', result: 'No recent deployments', status: 'clear' },
+          { action: `Analyzed ${a.metric} trend`, result: isActive ? `Trending toward threshold over the past hour` : 'Brief spike, now back to normal', status: isActive ? 'found' : 'clear' },
+          { action: 'Checked correlated metrics', result: isActive ? 'Connection count also elevated' : 'No correlated anomalies', status: isActive ? 'found' : 'clear' },
+        ]},
+        ...(isActive ? [{ type: 'actions' }] : []),
+      ],
+      followUps: [`What caused this?`, `Show me the error logs`, `Should I adjust the threshold?`, `What's the blast radius?`],
+    }
+  }
+
+  if (type === 'slo') {
+    const { slo: s } = context
+    const atRisk = s.status === 'at-risk'
+    const errorBudget = ((s.current - s.target) / (100 - s.target) * 100).toFixed(1)
+    return {
+      title: `SLO: ${s.name}`,
+      subtitle: `${s.service} · ${s.window}`,
+      messages: [
+        { type: 'text', content: atRisk ? `This SLO is at risk of breaching. Error budget is running low.` : `This SLO is healthy and within target.` },
+        { type: 'chart', label: `${s.name} — Attainment (30d)`, base: s.current, variance: 0.05, color: atRisk ? '#f87171' : '#22c55e', unit: '%', threshold: s.target, thresholdLabel: `Target: ${s.target}%` },
+        { type: 'finding', severity: atRisk ? 'warning' : 'info', title: `Current: ${s.current}% · Target: ${s.target}%`, content: atRisk ? `Error budget at ${errorBudget}%. At current burn rate, you'll breach in ~3 days.` : `Error budget at ${errorBudget}%. Comfortable margin.` },
+        ...(atRisk ? [
+          { type: 'steps', steps: [
+            { action: 'Analyzed error budget burn rate', result: 'Accelerating over the past 48 hours', status: 'found' },
+            { action: 'Identified contributing errors', result: 'Intermittent 5xx from upstream dependency', status: 'found' },
+            { action: 'Checked recent changes', result: 'No deployments in the window', status: 'clear' },
+          ]},
+          { type: 'actions' },
+        ] : []),
+      ],
+      followUps: [atRisk ? `What's burning the error budget?` : `What would put this at risk?`, `Show me the error breakdown`, `Compare with last month`, `Set up an alert at 50% budget consumed`],
+    }
+  }
+
+  // Fallback
+  return { title: 'Investigation', subtitle: 'Analyzing...', messages: [{ type: 'text', content: 'Looking into this...' }], followUps: ['Tell me more'] }
+}
+
 // ─── Main Monitor Page ────────────────────────────────────────────
 export default function MonitorPage() {
   const navigate = useNavigate()
@@ -323,8 +413,9 @@ export default function MonitorPage() {
     )
   }
 
-  const openInvestigation = (widgetType, context) => {
-    setDrawerInvestigation(getInvestigation(widgetType, { ...context, services: applications.flatMap(a => a.services) }))
+  const openInvestigation = (type, context) => {
+    const inv = buildMonitorInvestigation(type, context, persona)
+    setDrawerInvestigation(inv)
   }
 
   return (
