@@ -11,6 +11,20 @@ import {
 import { coffee } from '../data/coffee'
 import { useChatPanel } from '../components/ConsoleLayout'
 import TopologyMap from '../components/TopologyMap'
+import { nodes as topoNodes, edges as topoEdges, insights as topoInsights } from '../data/topology'
+
+// Filter topology to key services for the home page — compressed y positions to fit panel
+const homeTopoNodeIds = new Set([
+  'customer-portal', 'order-management', 'inventory-system', 'payments-app',
+  'shipping-tracker', 'loyalty-program', 'search-app', 'fraud-detection',
+  'identity-provider', 'notification-hub',
+])
+const homeYRemap = { 0.05: 0.08, 0.25: 0.40, 0.42: 0.40, 0.62: 0.75 }
+const homeTopoNodes = topoNodes
+  .filter(n => homeTopoNodeIds.has(n.id))
+  .map(n => ({ ...n, y: homeYRemap[n.y] ?? n.y }))
+const homeTopoEdges = topoEdges.filter(e => homeTopoNodeIds.has(e.from) && homeTopoNodeIds.has(e.to))
+const homeTopoInsights = topoInsights.filter(ins => (ins.relatedNodes || []).some(id => homeTopoNodeIds.has(id)))
 
 /* ── Act indicator ── */
 function ActIndicator({ current, total }) {
@@ -545,8 +559,14 @@ export default function CoffeeView() {
               {/* Agent Insight Cards */}
               <div className="glass-card p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-heading-xs font-normal text-foreground flex items-center gap-1.5"><Sparkle size={12} className="text-orange-400" weight="fill" /> Trends & signals</h3>
+                  <h3 className="text-heading-xs font-normal text-foreground">Trends & signals</h3>
                   <TileMenu id="trends" />
+                </div>
+
+                {/* Agent insight */}
+                <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/[0.04] border border-primary/10 mb-2">
+                  <Sparkle size={12} className="text-primary mt-0.5 flex-shrink-0" weight="fill" />
+                  <p className="text-[11px] text-foreground leading-relaxed">3 signals worth your attention: a capacity trend, a latency improvement, and week-over-week health gains.</p>
                 </div>
                 <div className="space-y-2">
                 {/* Capacity Trend */}
@@ -648,12 +668,12 @@ export default function CoffeeView() {
 
                 {/* Agent insight */}
                 <div className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/[0.04] border border-primary/10 mb-2">
-                  <Sparkle size={12} className="text-orange-400 mt-0.5 flex-shrink-0" weight="fill" />
-                  <p className="text-[11px] text-foreground leading-relaxed">I'm watching 2 anomalies on the payment path — Order Management is degraded and cascading into Payments.</p>
+                  <Sparkle size={12} className="text-primary mt-0.5 flex-shrink-0" weight="fill" />
+                  <p className="text-[11px] text-foreground leading-relaxed">I'm watching 2 anomalies on the payment path. Order Management is degraded and cascading into Payments.</p>
                 </div>
 
                 <div className="flex-1 min-h-0">
-                  <TopologyMap />
+                  <TopologyMap customNodes={homeTopoNodes} customEdges={homeTopoEdges} customInsights={homeTopoInsights} />
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   House, MagnifyingGlass, Pulse, MagnifyingGlassPlus,
-  GearSix, Star, Clock, Sparkle, Bell, User,
+  GearSix, Star, Clock, Sparkle, Bell, User, CaretLeft,
   ChatTeardropDots, X, PaperPlaneRight, List
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
@@ -456,7 +456,7 @@ export default function ConsoleLayout({ children }) {
         <nav className={`${navOpen ? 'w-48' : 'w-14'} border-r border-border-muted flex flex-col flex-shrink-0 overflow-y-auto scrollbar-hide transition-all duration-200`}>
           <div className="px-3 pt-4 pb-3 flex items-center gap-2 cursor-pointer" onClick={() => setNavOpen(!navOpen)}>
             {navOpen
-              ? <span className="text-body-s font-semibold text-foreground">CloudWatch<sup className="text-primary text-[14px]">+</sup></span>
+              ? <><CaretLeft size={14} className="text-foreground-muted" /><span className="text-body-s font-semibold text-foreground">CloudWatch<sup className="text-primary text-[14px]">+</sup></span></>
               : <List size={20} className="text-foreground-muted mx-auto" />
             }
           </div>

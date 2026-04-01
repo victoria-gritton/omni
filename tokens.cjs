@@ -25,8 +25,8 @@ const tokens = {
 
   // ── Text Scale ──
   '--foreground':          'colors.slate.100',
-  '--foreground-secondary': 'colors.slate.100',
-  '--foreground-muted':    'colors.slate.200',
+  '--foreground-secondary': 'colors.slate.200',
+  '--foreground-muted':    'colors.slate.300',
   '--foreground-disabled': 'colors.slate.500',
   '--link':                'colors.blue.400',
 
