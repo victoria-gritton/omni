@@ -112,21 +112,14 @@ function ProgressBar({ tiers, activeTier, onTierClick }) {
   const totalResolved = tierKeys.reduce((s, k) => s + (tiers[k]?.resolved || 0), 0)
   const pct = totalGaps > 0 ? (totalResolved / totalGaps) * 100 : 0
 
-  // Calculate segment widths proportional to gap count
-  const segments = tierKeys.map(k => ({
+  // Evenly spaced milestones at 25%, 50%, 75%, 100%
+  const milestones = tierKeys.map((k, i) => ({
     key: k,
     count: tiers[k]?.total || 0,
     resolved: tiers[k]?.resolved || 0,
-    pct: totalGaps > 0 ? ((tiers[k]?.total || 0) / totalGaps) * 100 : 25,
     allDone: (tiers[k]?.total || 0) > 0 && (tiers[k]?.resolved || 0) === (tiers[k]?.total || 0),
+    position: (i + 1) * 25,
   }))
-
-  // Cumulative positions for milestone markers
-  let cumPct = 0
-  const milestones = segments.map(seg => {
-    cumPct += seg.pct
-    return { ...seg, position: cumPct }
-  })
 
   return (
     <div className="glass-card p-5 mb-6">
