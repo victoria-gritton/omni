@@ -143,7 +143,7 @@ function InfrastructureCard({ infraHealth, onInvestigate }) {
         <button onClick={() => setActiveType('all')} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors ${activeType === 'all' ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>All</button>
         {sortedTypes.map(type => {
           const hasIssue = byType[type].some(r => r.status !== 'healthy')
-          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors flex items-center gap-1 ${activeType === type ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>{typeLabels[type] || type}{hasIssue && <div className="w-1.5 h-1.5 rounded-full bg-status-degraded" />}</button>
+          return <button key={type} onClick={() => setActiveType(type)} className={`px-2 py-1 rounded text-[9px] font-medium transition-colors relative ${activeType === type ? 'bg-primary/15 text-primary' : 'text-foreground-disabled hover:text-foreground-muted'}`}>{typeLabels[type] || type}{hasIssue && activeType !== type && <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-status-degraded" />}</button>
         })}
       </div>
       {/* Scrollable list */}
