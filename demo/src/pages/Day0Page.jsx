@@ -691,7 +691,7 @@ export default function Day0Page() {
       </div>
 
       {/* Top row */}
-      <div className="grid grid-cols-[1fr_300px] gap-4 mb-6">
+      <div className={`grid ${!isGreenfield && persona.activeAlarms ? 'grid-cols-[1fr_1fr_300px]' : 'grid-cols-[1fr_300px]'} gap-4 mb-6`}>
         {isGreenfield ? (
           <button onClick={() => navigate('/gaps')} className="ai-glass-card p-5 text-left hover:border-primary/40 transition-all">
             <div className="flex items-start gap-3">
@@ -715,6 +715,26 @@ export default function Day0Page() {
             </div>
           </button>
         )}
+        {/* Monitor widget — only for personas with active monitoring */}
+        {!isGreenfield && persona.activeAlarms && (() => {
+          const alarming = persona.activeAlarms.filter(a => a.state === 'ALARM').length
+          const sloAtRisk = (persona.slos || []).filter(s => s.status === 'at-risk').length
+          const sloTotal = (persona.slos || []).length
+          const overallOk = alarming === 0 && sloAtRisk === 0
+          return (
+            <button onClick={() => navigate('/monitor')} className="glass-card p-4 text-left hover:border-primary/30 transition-all">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-3 h-3 rounded-full ${overallOk ? 'bg-status-active' : alarming > 0 ? 'bg-red-400' : 'bg-status-degraded'}`} style={!overallOk ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
+                <span className="text-body-s font-semibold text-foreground">{overallOk ? 'Systems Healthy' : 'Attention Needed'}</span>
+              </div>
+              <div className="flex gap-3 mb-2">
+                <div><p className={`text-heading-m font-semibold ${alarming > 0 ? 'text-red-400' : 'text-status-active'}`}>{alarming}</p><p className="text-[8px] text-foreground-muted">Active alarms</p></div>
+                <div><p className={`text-heading-m font-semibold ${sloAtRisk > 0 ? 'text-status-degraded' : 'text-status-active'}`}>{sloTotal - sloAtRisk}/{sloTotal}</p><p className="text-[8px] text-foreground-muted">SLOs on target</p></div>
+              </div>
+              <span className="text-[10px] text-primary inline-flex items-center gap-1">Open Monitor <ArrowRight size={10} /></span>
+            </button>
+          )
+        })()}
         <div className="glass-card p-4">
           <span className="text-body-s font-semibold text-foreground">CloudWatch Cost</span>
           <p className="text-heading-m font-semibold text-foreground mt-1 mb-2">${cost.current.total.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span></p>
