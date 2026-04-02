@@ -32,8 +32,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/watch" element={<WatchView />} />
           <Route path="/phone" element={<PhoneView />} />
           <Route path="/slack" element={<SlackView />} />
-          <Route path="/home" element={<ConsoleLayout><TileHomePage /></ConsoleLayout>} />
-          <Route path="/coffee" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
+          <Route path="/home" element={<ConsoleLayout><CoffeeView /></ConsoleLayout>} />
+          <Route path="/tiles" element={<ConsoleLayout><TileHomePage /></ConsoleLayout>} />
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />
           <Route path="/day0" element={<ConsoleLayout><Day0Page /></ConsoleLayout>} />
