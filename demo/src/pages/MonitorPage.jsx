@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { AgentDrawer } from '../components/Drawer'
+import { IaCExportModal } from '../components/IaCExportModal'
 
 const statusDots = { healthy: 'bg-green-400', warning: 'bg-orange-400', critical: 'bg-red-400', 'at-risk': 'bg-orange-400' }
 const sevColors = { critical: 'text-red-400 bg-red-400/10', high: 'text-orange-400 bg-orange-400/10', medium: 'text-primary bg-primary/10', low: 'text-foreground-muted bg-foreground-muted/10' }
@@ -480,35 +481,11 @@ export default function MonitorPage() {
       )}
 
       {iacItems && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="glass-card w-[600px] max-h-[70vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-border-muted">
-              <div>
-                <h2 className="text-body-m font-semibold text-foreground">Export as Code</h2>
-                <p className="text-[11px] text-foreground-muted">{iacItems.length} items selected</p>
-              </div>
-              <button onClick={() => setIacItems(null)} className="p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted">✕</button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              <pre className="text-[10px] text-foreground-muted bg-background/60 rounded-lg p-4 border border-border-muted/30 overflow-x-auto leading-relaxed">
-{`AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudWatch resources from Monitor investigation
-
-Resources:
-${iacItems.map(item => `  # ${item.name}
-  ${item.id.replace(/[^a-zA-Z0-9]/g, '')}:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: ${item.name.split(' — ')[1] || item.name}
-      # Cost: $${item.cost?.toFixed(2) || '0.10'}/mo`).join('\n\n')}`}
-              </pre>
-            </div>
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-border-muted">
-              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2">Copy</button>
-              <button className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium">Download</button>
-            </div>
-          </div>
-        </div>
+        <IaCExportModal
+          onClose={() => setIacItems(null)}
+          title={`${iacItems.length} items from investigation`}
+          subtitle={iacItems.map(i => i.name?.split(' — ')[1] || i.name).slice(0, 3).join(', ')}
+        />
       )}
 
       <style>{`
