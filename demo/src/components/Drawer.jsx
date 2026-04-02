@@ -120,6 +120,87 @@ const mockResponses = {
   'default': [
     { type: 'text', content: 'That\'s a great question. Based on your current setup, I\'d recommend starting with the critical items first — they have the highest impact on your reliability posture. Once those are deployed, we can look at the next tier together.' },
   ],
+  'root-cause': [
+    { type: 'text', content: 'I ran a root cause analysis across correlated signals:' },
+    { type: 'steps', steps: [
+      { action: 'Checked recent deployments', result: 'No deployments in the last 24 hours — not a code change', status: 'clear' },
+      { action: 'Analyzed traffic patterns', result: 'Traffic is within normal range — not a load issue', status: 'clear' },
+      { action: 'Checked upstream dependencies', result: 'External payment provider response time elevated — likely root cause', status: 'found' },
+      { action: 'Checked infrastructure', result: 'Database connection pool at 78% — contributing factor', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'warning', title: 'Two contributing factors identified', content: 'The primary issue is elevated response times from the external payment provider. This is compounded by the database connection pool approaching capacity. The combination is causing cascading latency.' },
+  ],
+  'service-map': [
+    { type: 'text', content: 'Here\'s the service dependency map based on your infrastructure:' },
+    { type: 'finding', severity: 'info', title: 'Service topology', content: 'API Gateway → ECS/EKS compute services → databases (RDS, DynamoDB) with caching (ElastiCache) and async messaging (SQS/SNS/Kinesis/MSK) on the side.' },
+    { type: 'text', content: 'To get a real-time interactive service map with health overlays, enable X-Ray tracing. Application Signals will then auto-generate the map from trace data.' },
+  ],
+  'create-alarm': [
+    { type: 'text', content: 'I can create alarms for the uncovered services. Here\'s what I recommend:' },
+    { type: 'finding', severity: 'info', title: 'Recommended approach', content: 'I\'ll create 2-3 alarms per service based on the service type: CPU/memory for compute, latency/errors for APIs, connections/latency for databases. Each alarm is $0.10/month.' },
+    { type: 'text', content: 'Go to the Observability Gaps page to select specific services and configure alarm thresholds before deploying.' },
+  ],
+  'circuit-breaker': [
+    { type: 'text', content: 'A circuit breaker pattern would help here. When the upstream dependency starts timing out, the circuit breaker trips and returns a fast failure instead of waiting for the timeout.' },
+    { type: 'steps', steps: [
+      { action: 'Configure failure threshold', result: 'Trip after 5 consecutive failures or 50% error rate in 30 seconds', status: 'clear' },
+      { action: 'Set recovery timeout', result: 'Half-open after 30 seconds, allow 1 test request through', status: 'clear' },
+      { action: 'Add fallback response', result: 'Return cached response or graceful degradation message', status: 'clear' },
+    ]},
+    { type: 'finding', severity: 'info', title: 'CloudWatch alarm for circuit breaker', content: 'I can create an alarm that monitors the circuit breaker state — alerting when it trips so your team knows the dependency is degraded.' },
+  ],
+  'endpoint-breakdown': [
+    { type: 'text', content: 'Here\'s the traffic breakdown by endpoint:' },
+    { type: 'steps', steps: [
+      { action: '/api/v2/payments — 42% of traffic', result: '~3,500 req/min, p99 latency 180ms', status: 'clear' },
+      { action: '/api/v2/accounts — 28% of traffic', result: '~2,300 req/min, p99 latency 95ms', status: 'clear' },
+      { action: '/api/v2/transactions — 18% of traffic', result: '~1,500 req/min, p99 latency 210ms', status: 'found' },
+      { action: '/api/v2/auth — 12% of traffic', result: '~1,000 req/min, p99 latency 45ms', status: 'clear' },
+    ]},
+    { type: 'finding', severity: 'info', title: '/transactions has highest latency', content: 'The transactions endpoint has the highest p99 latency at 210ms. This correlates with the database connection pool pressure we identified earlier.' },
+  ],
+  'capacity-projection': [
+    { type: 'text', content: 'Based on your current growth rate and resource utilization:' },
+    { type: 'steps', steps: [
+      { action: 'Current utilization', result: 'CPU 42%, Memory 58%, Connections 24/100', status: 'clear' },
+      { action: 'Growth rate', result: '~8% month-over-month traffic increase', status: 'clear' },
+      { action: 'Projected capacity limit', result: 'At current growth, you\'ll hit 80% memory in ~4 months', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'warning', title: 'Plan scaling in ~3 months', content: 'Memory will be the first bottleneck. Consider scaling up instance size or adding horizontal capacity before hitting 80%.' },
+  ],
+  'scaling-advice': [
+    { type: 'text', content: 'Based on your current utilization and traffic patterns:' },
+    { type: 'finding', severity: 'info', title: 'Scaling recommendation', content: 'Your current capacity has healthy headroom. CPU at 42% and memory at 58% means you can handle ~70% more traffic before needing to scale. I\'d recommend setting up auto-scaling policies rather than scaling up now.' },
+    { type: 'text', content: 'For ECS: set target tracking on CPU at 70%. For EKS: configure Horizontal Pod Autoscaler with CPU target 60%. This gives you automatic scaling without over-provisioning.' },
+  ],
+  'cold-starts': [
+    { type: 'text', content: 'Here\'s the cold start analysis for your Lambda functions:' },
+    { type: 'steps', steps: [
+      { action: 'transaction-processor — 6% cold starts', result: 'High invocation rate keeps containers warm. Cold starts only during scale-up events.', status: 'clear' },
+      { action: 'fraud-scorer — 12% cold starts', result: 'Bursty traffic pattern causes frequent cold starts. Provisioned concurrency would help.', status: 'found' },
+      { action: 'report-generator — 45% cold starts', result: 'Low frequency (batch job). Cold starts expected and acceptable for this use case.', status: 'clear' },
+    ]},
+    { type: 'finding', severity: 'info', title: 'Provisioned concurrency recommended for fraud-scorer', content: 'Setting 5 provisioned instances would eliminate most cold starts for the fraud-scorer function. Estimated cost: ~$15/month.' },
+  ],
+  'budget-burn': [
+    { type: 'text', content: 'I analyzed the error budget consumption pattern:' },
+    { type: 'chart', label: 'Error budget remaining (30d)', base: 65, variance: 8, color: '#f87171', unit: '%' },
+    { type: 'steps', steps: [
+      { action: 'Burn rate analysis', result: 'Current burn rate: 2.3× — consuming budget 2.3× faster than sustainable', status: 'found' },
+      { action: 'Top contributor', result: 'Intermittent 5xx errors from upstream dependency account for 68% of budget consumption', status: 'found' },
+      { action: 'Time to breach', result: 'At current rate, you\'ll breach the SLO in ~3 days', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'warning', title: 'Action needed within 3 days', content: 'The upstream dependency issues are burning your error budget fast. Fix the dependency or add a circuit breaker to stop the bleeding.' },
+  ],
+  'slo-risk': [
+    { type: 'text', content: 'Here\'s what could put this SLO at risk:' },
+    { type: 'steps', steps: [
+      { action: 'Upstream dependency failure', result: 'If the payment provider degrades, your error rate spikes immediately', status: 'found' },
+      { action: 'Database capacity', result: 'Connection pool at 78% — a traffic spike could cause queuing and latency breaches', status: 'found' },
+      { action: 'Deployment risk', result: 'A bad deploy without canary testing could burn the entire error budget in minutes', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'info', title: 'Mitigation recommendations', content: 'Set up burn-rate alerts at 2× and 10× thresholds. Add circuit breakers for external dependencies. Use canary deployments to limit blast radius.' },
+  ],
 }
 
 function getResponse(question) {
@@ -131,13 +212,26 @@ function getResponse(question) {
   if (q.includes('data drift') || q.includes('drift')) return mockResponses['data-drift']
   if (q.includes('spike') || q.includes('3:42') || q.includes('caused the')) return mockResponses['spike-analysis']
   if (q.includes('rolling restart') || q.includes('downtime') || q.includes('affect my running')) return mockResponses['rolling-restart']
-  if (q.includes('agent config') || q.includes('workload') || q.includes('collection interval') || q.includes('what metrics will')) return mockResponses['agent-config']
-  if (q.includes('widget') || q.includes('overview dashboard') || q.includes('customize the layout') || q.includes('preview')) return mockResponses['dashboard-widgets']
-  if (q.includes('slo') || q.includes('latency slo') || q.includes('service level')) return mockResponses['slo-setup']
+  if (q.includes('agent config') || q.includes('collection interval') || q.includes('what metrics will')) return mockResponses['agent-config']
+  if (q.includes('widget') || q.includes('overview dashboard') || q.includes('customize the layout') || q.includes('show me a preview')) return mockResponses['dashboard-widgets']
+  if (q.includes('circuit breaker')) return mockResponses['circuit-breaker']
+  if (q.includes('endpoint') || q.includes('by endpoint') || q.includes('traffic breakdown')) return mockResponses['endpoint-breakdown']
+  if (q.includes('capacity') || q.includes('project capacity') || q.includes('sized correctly')) return mockResponses['capacity-projection']
+  if (q.includes('scale up') || q.includes('scale out') || q.includes('scaling correctly') || q.includes('add more consumer')) return mockResponses['scaling-advice']
+  if (q.includes('cold start') || q.includes('provisioned concurrency')) return mockResponses['cold-starts']
+  if (q.includes('budget') || q.includes('burning') || q.includes('burn')) return mockResponses['budget-burn']
+  if (q.includes('at risk') || q.includes('put this at risk') || q.includes('what would')) return mockResponses['slo-risk']
+  if (q.includes('service map') || q.includes('dependency map') || q.includes('topology')) return mockResponses['service-map']
+  if (q.includes('create alarm') || q.includes('uncovered service') || q.includes('create an alarm')) return mockResponses['create-alarm']
+  if (q.includes('causing') || q.includes('root cause') || q.includes('what\'s wrong') || q.includes('issues in')) return mockResponses['root-cause']
+  if (q.includes('slo') || q.includes('latency slo') || q.includes('service level') || q.includes('error breakdown')) return mockResponses['slo-setup']
   if (q.includes('anomaly') || q.includes('anomaly detection')) return mockResponses['anomaly-detection']
-  if (q.includes('compare') || q.includes('last week') || q.includes('last month') || q.includes('previous')) return mockResponses['compare-week']
+  if (q.includes('compare') || q.includes('last week') || q.includes('last month') || q.includes('previous') || q.includes('model version')) return mockResponses['compare-week']
+  if (q.includes('hot partition') || q.includes('hot key') || q.includes('frequently accessed')) return mockResponses['capacity-projection']
+  if (q.includes('split') || q.includes('fan-out') || q.includes('shard')) return mockResponses['scaling-advice']
+  if (q.includes('workload')) return mockResponses['agent-config']
   // General keyword matches
-  if (q.includes('threshold')) return mockResponses['thresholds']
+  if (q.includes('threshold') || q.includes('adjust')) return mockResponses['thresholds']
   if (q.includes('critical') || q.includes('why is this')) return mockResponses['critical']
   if (q.includes('skip') || q.includes('what happens if i skip')) return mockResponses['skip']
   if (q.includes('cloudformation') || q.includes('template') || q.includes('terraform')) return mockResponses['cloudformation']
@@ -145,6 +239,8 @@ function getResponse(question) {
   if (q.includes('log') && (q.includes('class') || q.includes('retention') || q.includes('volume') || q.includes('infrequent'))) return mockResponses['logs']
   if (q.includes('trac') || q.includes('x-ray') || q.includes('sampling')) return mockResponses['tracing']
   if (q.includes('stale') || q.includes('recreate') || q.includes('audit')) return mockResponses['skip']
+  if (q.includes('raw data') || q.includes('show me')) return mockResponses['endpoint-breakdown']
+  if (q.includes('blast radius')) return mockResponses['root-cause']
   return mockResponses['default']
 }
 
