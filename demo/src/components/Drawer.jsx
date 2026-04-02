@@ -271,6 +271,7 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
   const [configOpen, setConfigOpen] = useState(new Set())
   const [alarmConfigItem, setAlarmConfigItem] = useState(null)
   const [extraMessages, setExtraMessages] = useState([])
+  const [dynamicItems, setDynamicItems] = useState([])
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -281,6 +282,7 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
       setSelected(new Set())
     }
     setExtraMessages([])
+    setDynamicItems([])
   }, [investigation])
 
   // Auto-scroll when new messages are added
@@ -292,22 +294,121 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
 
   if (!investigation) return null
 
-  const items = investigation.selectableItems || []
-  const hasSelectable = items.length > 0
-  const groups = hasSelectable ? groupByService(items) : {}
+  const baseItems = investigation.selectableItems || []
+  const allItems = [...baseItems, ...dynamicItems]
+  const hasSelectable = allItems.length > 0
+  const groups = hasSelectable ? groupByService(allItems) : {}
   const serviceNames = Object.keys(groups)
-  const needsGrouping = serviceNames.length > 1 && items.length > 6
-  const selectedItems = items.filter(i => selected.has(i.id))
+  const needsGrouping = serviceNames.length > 1 && allItems.length > 6
+  const selectedItems = allItems.filter(i => selected.has(i.id))
   const totalCost = selectedItems.reduce((s, i) => s + (i.cost || 0), 0)
 
   const toggle = (id) => setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   const toggleGroup = (svc) => { const grp = groups[svc]; setSelected(prev => { const n = new Set(prev); const allIn = grp.every(i => n.has(i.id)); grp.forEach(i => allIn ? n.delete(i.id) : n.add(i.id)); return n }) }
   const toggleExpand = (svc) => setExpanded(prev => { const n = new Set(prev); n.has(svc) ? n.delete(svc) : n.add(svc); return n })
-  const selectAll = () => { if (selected.size === items.length) setSelected(new Set()); else setSelected(new Set(items.map(i => i.id))) }
+  const selectAll = () => { if (selected.size === allItems.length) setSelected(new Set()); else setSelected(new Set(allItems.map(i => i.id))) }
 
   const handleFollowUp = (question) => {
-    // Add user message
     const userMsg = { type: 'user', content: question }
+    const q = question.toLowerCase()
+
+    // Check if this is an action-triggering follow-up
+    if (q.includes('create alarm') || q.includes('create an alarm')) {
+      // Extract resource context from the investigation
+      const resourceName = investigation.title?.replace('Alarm: ', '') || 'service'
+      const resourceType = investigation.subtitle?.split(' · ')[0] || ''
+
+      // Generate alarm items based on the resource type
+      const alarmConfigs = {
+        'EKS': [
+          { name: 'Pod restart rate > 5/hr', metric: 'pod_restart_count', threshold: '5/hr', cost: 0.10 },
+          { name: 'Node CPU > 85%', metric: 'node_cpu_utilization', threshold: '85%', cost: 0.10 },
+          { name: 'Node memory > 85%', metric: 'node_memory_utilization', threshold: '85%', cost: 0.10 },
+          { name: 'Pending pods > 0', metric: 'pending_pods', threshold: '0', cost: 0.10 },
+        ],
+        'Aurora PostgreSQL': [
+          { name: 'CPU > 80%', metric: 'CPUUtilization', threshold: '80%', cost: 0.10 },
+          { name: 'Replica lag > 100ms', metric: 'AuroraReplicaLag', threshold: '100ms', cost: 0.10 },
+          { name: 'Deadlocks > 0', metric: 'Deadlocks', threshold: '0', cost: 0.10 },
+        ],
+        'DynamoDB': [
+          { name: 'Throttled requests > 0', metric: 'ThrottledRequests', threshold: '0', cost: 0.10 },
+          { name: 'System errors > 0', metric: 'SystemErrors', threshold: '0', cost: 0.10 },
+        ],
+        'ElastiCache Redis': [
+          { name: 'CPU > 75%', metric: 'CPUUtilization', threshold: '75%', cost: 0.10 },
+          { name: 'Engine CPU > 80%', metric: 'EngineCPUUtilization', threshold: '80%', cost: 0.10 },
+        ],
+        'ECS Fargate': [
+          { name: 'CPU > 90%', metric: 'CPUUtilization', threshold: '90%', cost: 0.10 },
+          { name: 'Memory > 85%', metric: 'MemoryUtilization', threshold: '85%', cost: 0.10 },
+        ],
+      }
+
+      const configs = alarmConfigs[resourceType] || [
+        { name: 'CPU > 90%', metric: 'CPUUtilization', threshold: '90%', cost: 0.10 },
+        { name: 'Error rate > 1%', metric: 'Errors', threshold: '1%', cost: 0.10 },
+      ]
+
+      const newItems = configs.map((c, i) => ({
+        id: `dyn-alarm-${resourceName}-${i}`,
+        name: `${resourceName} — ${c.name}`,
+        description: `${c.metric} · Threshold: ${c.threshold}`,
+        cost: c.cost,
+        defaultOn: true,
+        config: { metric: c.metric, threshold: parseFloat(c.threshold) || 0, unit: c.threshold.replace(/[\d.]/g, '') || '%', period: 300, evalPeriods: 2, comparison: 'GreaterThanThreshold', missingData: 'breaching' },
+      }))
+
+      // Add items to dynamic state and auto-select them
+      setDynamicItems(prev => [...prev, ...newItems])
+      setSelected(prev => {
+        const next = new Set(prev)
+        newItems.forEach(i => next.add(i.id))
+        return next
+      })
+
+      const totalCostNew = newItems.reduce((s, i) => s + i.cost, 0)
+      setExtraMessages(prev => [...prev, userMsg,
+        { type: 'text', content: `Here are the recommended alarms for ${resourceName}. You can edit thresholds before deploying.` },
+        { type: 'selectable' },
+        { type: 'finding', severity: 'info', title: `${newItems.length} alarms · $${totalCostNew.toFixed(2)}/mo`, content: 'Select the alarms you want, edit thresholds if needed, then Apply or Export as code.' },
+      ])
+      return
+    }
+
+    // Check for SLO creation
+    if (q.includes('slo') && (q.includes('create') || q.includes('set up'))) {
+      const svcName = investigation.title || 'service'
+      const newItems = [
+        { id: 'dyn-slo-avail', name: `${svcName} — Availability SLO`, description: '99.9% over 30-day rolling window', cost: 0, defaultOn: true },
+        { id: 'dyn-slo-latency', name: `${svcName} — Latency SLO`, description: 'p99 < 500ms over 30-day rolling window', cost: 0, defaultOn: true },
+      ]
+      setDynamicItems(prev => [...prev, ...newItems])
+      setSelected(prev => { const next = new Set(prev); newItems.forEach(i => next.add(i.id)); return next })
+      setExtraMessages(prev => [...prev, userMsg,
+        { type: 'text', content: `I recommend these SLOs for ${svcName}. Edit the targets to match your requirements.` },
+        { type: 'selectable' },
+      ])
+      return
+    }
+
+    // Check for circuit breaker creation
+    if (q.includes('circuit breaker')) {
+      const svcName = investigation.title || 'service'
+      const newItems = [
+        { id: 'dyn-cb-alarm', name: `${svcName} — Circuit breaker trip alarm`, description: 'Alert when circuit breaker opens due to upstream failures', cost: 0.10, defaultOn: true },
+        { id: 'dyn-cb-timeout', name: `${svcName} — Upstream timeout alarm`, description: 'Alert when upstream p99 > 2s', cost: 0.10, defaultOn: true },
+      ]
+      setDynamicItems(prev => [...prev, ...newItems])
+      setSelected(prev => { const next = new Set(prev); newItems.forEach(i => next.add(i.id)); return next })
+      setExtraMessages(prev => [...prev, userMsg,
+        ...mockResponses['circuit-breaker'],
+        { type: 'selectable' },
+      ])
+      return
+    }
+
+    // Default: text-only response
     const response = getResponse(question)
     setExtraMessages(prev => [...prev, userMsg, ...response])
   }
@@ -429,8 +530,8 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
             {msg.type === 'selectable' && hasSelectable && (
               <div className="my-3">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[9px] text-foreground-disabled uppercase tracking-wider">{selected.size} of {items.length} selected</p>
-                  <button onClick={selectAll} className="text-[9px] text-primary hover:text-primary-hover">{selected.size === items.length ? 'Deselect all' : 'Select all'}</button>
+                  <p className="text-[9px] text-foreground-disabled uppercase tracking-wider">{selected.size} of {allItems.length} selected</p>
+                  <button onClick={selectAll} className="text-[9px] text-primary hover:text-primary-hover">{selected.size === allItems.length ? 'Deselect all' : 'Select all'}</button>
                 </div>
                 {needsGrouping ? (
                   <div className="flex flex-col gap-1">
@@ -452,7 +553,7 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1">
-                    {items.map(item => (<div key={item.id}><div onClick={() => toggle(item.id)} className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer transition-colors ${selected.has(item.id) ? 'bg-primary/5 border border-primary/20' : 'border border-transparent hover:bg-background-surface-2/50'}`}>{selected.has(item.id) ? <CheckSquare size={14} weight="fill" className="text-primary flex-shrink-0" /> : <Square size={14} className="text-foreground-disabled flex-shrink-0" />}<div className="flex-1 min-w-0"><p className="text-[11px] text-foreground">{item.name}</p>{item.description && <p className="text-[9px] text-foreground-muted">{item.description}</p>}</div>{item.config && <button onClick={(e) => { e.stopPropagation(); setAlarmConfigItem(item) }} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}<span className="text-[10px] text-foreground-muted flex-shrink-0">{item.cost >= 0 ? '+' : ''}${item.cost.toFixed(2)}/mo</span></div></div>))}
+                    {allItems.map(item => (<div key={item.id}><div onClick={() => toggle(item.id)} className={`flex items-center gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer transition-colors ${selected.has(item.id) ? 'bg-primary/5 border border-primary/20' : 'border border-transparent hover:bg-background-surface-2/50'}`}>{selected.has(item.id) ? <CheckSquare size={14} weight="fill" className="text-primary flex-shrink-0" /> : <Square size={14} className="text-foreground-disabled flex-shrink-0" />}<div className="flex-1 min-w-0"><p className="text-[11px] text-foreground">{item.name}</p>{item.description && <p className="text-[9px] text-foreground-muted">{item.description}</p>}</div>{item.config && <button onClick={(e) => { e.stopPropagation(); setAlarmConfigItem(item) }} className="text-[9px] text-primary hover:text-primary-hover">Edit</button>}<span className="text-[10px] text-foreground-muted flex-shrink-0">{item.cost >= 0 ? '+' : ''}${item.cost.toFixed(2)}/mo</span></div></div>))}
                   </div>
                 )}
               </div>
@@ -469,7 +570,7 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
       {hasSelectable && selected.size > 0 && (
         <div className="flex-shrink-0 border-t border-border-muted bg-[#0c1120] px-5 py-3">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-[10px] text-foreground-muted">{selected.size} of {items.length} selected</span>
+            <span className="text-[10px] text-foreground-muted">{selected.size} of {allItems.length} selected</span>
             <div className="text-right"><span className="text-[10px] text-foreground-disabled">Estimated cost</span><p className="text-body-s font-semibold text-foreground">{totalCost >= 0 ? '+' : ''}${totalCost.toFixed(2)}<span className="text-[10px] text-foreground-muted font-normal">/mo</span></p></div>
           </div>
           <div className="flex gap-2">
