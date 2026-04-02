@@ -328,6 +328,124 @@ export function getInvestigation(widgetType, context = {}) {
       ],
       followUps: ['Show me the full error logs', 'Which upstream is timing out?', 'Create an alarm for this pattern'],
     },
+
+    'cache-hit': {
+      title: 'Cache Performance Analysis',
+      subtitle: context.label || `ElastiCache health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed the cache hit ratio and performance for ${appName}.` },
+        { type: 'chart', label: 'Cache hit ratio (24h)', base: 94, variance: 4, color: '#facc15', unit: '%', threshold: 85, thresholdLabel: 'Min acceptable 85%' },
+        { type: 'finding', severity: 'info', title: 'Cache hit ratio is healthy at 94%', content: 'Your cache is effectively reducing database load. A drop below 85% would indicate cache invalidation issues or a change in access patterns.' },
+        { type: 'steps', steps: [
+          { action: 'Checked eviction rate', result: 'Low evictions — cache size is adequate', status: 'clear' },
+          { action: 'Analyzed key distribution', result: 'Hot keys are well-distributed across shards', status: 'clear' },
+          { action: 'Checked memory utilization', result: 'Redis memory at 62% — healthy headroom', status: 'clear' },
+        ]},
+      ],
+      followUps: ['What are the most frequently accessed keys?', 'Create an alarm for cache hit ratio', 'Show me eviction trends', 'Is my cache sized correctly?'],
+    },
+
+    'lambda-stats': {
+      title: 'Lambda Function Analysis',
+      subtitle: context.service || `Lambda health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed the Lambda functions in ${appName} — invocations, errors, duration, and cold starts.` },
+        { type: 'chart', label: 'Invocations (24h)', base: 3200, variance: 1500, color: '#0ea5e9', unit: ' inv/min' },
+        { type: 'chart', label: 'Duration p99 (24h)', base: 450, variance: 200, color: '#8b5cf6', unit: 'ms', threshold: 10000, thresholdLabel: 'Timeout 10s' },
+        { type: 'steps', steps: [
+          { action: 'Checked error rate', result: 'Error rate 0.12% — within normal range', status: 'clear' },
+          { action: 'Analyzed cold starts', result: '~8% of invocations are cold starts — consider provisioned concurrency if latency-sensitive', status: 'found' },
+          { action: 'Checked throttling', result: 'No throttling events in the last 7 days', status: 'clear' },
+          { action: 'Reviewed memory utilization', result: 'Average 68% of allocated memory — well-sized', status: 'clear' },
+        ]},
+        { type: 'finding', severity: 'info', title: 'Functions are healthy', content: 'No errors or throttling. Cold start rate of 8% is typical for on-demand invocations. Consider provisioned concurrency for latency-critical functions.' },
+      ],
+      followUps: ['Which functions have the most cold starts?', 'Should I enable provisioned concurrency?', 'Show me error logs', 'Create alarms for these functions'],
+    },
+
+    'dynamo-capacity': {
+      title: 'DynamoDB Capacity Analysis',
+      subtitle: context.service || `DynamoDB health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed the read/write capacity and throttling for your DynamoDB tables in ${appName}.` },
+        { type: 'chart', label: 'Consumed read capacity (24h)', base: 120, variance: 60, color: '#60a5fa', unit: ' RCU' },
+        { type: 'chart', label: 'Consumed write capacity (24h)', base: 45, variance: 25, color: '#f59e0b', unit: ' WCU' },
+        { type: 'steps', steps: [
+          { action: 'Checked throttled requests', result: 'Zero throttled requests in the last 7 days', status: 'clear' },
+          { action: 'Analyzed capacity mode', result: 'On-demand mode — auto-scales with traffic', status: 'clear' },
+          { action: 'Checked hot partitions', result: 'No partition-level throttling detected', status: 'clear' },
+        ]},
+        { type: 'finding', severity: 'info', title: 'DynamoDB is healthy', content: 'No throttling, capacity is auto-scaling appropriately. Read/write patterns are consistent with expected traffic.' },
+      ],
+      followUps: ['Are there any hot partition keys?', 'Should I switch to provisioned capacity?', 'Show me the most expensive queries', 'Create a throttling alarm'],
+    },
+
+    'queue-depth': {
+      title: 'Queue Depth Analysis',
+      subtitle: context.service || `SQS health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed the queue depth and message processing for ${appName}.` },
+        { type: 'chart', label: 'Queue depth (24h)', base: 45, variance: 30, color: '#f97316', unit: ' msgs', threshold: 1000, thresholdLabel: 'Alert: 1000 msgs' },
+        { type: 'steps', steps: [
+          { action: 'Checked message age', result: 'Oldest message is 12 seconds — well within limits', status: 'clear' },
+          { action: 'Analyzed consumer throughput', result: 'Consumers processing at 98% of incoming rate', status: 'clear' },
+          { action: 'Checked dead letter queue', result: '3 messages in DLQ in the last 24 hours — investigate', status: 'found' },
+        ]},
+        { type: 'finding', severity: 'warning', title: '3 messages in dead letter queue', content: 'These messages failed processing after max retries. Could indicate a bug in the consumer or malformed messages from a producer.' },
+        { type: 'actions' },
+      ],
+      followUps: ['Show me the DLQ messages', 'What caused the failures?', 'Create an alarm for queue depth', 'Is my consumer scaling correctly?'],
+    },
+
+    'resource-util': {
+      title: 'Resource Utilization Analysis',
+      subtitle: `Compute health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed CPU and memory utilization across compute resources in ${appName}.` },
+        { type: 'chart', label: 'CPU utilization (24h)', base: 42, variance: 18, color: '#0ea5e9', unit: '%', threshold: 90, thresholdLabel: 'Alert: 90%' },
+        { type: 'chart', label: 'Memory utilization (24h)', base: 58, variance: 12, color: '#8b5cf6', unit: '%', threshold: 85, thresholdLabel: 'Alert: 85%' },
+        { type: 'steps', steps: [
+          { action: 'Checked peak utilization', result: 'CPU peaked at 67% during business hours — healthy headroom', status: 'clear' },
+          { action: 'Analyzed memory trend', result: 'Memory slowly trending up (+2% over 7 days) — possible memory leak', status: 'found' },
+          { action: 'Checked scaling events', result: 'No auto-scaling events triggered — current capacity is sufficient', status: 'clear' },
+        ]},
+        { type: 'finding', severity: 'warning', title: 'Memory trending upward', content: 'Memory utilization has increased 2% over the past week without a corresponding traffic increase. This could indicate a slow memory leak. Monitor closely.' },
+      ],
+      followUps: ['Which service has the memory leak?', 'Show me per-service breakdown', 'Create a memory alarm', 'Should I scale up?'],
+    },
+
+    'stream-lag': {
+      title: 'Kinesis Stream Analysis',
+      subtitle: context.label || `Stream health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed the Kinesis stream performance and consumer lag for ${appName}.` },
+        { type: 'chart', label: 'Iterator age (24h)', base: 800, variance: 600, color: '#f97316', unit: 'ms', threshold: 60000, thresholdLabel: 'Alert: 60s' },
+        { type: 'steps', steps: [
+          { action: 'Checked iterator age', result: 'Average 800ms — well within the 60s threshold', status: 'clear' },
+          { action: 'Analyzed throughput', result: 'Incoming: 2,400 records/sec, Processing: 2,380 records/sec — keeping up', status: 'clear' },
+          { action: 'Checked shard utilization', result: 'Shard 3 at 78% capacity — approaching limit', status: 'found' },
+        ]},
+        { type: 'finding', severity: 'warning', title: 'Shard 3 approaching capacity', content: 'One shard is at 78% throughput capacity. If traffic increases, you may need to split this shard or enable enhanced fan-out.' },
+      ],
+      followUps: ['Should I split the hot shard?', 'Enable enhanced fan-out', 'Show me per-shard metrics', 'Create a throughput alarm'],
+    },
+
+    'consumer-lag': {
+      title: 'MSK Consumer Lag Analysis',
+      subtitle: context.label || `Kafka health for ${appName}`,
+      messages: [
+        { type: 'text', content: `I analyzed the MSK consumer group lag and broker health for ${appName}.` },
+        { type: 'chart', label: 'Consumer lag (24h)', base: 450, variance: 300, color: '#ef4444', unit: ' msgs', threshold: 1000, thresholdLabel: 'Alert: 1000 msgs' },
+        { type: 'steps', steps: [
+          { action: 'Checked consumer group lag', result: 'Average lag 450 messages — within acceptable range', status: 'clear' },
+          { action: 'Analyzed broker disk usage', result: 'Broker 2 at 72% disk — monitor closely', status: 'found' },
+          { action: 'Checked partition balance', result: 'Partitions are evenly distributed across brokers', status: 'clear' },
+          { action: 'Reviewed consumer throughput', result: 'Consumers processing at 96% of production rate', status: 'clear' },
+        ]},
+        { type: 'finding', severity: 'warning', title: 'Broker disk usage at 72%', content: 'Broker 2 disk is filling up. At current ingestion rate, you have ~5 days before hitting 85%. Consider increasing retention cleanup or adding storage.' },
+      ],
+      followUps: ['Which topics have the most lag?', 'Should I add more consumers?', 'Show me broker health', 'Create a disk usage alarm'],
+    },
   }
 
   return investigations[widgetType] || {
