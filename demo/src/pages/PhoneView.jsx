@@ -21,7 +21,7 @@ export default function PhoneView() {
   const [showLogs, setShowLogs] = useState(false)
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-8">
+    <div className="min-h-screen flex items-center justify-center py-8 animate-[slideUp_0.4s_ease-out]">
       <div className="gradient-bg-dark" />
       <div className="content-layer flex flex-col items-center gap-6">
         <div className="w-full flex items-center justify-between">

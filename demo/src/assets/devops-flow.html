@@ -6,7 +6,7 @@
 <title>Maya 2AM Incident - CloudWatch AI Experience</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;background:#0a0e1a;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif;background:#0a0e1a;color:#e0e0e0;min-height:100vh;overflow-x:auto}
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;padding:14px 24px;gap:6px}
 .nav-btn{padding:10px 22px;border-radius:24px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.3s;background:transparent;color:#888;display:inline-flex;align-items:center;gap:6px}
 .nav-btn:hover{color:#fff;background:rgba(255,255,255,0.06)}
@@ -32,6 +32,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
 .watch-svg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none}
 .watch-screen{position:absolute;top:102px;left:36px;right:36px;bottom:102px;border-radius:30px;overflow:hidden;background:#000;z-index:3}
 .ws{width:100%;height:100%;display:flex;flex-direction:column;overflow-y:auto;scrollbar-width:none}
+.devices-row{display:flex;align-items:center;gap:24px;justify-content:center}
+.phone-mock{width:220px;height:460px;border-radius:40px;background:#000;border:2px solid #333;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+.phone-notch{width:112px;height:26px;background:#000;border-radius:0 0 16px 16px;margin:0 auto;margin-top:8px}
+.phone-status{display:flex;align-items:center;justify-content:space-between;padding:4px 24px 0}
+.phone-time-big{text-align:center;margin-top:48px}
+.phone-time-big .date{font-size:13px;color:rgba(255,255,255,0.7);font-weight:500}
+.phone-time-big .clock{font-size:80px;font-weight:700;color:#fff;letter-spacing:-2px;line-height:0.9;margin-top:-2px}
+.phone-notif{margin:16px 16px 0;border-radius:16px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2);backdrop-filter:blur(20px);overflow:hidden;cursor:pointer;transition:transform 0.15s}
+.phone-notif:hover{transform:scale(1.02)}
+.phone-notif-hdr{display:flex;align-items:center;gap:8px;padding:12px 16px 4px}
+.phone-notif-icon{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#ef4444,#b91c1c);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.phone-notif-app{font-size:11px;color:rgba(255,255,255,0.9);font-weight:600}
+.phone-notif-badge{font-size:9px;color:#f87171;font-weight:700;background:rgba(239,68,68,0.2);padding:2px 6px;border-radius:8px;margin-left:4px}
+.phone-notif-when{font-size:10px;color:rgba(255,255,255,0.4);margin-left:auto}
+.phone-notif-body{padding:0 16px 14px}
+.phone-notif-title{font-size:15px;color:#fff;font-weight:700;line-height:1.3}
+.phone-notif-desc{font-size:12px;color:rgba(252,165,165,0.8);margin-top:6px;line-height:1.4;font-weight:500}
+.phone-notif-hint{font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px}
+.phone-bottom{margin-top:auto;display:flex;align-items:center;justify-content:space-between;padding:4px 56px 12px}
+.phone-bottom-btn{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center}
+.phone-home{display:flex;justify-content:center;padding-bottom:8px}
+.phone-home div{width:112px;height:4px;border-radius:4px;background:rgba(255,255,255,0.3)}
 .ws::-webkit-scrollbar{display:none}
 /* Notification face */
 .wn-face{height:100%;display:flex;flex-direction:column}
@@ -311,17 +333,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
   <symbol id="ic-diff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="9" y1="15" x2="15" y2="15"/></symbol>
   <symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
 </svg>
-
 <nav class="nav" style="display:none">
   <button class="nav-btn active" onclick="go('watch')"><svg><use href="#ic-watch"/></svg>Watch</button>
   <button class="nav-btn" onclick="go('phone')"><svg><use href="#ic-phone"/></svg>Phone</button>
   <button class="nav-btn" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){window.top.location.hash='#/devops-console'}"><svg><use href="#ic-desktop"/></svg>Desktop</button>
 </nav>
-
 <!-- WATCH -->
-<section class="scene active" id="scene-watch" style="padding-top:100px">
+<section class="scene active" id="scene-watch" style="padding-top:20px;min-height:100vh;display:flex;flex-direction:column;justify-content:center">
   <div class="wrap">
-    <div class="watch-wrap">
+    <div style="display:flex;align-items:center;gap:40px;justify-content:center">
+      <div class="watch-wrap">
       <!-- SVG Apple Watch mockup -->
       <svg class="watch-svg" viewBox="0 0 220 330" fill="none" xmlns="http://www.w3.org/2000/svg">
         <!-- Band top -->
@@ -355,13 +376,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
         <path d="M56,58 Q110,52 164,58" stroke="#3a5a8a" stroke-width="0.5" fill="none" opacity="0.4"/>
       </svg>
       <div class="watch-screen">
-
         <!-- W0: Notification on watch face -->
         <div class="ws" id="w0">
           <div class="wn-face">
             <div class="wn-time">2:07</div>
             <div class="wn-date">Thursday, Mar 26</div>
-            <div class="wn-banner" onclick="ws(1)">
+            <div class="wn-banner" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){window.top.location.hash='#/devops-console'}" style="cursor:pointer">
               <div class="wn-hdr">
                 <div class="wn-icon"><svg stroke="#fff"><use href="#ic-alert"/></svg></div>
                 <span class="wn-app">CloudWatch</span>
@@ -379,68 +399,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
             </div>
           </div>
         </div>
+    </div>
 
-        <div class="ws" id="w1" style="display:none;cursor:pointer" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){window.top.location.hash='#/devops-console'}">
-          <div style="padding:10px 12px 16px">
+      <!-- Phone -->
+      
 
-            <!-- Header -->
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-              <div style="width:8px;height:8px;border-radius:50%;background:#ff3b30;animation:pulse 1.5s infinite"></div>
-              <span style="font-size:11px;font-weight:600;color:#ff6b6b">HIGH SEVERITY</span>
-            </div>
-            <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:12px">Payments Service</div>
-
-            <!-- What happened -->
-            <div style="font-size:11px;font-weight:600;color:#0a84ff;margin-bottom:4px">What happened</div>
-            <div style="font-size:13px;color:#ccc;line-height:1.45;margin-bottom:6px">Deploy <strong style="color:#fff">#847</strong> landed at 01:45 AM. New code references <strong style="color:#ff9500">PaymentsTable-v2</strong> which does not exist.</div>
-            <div style="height:32px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,0.03);margin-bottom:16px">
-              <svg width="100%" height="100%" viewBox="0 0 160 28" preserveAspectRatio="none">
-                <defs><linearGradient id="wg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3b30" stop-opacity="0.3"/><stop offset="100%" stop-color="#ff3b30" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0,26 L20,26 L40,26 L55,26 L65,24 L75,20 L85,8 L95,3 L105,5 L115,3 L125,6 L135,4 L145,3 L160,5" fill="none" stroke="#ff3b30" stroke-width="1.5"/>
-                <path d="M0,26 L20,26 L40,26 L55,26 L65,24 L75,20 L85,8 L95,3 L105,5 L115,3 L125,6 L135,4 L145,3 L160,5 L160,28 L0,28Z" fill="url(#wg2)"/>
-                <line x1="58" y1="0" x2="58" y2="28" stroke="#ff9500" stroke-width="0.7" stroke-dasharray="2,2" opacity="0.6"/>
-                <text x="60" y="7" fill="#ff9500" font-size="5" font-family="sans-serif">deploy</text>
-              </svg>
-            </div>
-
-            <!-- Impact -->
-            <div style="font-size:11px;font-weight:600;color:#ff9500;margin-bottom:8px">Impact</div>
-            <div style="display:flex;gap:6px;margin-bottom:10px">
-              <div style="flex:1;text-align:center;background:rgba(255,59,48,0.1);border-radius:8px;padding:8px 4px">
-                <div style="font-size:18px;font-weight:700;color:#ff3b30">12%</div>
-                <div style="font-size:9px;color:#999;margin-top:2px">error rate</div>
-              </div>
-              <div style="flex:1;text-align:center;background:rgba(255,149,0,0.1);border-radius:8px;padding:8px 4px">
-                <div style="font-size:18px;font-weight:700;color:#ff9500">800</div>
-                <div style="font-size:9px;color:#999;margin-top:2px">failed</div>
-              </div>
-              <div style="flex:1;text-align:center;background:rgba(48,209,88,0.1);border-radius:8px;padding:8px 4px">
-                <div style="font-size:18px;font-weight:700;color:#30d158">0</div>
-                <div style="font-size:9px;color:#999;margin-top:2px">data loss</div>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#ff3b30;display:inline-block"></span>Payments</span><span style="font-size:11px;font-weight:600;color:#ff3b30">down</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#ff9500;display:inline-block"></span>DynamoDB</span><span style="font-size:11px;font-weight:600;color:#ff9500">slow</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#ccc"><span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#30d158;display:inline-block"></span>Gateway</span><span style="font-size:11px;font-weight:600;color:#30d158">ok</span></div>
-            </div>
-
-            <!-- Root cause -->
-            <div style="font-size:11px;font-weight:600;color:#ff3b30;margin-bottom:4px">Root cause</div>
-            <div style="font-size:13px;color:#ccc;line-height:1.45;margin-bottom:16px">Raj Patel merged at 5:47 PM. Table ref changed to <strong style="color:#ff9500">PaymentsTable-v2</strong> but Terraform not yet applied. No duplicate charges. No data corruption.</div>
-
-            <!-- Next steps -->
-            <div style="background:rgba(48,209,88,0.08);border:1px solid rgba(48,209,88,0.2);border-radius:8px;padding:10px">
-              <div style="font-size:11px;font-weight:600;color:#30d158;margin-bottom:4px">Recommended action</div>
-              <div style="font-size:13px;color:#ddd;line-height:1.45">Roll back deploy #847 to restore working table reference. Apply Terraform before redeploying.</div>
-            </div>
-
-          </div>
-        </div>
+    </div>
+      <div style="width:390px;height:844px;border-radius:44px;background:#000;border:2px solid #333;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.6);cursor:pointer;flex-shrink:0" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){}">
+  <div style="display:flex;justify-content:center;padding-top:6px"><div style="width:120px;height:28px;background:#000;border-radius:0 0 16px 16px;border:1px solid #222"></div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 20px 0">
+    <span style="font-size:13px;color:rgba(255,255,255,0.5);font-weight:600">2:07</span>
+    <svg width="18" height="8" viewBox="0 0 18 8"><rect x="0" y="0" width="14" height="8" rx="2" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><rect x="1.5" y="1.5" width="9" height="5" rx="1" fill="rgba(255,255,255,0.7)"/></svg>
+  </div>
+  <div style="text-align:center;margin-top:64px">
+    <div style="font-size:15px;color:rgba(255,255,255,0.6)">Thu Mar 26</div>
+    <div style="font-size:86px;font-weight:700;color:#fff;letter-spacing:-3px;line-height:0.9">2:07</div>
+  </div>
+  <div style="margin:24px 16px 0;border-radius:20px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2);overflow:hidden">
+    <div style="display:flex;align-items:center;gap:6px;padding:12px 16px 6px">
+      <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#ef4444,#b91c1c);display:flex;align-items:center;justify-content:center"><svg width="10" height="11" viewBox="0 0 28 32" fill="none"><path d="M8 18C4 18 2 15 2 12.5C2 10 4 8 6.5 8C7 5 9.5 2 14 2C18.5 2 21 5 21.5 8C24 8.5 26 10.5 26 13C26 15.5 24 18 21 18" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/><line x1="14" y1="10.5" x2="14" y2="15.5" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="13" x2="16.5" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <span style="font-size:13px;color:rgba(255,255,255,0.9);font-weight:600">CloudWatch</span>
+      <span style="font-size:10px;color:#f87171;font-weight:700;background:rgba(239,68,68,0.2);padding:2px 8px;border-radius:8px">CRITICAL</span>
+      <span style="font-size:9px;color:rgba(255,255,255,0.4);margin-left:auto">now</span>
+    </div>
+    <div style="padding:0 16px 14px">
+      <div style="font-size:16px;color:#fff;font-weight:700;line-height:1.3">Payments service is failing</div>
+      <div style="font-size:13px;color:rgba(252,165,165,0.8);margin-top:6px;line-height:1.4">12% error rate. 800 failed checkouts. Deploy #847.</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:6px">Tap to investigate</div>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div style="display:flex;justify-content:center;padding-bottom:6px"><div style="width:140px;height:5px;border-radius:5px;background:rgba(255,255,255,0.25)"></div></div>
+</div>
     </div>
   </div>
 </section>
-
 <!-- PHONE -->
 <section class="scene" id="scene-phone">
   <div class="ctx">
@@ -451,13 +444,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
     <div class="pf"><div class="pn"></div>
       <div class="ps" id="p1">
         <div class="ph"><a class="bk" onclick="go('watch')">&#8249;</a><h2>Payments Service</h2><span class="pill pill-r" id="phone-pill">IN ALARM</span></div>
-
         <!-- Agent investigation -->
         <div class="ac fade-up">
           <div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span><span class="at">2:07 AM</span></div>
           <div class="ax">Your Payments service is returning <strong>500 errors</strong> on the <span class="er">/process-payment</span> endpoint. <span class="hl">12% error rate</span>, up from a baseline of 0.1%.</div>
         </div>
-
         <div class="sec"><svg><use href="#ic-map"/></svg> Service Health</div>
         <div class="sm">
           <div class="sn"><div class="sd sd-r"><svg stroke="#ff6b6b"><use href="#ic-pay"/></svg></div><div class="sl">Payments</div></div>
@@ -471,7 +462,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
           <div class="is"><div class="n ylw">~800</div><div class="d">Failed Payments</div></div>
           <div class="is"><div class="n grn">0</div><div class="d">Data Corruption</div></div>
         </div>
-
         <!-- Root cause -->
         <div class="ac">
           <div class="ah"><div class="av"><svg><use href="#ic-search"/></svg></div><span class="an">Root Cause Analysis</span></div>
@@ -482,37 +472,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
             <strong>Customer impact:</strong> Customers hitting checkout see "payment failed, please retry." No money was taken incorrectly. All failures are retryable.
           </div>
         </div>
-
         <!-- Conversation -->
         <div class="ub">Are any customers actually affected right now?</div>
         <div class="ac"><div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span></div>
           <div class="ax">Yes. <strong>847 payment attempts</strong> failed in the last 18 minutes. No duplicate charges detected. All failures returned clean 500 errors -- <span class="hl">retryable on the client side</span>. No data corruption risk.</div></div>
-
         <div class="ub">Is the v2 table supposed to exist?</div>
         <div class="ac"><div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span></div>
           <div class="ax">There's a <strong>Terraform change in the pipeline</strong> to create PaymentsTable-v2, but it hasn't been applied yet. The code change shipped before the infrastructure change. This is a sequencing issue -- not a bug in the code itself.</div></div>
-
         <div class="ub">Should I roll back or wait for the table to be created?</div>
         <div class="ac"><div class="ah"><div class="av"><svg><use href="#ic-agent"/></svg></div><span class="an">CloudWatch Agent</span></div>
           <div class="ax">I recommend <strong>rolling back now</strong>. The Terraform apply requires approvals and could take 15+ minutes. Every minute the current deploy is live, ~45 more payments fail. Rolling back to deploy #846 will restore the working table reference immediately.</div></div>
-
         <!-- Actions -->
         <div class="sec"><svg><use href="#ic-agent"/></svg> Agent Recommended</div>
         <div class="pa"><button class="pb" onclick="doRollback()"><div class="pi pi-b"><svg stroke="#0a84ff"><use href="#ic-rewind"/></svg></div><div><div class="pt">Roll back deploy #847</div><div class="pu" id="rb-status">Restore deploy #846 -- immediate fix</div></div></button></div>
-
         <div class="sec">Notify &amp; Escalate</div>
         <div class="pa">
           <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- sent to #payments-eng'"><div class="pi pi-o"><svg stroke="#ff9500"><use href="#ic-chat"/></svg></div><div><div class="pt">Notify team on Slack</div><div class="pu">Agent drafts message for #payments-eng</div></div></button>
           <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- Raj Patel paged'"><div class="pi pi-p"><svg stroke="#5e5ce6"><use href="#ic-pager"/></svg></div><div><div class="pt">Page deploy author</div><div class="pu">Raj Patel -- pushed the change at 5:47 PM</div></div></button>
           <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- escalated'"><div class="pi pi-o"><svg stroke="#ff9500"><use href="#ic-up"/></svg></div><div><div class="pt">Escalate to engineering lead</div><div class="pu">Alert on-call manager chain</div></div></button>
         </div>
-
         <div class="sec">Follow Up</div>
         <div class="pa">
           <button class="pb" onclick="this.style.opacity='0.5';this.querySelector('.pu').textContent='Done -- task created'"><div class="pi pi-t"><svg stroke="#64d2ff"><use href="#ic-task"/></svg></div><div><div class="pt">Create follow-up task</div><div class="pu">Agent drafts: "Coordinate PaymentsTable-v2 migration"</div></div></button>
           <button class="pb" onclick="try{window.parent.postMessage('navigate-devops-console','*')}catch(e){window.top.location.hash='#/devops-console'}"><div class="pi pi-p"><svg stroke="#5e5ce6"><use href="#ic-desktop"/></svg></div><div><div class="pt">Open on desktop</div><div class="pu">Deep investigation -- traces, code, dependencies</div></div></button>
         </div>
-
         <!-- Resolution (hidden until rollback) -->
         <div id="phone-resolved" style="display:none">
           <div style="height:1px;background:rgba(255,255,255,0.06);margin:14px 0"></div>
@@ -534,7 +517,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
             <svg style="width:12px;height:12px" stroke="#555" fill="none" stroke-width="2"><use href="#ic-moon"/></svg> Go back to sleep. I'll watch the service.
           </div>
         </div>
-
         <!-- Chat input is now in p-bottom below -->
       </div>
       <div class="p-bottom">
@@ -543,7 +525,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
     </div>
   </div>
 </section>
-
 <!-- DESKTOP -->
 <section class="scene" id="scene-desktop">
   <div class="ctx">
@@ -641,7 +622,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
                   </div>
                   <div class="dab dab-g"><div class="av" style="background:linear-gradient(135deg,#30d158,#34c759)"><svg><use href="#ic-bulb"/></svg></div><div class="dab-c"><div class="dab-t dab-tg">Suggested Next Steps</div><div class="dab-d">1. Apply the Terraform change to create PaymentsTable-v2 before redeploying<br>2. Add a deployment gate that validates referenced resources exist<br>3. Consider a feature flag for the table migration cutover</div></div></div>
                 </div>
-
                 <div id="d2" style="display:none">
                   <div class="dh"><h2>Traces &amp; Code</h2><span class="pill pill-r">Root Cause</span><span class="dh-t">Deploy #847 / commit a3f7c2d</span></div>
                   <div class="dab dab-b"><div class="av"><svg><use href="#ic-agent"/></svg></div><div class="dab-c"><div class="dab-t dab-tb">Agent Analysis</div><div class="dab-d">The trace below shows the exact call path. The Lambda function calls DynamoDB with table name "PaymentsTable-v2" -- which returns ResourceNotFoundException in 3ms. The code change is in <strong>payment-processor.ts:47</strong>.</div></div></div>
@@ -691,7 +671,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',sans-serif
     </div>
   </div>
 </section>
-
 <script>
 function go(name){
   document.querySelectorAll('.scene').forEach(function(s){s.classList.remove('active')});
