@@ -71,13 +71,13 @@ export function getInvestigation(widgetType, context = {}) {
       const items = noLogs.map(s => {
         const cfg = logConfigs[s.type] || { name: 'CloudWatch Logs', impact: 'Config update', cost: 1.00 }
         return { id: `log-${s.name}`, name: `${s.name} — ${cfg.name}`, description: cfg.impact, cost: cfg.cost, defaultOn: true }
-      }).filter(i => i.cost > 0) // skip Lambda (already has logs)
+      }).filter(i => i.cost > 0)
       return {
         title: 'Enable Log Delivery',
-        subtitle: `${items.length} services need logging in ${appName}`,
+        subtitle: `${items.length} services need log configuration in ${appName}`,
         messages: [
-          { type: 'text', content: `I'll configure log delivery for ${items.length} services. Each service type has a different logging mechanism:` },
-          { type: 'finding', severity: 'high', title: `${noLogs.length} services missing logs`, content: 'Without logs, you cannot debug issues, audit access, or investigate incidents on these services.' },
+          { type: 'text', content: `I'll configure log delivery for ${items.length} services in ${appName}. Each service type has a different logging mechanism:` },
+          { type: 'finding', severity: 'high', title: `${items.length} services need log delivery`, content: 'Without logs, you cannot debug issues, audit access, or investigate incidents on these services.' },
           { type: 'selectable' },
         ],
         selectableItems: items,
@@ -157,10 +157,11 @@ export function getInvestigation(widgetType, context = {}) {
 
     // ─── Create Dashboards ──────────────────────────────────────────
     'create-dashboards': (() => {
+      const svcNames = svcs.slice(0, 3).map(s => s.name).join(', ')
       const items = [
-        { id: 'dash-overview', name: `${appName} — Overview dashboard`, description: 'Health summary, key metrics, alarm status', cost: 3.00, defaultOn: true },
-        { id: 'dash-latency', name: `${appName} — Latency dashboard`, description: 'p50/p95/p99 per service, waterfall view', cost: 3.00, defaultOn: false },
-        { id: 'dash-errors', name: `${appName} — Error dashboard`, description: 'Error rates, top errors, error trends', cost: 3.00, defaultOn: false },
+        { id: 'dash-overview', name: `${appName} — Overview`, description: `Health summary for ${svcs.length} services: alarms, errors, latency`, cost: 3.00, defaultOn: true },
+        { id: 'dash-latency', name: `${appName} — Latency`, description: `p50/p95/p99 breakdown for ${svcNames}`, cost: 3.00, defaultOn: false },
+        { id: 'dash-errors', name: `${appName} — Errors`, description: `Error rates, top errors, trends across ${svcs.length} services`, cost: 3.00, defaultOn: false },
       ]
       return {
         title: 'Create Dashboards',
@@ -177,10 +178,10 @@ export function getInvestigation(widgetType, context = {}) {
     // ─── Clean Up Stale Alarms (savings) ────────────────────────────
     'cleanup-stale': (() => {
       const items = [
-        { id: 'stale-1', name: 'deleted-service-alarm-cpu — Orphaned', description: 'Resource no longer exists', cost: -0.10, defaultOn: true },
-        { id: 'stale-2', name: 'old-threshold-payment-5xx — Outdated', description: 'Threshold too high (10%), should be 1%', cost: -0.10, defaultOn: true },
-        { id: 'stale-3', name: 'duplicate-checkout-cpu — Duplicate', description: 'Same metric as checkout-cpu-alarm', cost: -0.10, defaultOn: true },
-        { id: 'stale-4', name: 'test-alarm-dev — Wrong environment', description: 'Dev alarm in production account', cost: -0.10, defaultOn: true },
+        { id: 'stale-1', name: 'legacy-auth-cpu-alarm — Orphaned', description: 'Resource was decommissioned 3 months ago', cost: -0.10, defaultOn: true },
+        { id: 'stale-2', name: 'payment-5xx-rate-old — Outdated threshold', description: 'Threshold set to 10%, should be 1% based on current traffic', cost: -0.10, defaultOn: true },
+        { id: 'stale-3', name: 'checkout-cpu-v2 — Duplicate', description: 'Same metric as checkout-cpu-alarm, created by different team', cost: -0.10, defaultOn: true },
+        { id: 'stale-4', name: 'staging-db-connections — Wrong account', description: 'Staging alarm deployed to production account', cost: -0.10, defaultOn: true },
       ]
       return {
         title: 'Clean Up Stale Alarms',
@@ -200,7 +201,7 @@ export function getInvestigation(widgetType, context = {}) {
       const loggingSvcs = svcs.filter(s => s.hasLogs)
       // Only offer optimization if there are services with significant log volume
       // Lambda auto-created log groups on free tier don't count
-      const optimizable = loggingSvcs.filter(s => s.type !== 'Lambda' || (s.invocations && parseInt(s.invocations) > 100000))
+      const optimizable = loggingSvcs.filter(s => s.type !== 'Lambda')
       const items = optimizable.map(s => ({
         id: `logopt-${s.name}`, name: `${s.name} — Move to Infrequent Access`, description: 'Low query frequency, suitable for IA class', cost: -2.00, defaultOn: false,
       }))
@@ -232,21 +233,22 @@ export function getInvestigation(widgetType, context = {}) {
     // ─── Insight (analysis + specific action CTA) ─────────────────
     'insight': (() => {
       const label = context.label || context.title || 'Metric insight'
+      const svcName = context.service || appName
       return {
         title: label,
-        subtitle: `Analysis for ${appName}`,
+        subtitle: `Analysis for ${svcName}`,
         messages: [
-          { type: 'text', content: `I noticed something worth investigating in ${appName}. Here's what I found:` },
+          { type: 'text', content: `I noticed something worth investigating on ${svcName}. Here's what I found:` },
           { type: 'chart', label: `${label} (24h)`, base: context.base || 65, variance: context.variance || 25, color: context.color || '#0ea5e9', unit: context.unit || '' },
           { type: 'steps', steps: [
-            { action: 'Analyzed metric trend', result: 'Detected a pattern that deviates from the baseline', status: 'found' },
+            { action: `Analyzed ${label} trend`, result: 'Detected a pattern that deviates from the baseline', status: 'found' },
             { action: 'Checked correlated metrics', result: 'No matching deployment or config change', status: 'clear' },
-            { action: 'Evaluated impact', result: 'Could affect availability if trend continues', status: 'found' },
+            { action: 'Evaluated blast radius', result: svcName !== appName ? `Could affect downstream services dependent on ${svcName}` : 'Could affect availability if trend continues', status: 'found' },
           ]},
-          { type: 'finding', severity: 'warning', title: 'Proactive action recommended', content: 'This metric is trending in a direction that could become problematic. Consider creating an alarm to catch it early.' },
+          { type: 'finding', severity: 'warning', title: 'Proactive action recommended', content: `This metric is trending in a direction that could become problematic. Consider creating an alarm for ${svcName} to catch it early.` },
           { type: 'actions' },
         ],
-        followUps: ['Create an alarm for this metric', 'Show me the raw data', 'What could be causing this?', 'Compare with last week'],
+        followUps: [`Create an alarm for ${label}`, 'Show me the raw data', 'What could be causing this?', 'Compare with last week'],
       }
     })(),
 
