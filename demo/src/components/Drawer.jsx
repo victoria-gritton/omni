@@ -39,6 +39,84 @@ const mockResponses = {
     { type: 'text', content: 'X-Ray tracing shows you the full request path across services. I recommend starting with 10% sampling rate and reservoir mode — this guarantees you always capture traces during low-traffic periods while keeping costs manageable.' },
     { type: 'chart', label: 'Expected trace volume at 10% sampling', base: 1200, variance: 400, color: '#8b5cf6', unit: ' traces/min' },
   ],
+  'rolling-restart': [
+    { type: 'text', content: 'Rolling restarts replace tasks one at a time, so there\'s always capacity serving traffic. For ECS Fargate, each task takes ~30 seconds to drain and ~60 seconds to start. With 6 services, the full rollout takes about 5 minutes.' },
+    { type: 'finding', severity: 'info', title: 'Zero downtime', content: 'ECS rolling updates maintain the desired task count throughout. Your load balancer drains connections from old tasks before terminating them. No customer-visible impact.' },
+  ],
+  'agent-config': [
+    { type: 'text', content: 'The CloudWatch Agent config is tailored per workload type. For payment-processing workloads, it collects CPU, memory, disk, network, plus custom metrics like transaction latency, queue depth, and error count.' },
+    { type: 'finding', severity: 'info', title: 'Collection interval', content: 'Default: 60 seconds for standard metrics, 10 seconds for high-resolution. You can customize per-metric. High-resolution costs more but gives faster alerting.' },
+    { type: 'steps', steps: [
+      { action: 'web-server workload', result: 'CPU, memory, disk, network, request count, active connections', status: 'clear' },
+      { action: 'payment-processing workload', result: 'CPU, memory, disk, network, transaction latency, queue depth, error count', status: 'clear' },
+      { action: 'analytics workload', result: 'CPU, memory, disk I/O, query duration, shuffle bytes', status: 'clear' },
+    ]},
+  ],
+  'dashboard-widgets': [
+    { type: 'text', content: 'The overview dashboard will include widgets for service health status, active alarm count, error rate trends, latency percentiles, and throughput. Each widget auto-refreshes and links to detailed views.' },
+    { type: 'steps', steps: [
+      { action: 'Top row: Health summary', result: 'Service status grid, alarm count, overall health indicator', status: 'clear' },
+      { action: 'Middle: Key metrics', result: 'Error rate trend, latency p50/p95/p99, request throughput', status: 'clear' },
+      { action: 'Bottom: Per-service breakdown', result: 'CPU/memory per service, database connections, cache hit ratio', status: 'clear' },
+    ]},
+    { type: 'finding', severity: 'info', title: 'Fully customizable', content: 'You can rearrange widgets, add custom metrics, and change time ranges after creation. The layout is saved per-user.' },
+  ],
+  'error-logs': [
+    { type: 'text', content: 'Here are the most recent error patterns from your services:' },
+    { type: 'steps', steps: [
+      { action: 'ConnectionTimeout — upstream dependency', result: '12 occurrences in the last hour. External payment provider responding slowly.', status: 'found' },
+      { action: 'ValidationError — malformed request', result: '5 occurrences. Missing required field in partner API requests.', status: 'found' },
+      { action: 'OutOfMemoryError — container killed', result: '2 occurrences. ECS task hit memory limit and was OOM-killed.', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'warning', title: 'Top issue: ConnectionTimeout', content: 'The upstream payment provider is responding slowly, causing cascading timeouts. Consider adding a circuit breaker or increasing timeout thresholds.' },
+  ],
+  'spike-analysis': [
+    { type: 'text', content: 'I analyzed the spike and correlated it with other signals:' },
+    { type: 'chart', label: 'Latency spike detail (3:30-4:00 AM)', base: 180, variance: 150, color: '#8b5cf6', unit: 'ms', threshold: 500, thresholdLabel: 'SLA 500ms' },
+    { type: 'steps', steps: [
+      { action: 'Checked database connections at 3:42 AM', result: 'Connection pool hit 95% capacity — queries queued', status: 'found' },
+      { action: 'Checked batch job schedule', result: 'Nightly analytics batch job runs at 3:30 AM — causes DB contention', status: 'found' },
+      { action: 'Checked recovery', result: 'Batch job completed at 3:55 AM, latency returned to normal', status: 'clear' },
+    ]},
+    { type: 'finding', severity: 'info', title: 'Root cause: batch job contention', content: 'The nightly analytics batch job saturates the database connection pool. Consider running it against a read replica or scheduling it during lower-traffic hours.' },
+  ],
+  'slo-setup': [
+    { type: 'text', content: 'I can create SLOs using Application Signals. You\'ll need to define a target (e.g., 99.9% availability) and a measurement window (e.g., 30-day rolling). I\'ll set up burn-rate alerting so you know when you\'re consuming error budget too fast.' },
+    { type: 'finding', severity: 'info', title: 'Recommended SLO structure', content: 'Availability SLO: 99.9% over 30 days. Latency SLO: p99 < 500ms. Burn-rate alerts at 2× (slow burn) and 10× (fast burn) thresholds.' },
+  ],
+  'anomaly-detection': [
+    { type: 'text', content: 'Anomaly detection uses machine learning to establish a baseline from your historical metrics. It creates a band of expected values and alerts when the metric goes outside that band — catching issues that static thresholds would miss.' },
+    { type: 'chart', label: 'Example: request count with anomaly band', base: 5000, variance: 1500, color: '#0ea5e9', unit: ' req/min' },
+    { type: 'finding', severity: 'info', title: 'Best for variable metrics', content: 'Anomaly detection works best for metrics with predictable patterns (diurnal traffic, weekly cycles). For metrics with stable baselines, static thresholds are simpler and cheaper.' },
+  ],
+  'data-drift': [
+    { type: 'text', content: 'I checked for data drift indicators on your ML model:' },
+    { type: 'steps', steps: [
+      { action: 'Compared input feature distributions', result: 'Feature "transaction_amount" distribution shifted 15% from training data', status: 'found' },
+      { action: 'Checked prediction confidence', result: 'Average confidence dropped from 0.92 to 0.84 over the past 2 weeks', status: 'found' },
+      { action: 'Checked model age', result: 'Model last retrained 6 weeks ago — approaching staleness threshold', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'warning', title: 'Data drift detected', content: 'Input distributions have shifted significantly. The model is likely making less accurate predictions. Consider retraining with recent data.' },
+  ],
+  'slow-queries': [
+    { type: 'text', content: 'Here are the top slow queries from your database:' },
+    { type: 'steps', steps: [
+      { action: 'SELECT * FROM transactions WHERE status = "pending" — 2.4s avg', result: 'Missing index on status column. Adding index would reduce to ~50ms.', status: 'found' },
+      { action: 'JOIN accounts ON transactions.account_id — 1.8s avg', result: 'Full table scan on accounts. Consider adding a covering index.', status: 'found' },
+      { action: 'Aggregate report query — 4.2s avg', result: 'Runs every 5 minutes. Consider materialized view or read replica.', status: 'found' },
+    ]},
+    { type: 'finding', severity: 'warning', title: 'Missing indexes causing slow queries', content: 'Two queries are doing full table scans. Adding indexes on the status and account_id columns would significantly reduce latency.' },
+  ],
+  'upstream-timeout': [
+    { type: 'text', content: 'I traced the timeout to the external payment provider:' },
+    { type: 'chart', label: 'Payment provider response time (24h)', base: 200, variance: 300, color: '#f87171', unit: 'ms', threshold: 2000, thresholdLabel: 'Timeout: 2s' },
+    { type: 'finding', severity: 'warning', title: 'External dependency degradation', content: 'The payment provider\'s p99 response time spiked to 1.8s (normally 200ms). This is outside your control, but you can add a circuit breaker to fail fast and protect your services.' },
+  ],
+  'compare-week': [
+    { type: 'text', content: 'Here\'s a week-over-week comparison:' },
+    { type: 'chart', label: 'This week vs last week', base: 50, variance: 15, color: '#0ea5e9', unit: '' },
+    { type: 'finding', severity: 'info', title: 'Trending stable', content: 'Metrics are within 5% of last week\'s values. No significant changes detected. The slight increase on Wednesday correlates with a marketing campaign.' },
+  ],
   'default': [
     { type: 'text', content: 'That\'s a great question. Based on your current setup, I\'d recommend starting with the critical items first — they have the highest impact on your reliability posture. Once those are deployed, we can look at the next tier together.' },
   ],
@@ -46,13 +124,27 @@ const mockResponses = {
 
 function getResponse(question) {
   const q = question.toLowerCase()
+  // Specific matches first (longer phrases before shorter keywords)
+  if (q.includes('error log') || q.includes('full error') || q.includes('show me the error')) return mockResponses['error-logs']
+  if (q.includes('slow quer')) return mockResponses['slow-queries']
+  if (q.includes('upstream') || q.includes('timing out')) return mockResponses['upstream-timeout']
+  if (q.includes('data drift') || q.includes('drift')) return mockResponses['data-drift']
+  if (q.includes('spike') || q.includes('3:42') || q.includes('caused the')) return mockResponses['spike-analysis']
+  if (q.includes('rolling restart') || q.includes('downtime') || q.includes('affect my running')) return mockResponses['rolling-restart']
+  if (q.includes('agent config') || q.includes('workload') || q.includes('collection interval') || q.includes('what metrics will')) return mockResponses['agent-config']
+  if (q.includes('widget') || q.includes('overview dashboard') || q.includes('customize the layout') || q.includes('preview')) return mockResponses['dashboard-widgets']
+  if (q.includes('slo') || q.includes('latency slo') || q.includes('service level')) return mockResponses['slo-setup']
+  if (q.includes('anomaly') || q.includes('anomaly detection')) return mockResponses['anomaly-detection']
+  if (q.includes('compare') || q.includes('last week') || q.includes('last month') || q.includes('previous')) return mockResponses['compare-week']
+  // General keyword matches
   if (q.includes('threshold')) return mockResponses['thresholds']
   if (q.includes('critical') || q.includes('why is this')) return mockResponses['critical']
-  if (q.includes('skip') || q.includes('what happens')) return mockResponses['skip']
+  if (q.includes('skip') || q.includes('what happens if i skip')) return mockResponses['skip']
   if (q.includes('cloudformation') || q.includes('template') || q.includes('terraform')) return mockResponses['cloudformation']
-  if (q.includes('prioritize') || q.includes('which') || q.includes('first')) return mockResponses['prioritize']
-  if (q.includes('log') || q.includes('class') || q.includes('retention')) return mockResponses['logs']
+  if (q.includes('prioritize') || q.includes('should i prioritize')) return mockResponses['prioritize']
+  if (q.includes('log') && (q.includes('class') || q.includes('retention') || q.includes('volume') || q.includes('infrequent'))) return mockResponses['logs']
   if (q.includes('trac') || q.includes('x-ray') || q.includes('sampling')) return mockResponses['tracing']
+  if (q.includes('stale') || q.includes('recreate') || q.includes('audit')) return mockResponses['skip']
   return mockResponses['default']
 }
 
