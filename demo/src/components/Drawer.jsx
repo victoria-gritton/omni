@@ -308,21 +308,26 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
     const action = step.action || ''
     const result = step.result || ''
     const parts = action.split(' — ')
-    const service = parts[0]?.trim() || 'this service'
-    const metric = parts[1]?.trim() || action
+    const hasSeparator = parts.length > 1
+    const service = hasSeparator ? parts[0].trim() : ''
+    const metric = hasSeparator ? parts[1].trim() : action
 
-    const userMsg = { type: 'user', content: `Tell me more about ${metric} on ${service}` }
+    const userMsg = { type: 'user', content: hasSeparator ? `Tell me more about ${metric} on ${service}` : `Tell me more about: ${action}` }
 
     let base = 50, variance = 20, unit = '', color = '#0ea5e9', threshold = null, thresholdLabel = ''
-    if (result.includes('%')) { base = 0.3; variance = 0.4; unit = '%'; color = '#f87171'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}%` } }
-    else if (result.includes('ms') || result.includes('s')) { base = 180; variance = 80; unit = 'ms'; color = '#8b5cf6'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}ms` } }
+    if (result.includes('%')) { base = parseFloat(result) || 50; variance = base * 0.3; unit = '%'; color = '#f87171'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}%` } }
+    else if (result.includes('ms')) { base = parseFloat(result) || 180; variance = base * 0.3; unit = 'ms'; color = '#8b5cf6'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}ms` } }
     else { base = 12; variance = 5; color = '#22c55e' }
 
+    const chartLabel = hasSeparator ? `${service} — ${metric} (24h)` : `${action} (24h)`
+    const explanation = hasSeparator
+      ? `Here's the detail on ${metric} for ${service}.`
+      : `Here's what I found for "${action}": ${result}`
+
     setExtraMessages(prev => [...prev, userMsg,
-      { type: 'text', content: `Here's the detail on ${metric} for ${service}. Showing the last 24 hours with the recommended threshold.` },
-      { type: 'chart', label: `${service} — ${metric} (24h)`, base, variance, color, unit, threshold, thresholdLabel },
-      { type: 'finding', severity: threshold ? 'info' : 'warning', title: `Why this ${threshold ? 'threshold' : 'metric'}`, content: threshold ? `The ${threshold}${unit} threshold is ~5× the current baseline — avoids false positives while catching real issues. Adjust via the Edit button.` : `This uses anomaly detection based on your historical patterns rather than a static threshold.` },
-      { type: 'text', content: 'You can edit the configuration from the gap card, or ask me to adjust it here.' },
+      { type: 'text', content: explanation },
+      { type: 'chart', label: chartLabel, base, variance, color, unit, threshold, thresholdLabel },
+      { type: 'finding', severity: step.status === 'found' ? 'warning' : 'info', title: step.status === 'found' ? result : 'No issues found', content: threshold ? `The ${threshold}${unit} threshold is ~5× the current baseline — avoids false positives while catching real issues.` : `This analysis is based on your historical patterns and current operational state.` },
     ])
   }
 
