@@ -314,21 +314,73 @@ export function AgentDrawer({ investigation, onClose, onExportCode }) {
 
     const userMsg = { type: 'user', content: hasSeparator ? `Tell me more about ${metric} on ${service}` : `Tell me more about: ${action}` }
 
+    // Build contextual explanation based on the step content
+    const explanations = []
+
+    // Opening text
+    if (hasSeparator) {
+      explanations.push({ type: 'text', content: `Here's a deeper look at ${metric} for ${service}:` })
+    } else {
+      explanations.push({ type: 'text', content: `Let me break down what "${action}" means for your system:` })
+    }
+
+    // Chart with smart defaults based on result content
     let base = 50, variance = 20, unit = '', color = '#0ea5e9', threshold = null, thresholdLabel = ''
     if (result.includes('%')) { base = parseFloat(result) || 50; variance = base * 0.3; unit = '%'; color = '#f87171'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}%` } }
     else if (result.includes('ms')) { base = parseFloat(result) || 180; variance = base * 0.3; unit = 'ms'; color = '#8b5cf6'; const m = result.match(/Threshold:\s*([\d.]+)/); if (m) { threshold = +m[1]; thresholdLabel = `Threshold ${m[1]}ms` } }
     else { base = 12; variance = 5; color = '#22c55e' }
 
     const chartLabel = hasSeparator ? `${service} — ${metric} (24h)` : `${action} (24h)`
-    const explanation = hasSeparator
-      ? `Here's the detail on ${metric} for ${service}.`
-      : `Here's what I found for "${action}": ${result}`
+    explanations.push({ type: 'chart', label: chartLabel, base, variance, color, unit, threshold, thresholdLabel })
 
-    setExtraMessages(prev => [...prev, userMsg,
-      { type: 'text', content: explanation },
-      { type: 'chart', label: chartLabel, base, variance, color, unit, threshold, thresholdLabel },
-      { type: 'finding', severity: step.status === 'found' ? 'warning' : 'info', title: step.status === 'found' ? result : 'No issues found', content: threshold ? `The ${threshold}${unit} threshold is ~5× the current baseline — avoids false positives while catching real issues.` : `This analysis is based on your historical patterns and current operational state.` },
-    ])
+    // Contextual finding based on step status and content
+    if (step.status === 'found') {
+      explanations.push({ type: 'finding', severity: 'warning', title: result, content: getStepExplanation(action, result) })
+    } else {
+      explanations.push({ type: 'finding', severity: 'info', title: result, content: 'This check came back clean — no issues detected in this area.' })
+    }
+
+    // Actionable next step
+    if (step.status === 'found') {
+      explanations.push({ type: 'text', content: getStepRecommendation(action, result) })
+    }
+
+    setExtraMessages(prev => [...prev, userMsg, ...explanations])
+  }
+
+  // Generate contextual explanations for drill-down findings
+  function getStepExplanation(action, result) {
+    const a = action.toLowerCase()
+    const r = result.toLowerCase()
+    if (a.includes('deployment') || a.includes('deploy')) return 'Deployments are a common root cause for metric changes. Since no recent deployments were found, the issue is likely environmental — traffic patterns, dependency changes, or resource exhaustion.'
+    if (a.includes('burn rate') || a.includes('budget')) return 'The error budget burn rate measures how fast you\'re consuming your allowed error margin. A rate above 1× means you\'re burning faster than sustainable. At 2×+, you need to act within days to avoid breaching your SLO.'
+    if (a.includes('contributing error') || a.includes('5xx')) return 'These errors are directly consuming your error budget. Each 5xx response counts against your availability SLO. The intermittent pattern suggests a flaky upstream dependency rather than a systemic issue.'
+    if (a.includes('traffic') || a.includes('load')) return 'Traffic analysis helps distinguish between load-induced issues and code/infrastructure problems. Normal traffic with degraded performance points to a capacity or dependency issue.'
+    if (a.includes('connection') || a.includes('pool')) return 'Database connection pool saturation causes queries to queue, increasing latency for all services that depend on this database. This is often the hidden bottleneck behind latency spikes.'
+    if (a.includes('batch') || a.includes('job')) return 'Batch jobs can compete with real-time traffic for shared resources like database connections and CPU. Consider running batch workloads against read replicas or during off-peak hours.'
+    if (a.includes('memory') || a.includes('mem')) return 'A gradual memory increase without corresponding traffic growth often indicates a memory leak — objects being allocated but not garbage collected. This will eventually cause OOM kills.'
+    if (a.includes('cpu')) return 'CPU utilization at this level leaves headroom for traffic spikes. However, sustained high CPU can increase latency as the scheduler contends for cycles.'
+    if (a.includes('restart') || a.includes('pod')) return 'Pod restarts indicate containers are crashing or being OOM-killed. Frequent restarts degrade availability and can cause request failures during the restart window.'
+    if (a.includes('disk')) return 'Disk usage at this level needs monitoring. When disk fills up, databases crash, logs stop writing, and services fail in unpredictable ways. This is one of the most common causes of outages.'
+    if (a.includes('lag') || a.includes('consumer')) return 'Consumer lag means your processing pipeline is falling behind the incoming data rate. This can cause stale data, delayed processing, and eventually data loss if the retention period is exceeded.'
+    if (a.includes('shard') || a.includes('partition')) return 'Hot shards/partitions create bottlenecks where one shard handles disproportionate traffic while others are underutilized. This limits your effective throughput to the capacity of the hottest shard.'
+    if (a.includes('confidence') || a.includes('model') || a.includes('feature')) return 'Changes in input data distributions cause ML models to make predictions on data that differs from their training set. This leads to degraded accuracy and potentially incorrect decisions.'
+    if (r.includes('no recent') || r.includes('no deploy')) return 'Ruling out deployments is an important first step. Since no code changes were made, the issue is likely environmental — a dependency change, traffic pattern shift, or gradual resource exhaustion.'
+    return 'This finding provides important context for understanding the current state of your system. Combined with other signals, it helps narrow down the root cause.'
+  }
+
+  // Generate actionable recommendations for drill-down findings
+  function getStepRecommendation(action, result) {
+    const a = action.toLowerCase()
+    if (a.includes('burn rate') || a.includes('budget')) return 'I recommend setting up burn-rate alerts at 2× (slow burn, page within hours) and 10× (fast burn, page immediately). This gives you early warning before the SLO breaches.'
+    if (a.includes('5xx') || a.includes('error')) return 'Consider adding a circuit breaker to fail fast when the upstream is degraded. This preserves your error budget by returning graceful failures instead of waiting for timeouts.'
+    if (a.includes('connection') || a.includes('pool')) return 'You can increase the connection pool size, add connection pooling middleware (like PgBouncer for PostgreSQL), or optimize long-running queries that hold connections.'
+    if (a.includes('memory') || a.includes('mem')) return 'I recommend creating a memory utilization alarm at 80% to catch this before it causes OOM kills. Also consider profiling the application to identify the leak source.'
+    if (a.includes('disk')) return 'Set up a disk usage alarm at 80%. Consider enabling log rotation, increasing storage, or moving old data to cheaper storage tiers.'
+    if (a.includes('lag') || a.includes('consumer')) return 'You can add more consumers to increase processing throughput, or optimize your consumer code to process messages faster. Also check if any messages are causing processing delays.'
+    if (a.includes('shard') || a.includes('partition')) return 'Consider splitting the hot shard, using a more distributed partition key, or enabling enhanced fan-out for dedicated throughput per consumer.'
+    if (a.includes('restart') || a.includes('pod')) return 'Check the pod logs for OOM kill events or crash stack traces. You may need to increase memory limits or fix the underlying crash cause.'
+    return 'I can help you set up monitoring for this. Would you like me to create an alarm or add this to a dashboard?'
   }
 
   const handleSend = () => {
