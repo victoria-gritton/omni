@@ -122,28 +122,47 @@ function RightSidebar({ steps, completedSteps, cost, persona }) {
   const allServices = persona.applications.flatMap(a => a.services)
   const completedCost = steps.filter(s => completedSteps.has(s.id)).reduce((sum, s) => sum + (s.costImpact || 0), 0)
   const totalProjectedCost = steps.filter(s => s.action?.type === 'deploy').reduce((sum, s) => sum + (s.costImpact || 0), 0)
-  const completedCount = [...completedSteps].filter(id => id !== 'welcome' && id !== 'done').length
-  const actionSteps = steps.filter(s => s.action?.type === 'deploy')
+
+  const noAlarms = allServices.filter(s => !s.hasAlarms).length
+  const noLogs = allServices.filter(s => !s.hasLogs).length
+  const noTraces = allServices.filter(s => !s.hasTraces).length
+  const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
+  const alarmCount = Math.round(noAlarms * 2.6)
+
+  // Build resource summary from steps
+  const resources = [
+    computeServices.length > 0 && { icon: Cpu, label: 'CW Agent deployments', count: computeServices.length, done: completedSteps.has('cw-agent'), color: 'text-cyan-400' },
+    noAlarms > 0 && { icon: Bell, label: 'Alarms to create', count: alarmCount, done: completedSteps.has('alarms'), color: 'text-red-400' },
+    noLogs > 0 && { icon: FileText, label: 'Log configurations', count: noLogs, done: completedSteps.has('logs'), color: 'text-green-400' },
+    noTraces > 0 && { icon: Path, label: 'Trace configurations', count: noTraces, done: completedSteps.has('traces'), color: 'text-orange-400' },
+    { icon: ChartBar, label: 'Dashboards', count: 1, done: completedSteps.has('dashboard'), color: 'text-primary' },
+    { icon: WaveTriangle, label: 'Anomaly detectors', count: 5, done: completedSteps.has('anomaly'), color: 'text-purple-400' },
+  ].filter(Boolean)
+
+  const totalResources = resources.reduce((s, r) => s + r.count, 0)
+  const doneResources = resources.filter(r => r.done).reduce((s, r) => s + r.count, 0)
 
   return (
-    <div className="w-64 flex-shrink-0 flex flex-col gap-4">
-      {/* Progress summary */}
+    <div className="flex flex-col gap-4">
+      {/* What you're setting up */}
       <div className="glass-card p-4">
-        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Progress</h3>
-        <div className="flex items-baseline gap-1 mb-2">
-          <span className="text-heading-m font-semibold text-foreground">{completedCount}</span>
-          <span className="text-body-s text-foreground-muted">/ {actionSteps.length} steps</span>
+        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Setup Summary</h3>
+        <div className="flex items-baseline gap-1 mb-3">
+          <span className="text-heading-m font-semibold text-foreground">{totalResources}</span>
+          <span className="text-body-s text-foreground-muted">resources</span>
+          {doneResources > 0 && <span className="text-[10px] text-status-active ml-1">({doneResources} done)</span>}
         </div>
-        <div className="w-full h-2 rounded-full bg-border-muted/30 overflow-hidden mb-3">
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${actionSteps.length > 0 ? (completedCount / actionSteps.length) * 100 : 0}%` }} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          {actionSteps.map(s => (
-            <div key={s.id} className="flex items-center gap-2">
-              {completedSteps.has(s.id) ? <CheckCircle size={10} weight="fill" className="text-status-active" /> : <div className="w-2.5 h-2.5 rounded-full bg-border-muted/30" />}
-              <span className={`text-[10px] ${completedSteps.has(s.id) ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{s.title}</span>
-            </div>
-          ))}
+        <div className="flex flex-col gap-2">
+          {resources.map(r => {
+            const Icon = r.icon
+            return (
+              <div key={r.label} className={`flex items-center gap-2.5 ${r.done ? 'opacity-50' : ''}`}>
+                <Icon size={12} className={r.done ? 'text-status-active' : r.color} />
+                <span className={`text-[11px] flex-1 ${r.done ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{r.label}</span>
+                <span className={`text-[11px] font-medium ${r.done ? 'text-status-active' : 'text-foreground'}`}>{r.count}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -154,7 +173,7 @@ function RightSidebar({ steps, completedSteps, cost, persona }) {
           <span className="text-[10px] text-foreground-muted">Current</span>
           <span className="text-body-s font-semibold text-foreground">${cost.current.total.toLocaleString()}/mo</span>
         </div>
-        {completedCount > 0 && (
+        {doneResources > 0 && (
           <div className="flex items-baseline justify-between mb-1">
             <span className="text-[10px] text-foreground-muted">Added so far</span>
             <span className="text-body-s font-semibold text-status-degraded">+${completedCost.toFixed(0)}/mo</span>
