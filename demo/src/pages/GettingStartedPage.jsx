@@ -1007,7 +1007,7 @@ export default function GettingStartedPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-4 border-t border-border-muted/20">
+            <div className="sticky bottom-0 flex items-center justify-between pt-4 pb-2 border-t border-border-muted/20 bg-background z-10 -mx-1 px-1">
               <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
                 <ArrowLeft size={14} /> Back
               </button>
