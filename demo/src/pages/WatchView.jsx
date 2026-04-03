@@ -128,7 +128,7 @@ export default function WatchView() {
         </div>
 
         <p className="text-body-m text-foreground text-center max-w-[250px]">
-          Click "View investigation in CloudWatch+" on the phone →
+          Click Acknowledge to continue to mobile
         </p>
         </div>
 

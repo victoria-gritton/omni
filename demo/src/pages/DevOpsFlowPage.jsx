@@ -24,7 +24,7 @@ export default function DevOpsFlowPage() {
           <a href="#/" className="text-[11px] text-link">Demos</a>
         </div>
         <p className="text-body-m text-foreground text-center mb-2">
-          Click "Open on desktop" or "View investigation in CloudWatch+" to continue →
+          Click the watch notification to continue to the console
         </p>
         <iframe
           srcDoc={devopsFlowHtml}

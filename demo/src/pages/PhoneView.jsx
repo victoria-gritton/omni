@@ -29,6 +29,7 @@ export default function PhoneView() {
           <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
 
+        <div className="flex items-center gap-8">
         <div className="w-[390px] h-[844px] rounded-[44px] border-2 border-border bg-background overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-8 pt-4 pb-2">
             <span className="text-[12px] text-foreground-muted font-semibold">2:05 AM</span>
@@ -156,9 +157,10 @@ export default function PhoneView() {
           </div>
         </div>
 
-        <p className="text-body-m text-foreground text-center max-w-[500px]">
-          Click "View investigation in CloudWatch+" on the phone to continue →
+        <p className="text-body-m text-foreground max-w-[250px]">
+          Click "View investigation in CloudWatch+" to continue to the console →
         </p>
+        </div>
       </div>
     </div>
   )
