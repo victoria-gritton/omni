@@ -4,6 +4,7 @@ import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code,
   Cpu, CheckSquare, Square, Globe, PaperPlaneRight, Info, CaretRight,
+  Package, Broadcast,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
@@ -14,10 +15,15 @@ function buildStepItems(persona) {
   const allServices = persona.applications.flatMap(a => a.services)
   const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
 
+  const ecsServices = allServices.filter(s => s.type === 'ECS Fargate')
+  const eksServices = allServices.filter(s => s.type === 'EKS')
+
   const alarmTypes = { 'ECS Fargate': ['CPU > 90%', 'Memory > 85%'], 'EKS': ['Pod restarts > 5/hr', 'Node CPU > 85%', 'Node memory > 85%'], 'Lambda': ['Errors > 1%', 'Duration p99 > 10s'], 'RDS PostgreSQL': ['CPU > 80%', 'Read latency > 20ms'], 'Aurora PostgreSQL': ['CPU > 80%', 'Replica lag > 100ms'], 'DynamoDB': ['Throttled requests > 0'], 'ElastiCache Redis': ['CPU > 75%'], 'API Gateway': ['5xx > 1%', 'Latency p99 > 1s'], 'CloudFront': ['5xx > 1%'], 'SNS + SQS': ['Message age > 300s'], 'S3': ['4xx > 5%'] }
 
   return {
-    'cw-agent': computeServices.map(s => ({ id: `cwa-${s.name}`, label: s.name, detail: `${s.type} · ${s.type === 'EKS' ? 'DaemonSet' : 'Sidecar'}`, cost: 0.50 })),
+    'cw-agent': computeServices.map(s => ({ id: `cwa-${s.name}`, label: s.name, detail: `${s.type} · ${s.type === 'EKS' ? 'Add-on' : 'Sidecar'}`, cost: 0.50 })),
+    'container-insights': ecsServices.length > 0 ? [{ id: 'ci-ecs', label: 'ECS Container Insights', detail: 'Cluster-level setting · No restarts', cost: 0 }] : [],
+    'app-signals': computeServices.map(s => ({ id: `appsig-${s.name}`, label: s.name, detail: `${s.type} · ${s.type === 'EKS' ? 'Included with add-on' : 'ADOT init container'}`, cost: s.type === 'EKS' ? 0 : 0.80 })),
     'alarms': allServices.filter(s => !s.hasAlarms).flatMap(s => (alarmTypes[s.type] || ['Health alarm']).map((a, i) => ({ id: `alarm-${s.name}-${i}`, label: `${s.name} — ${a}`, detail: s.type, cost: 0.10 }))),
     'logs': allServices.filter(s => !s.hasLogs).map(s => ({ id: `log-${s.name}`, label: s.name, detail: s.type, cost: s.type === 'EKS' ? 5 : s.type === 'ECS Fargate' ? 3 : 1.5 })),
     'traces': allServices.filter(s => !s.hasTraces).map(s => ({ id: `trace-${s.name}`, label: s.name, detail: s.type, cost: s.type === 'EKS' ? 1.5 : 0.5 })),
@@ -39,11 +45,26 @@ function buildSteps(persona) {
   const noLogs = allServices.filter(s => !s.hasLogs).length
   const noTraces = allServices.filter(s => !s.hasTraces).length
   const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
+  const ecsServices = allServices.filter(s => s.type === 'ECS Fargate')
+  const eksServices = allServices.filter(s => s.type === 'EKS')
   const needsAgent = computeServices.length > 0
+  const hasEcs = ecsServices.length > 0
+  const hasEks = eksServices.length > 0
 
   return [
     { id: 'welcome', icon: Robot, title: 'Welcome', agentMessage: `I found ${total} services across ${persona.applications.length} applications. Let me walk you through setting up monitoring.`, detail: persona.applications.map(a => `• ${a.name} — ${a.services.length} services`).join('\n') },
-    ...(needsAgent ? [{ id: 'cw-agent', icon: Cpu, title: 'Install CloudWatch Agent', agentMessage: `${computeServices.length} compute services need the CW Agent for memory, disk, and custom metrics. Without it, I can only create basic CPU alarms.`, detail: `Deployment:\n${computeServices.filter(s => s.type === 'ECS Fargate').length > 0 ? '• ECS: sidecar (rolling restart, ~5 min)\n' : ''}${computeServices.filter(s => s.type === 'EKS').length > 0 ? '• EKS: DaemonSet (~3 min per cluster)\n' : ''}Reversible.` }] : []),
+    ...(needsAgent ? [{
+      id: 'cw-agent', icon: Cpu, title: 'Install CloudWatch Agent',
+      agentMessage: `${computeServices.length} compute services need the CW Agent. The agent collects enhanced metrics (memory, disk, network) and provides endpoints for custom application metrics.${hasEks ? ' For EKS, the Observability Add-on bundles the agent with Container Insights and Application Signals.' : ''}`,
+    }] : []),
+    ...(hasEcs ? [{
+      id: 'container-insights', icon: Package, title: 'Enable Container Insights',
+      agentMessage: `Container Insights provides cluster, service, and task-level metrics for your ${ecsServices.length} ECS services. This is a cluster-level setting — no agent or restarts needed.${hasEks ? ' For EKS, this is already included with the Observability Add-on.' : ''}`,
+    }] : []),
+    ...(needsAgent ? [{
+      id: 'app-signals', icon: Broadcast, title: 'Enable Application Signals',
+      agentMessage: `Application Signals auto-instruments your applications for APM: service map, latency breakdown, error tracking, and SLO support.${hasEcs ? ' For ECS, this requires an ADOT SDK init container per task definition (the CW Agent acts as the receiver).' : ''}${hasEks ? ' For EKS, this is included with the Observability Add-on.' : ''}`,
+    }] : []),
     { id: 'alarms', icon: Bell, title: 'Set up alarms', agentMessage: noAlarms > 0 ? `${noAlarms} services have no alarms. Select which alarms you want — I've pre-selected the recommended ones.` : 'All services have alarms.', skip: noAlarms === 0 },
     { id: 'logs', icon: FileText, title: 'Enable logging', agentMessage: noLogs > 0 ? `${noLogs} services need log delivery. Select which to enable.` : 'All services are logging.', skip: noLogs === 0 },
     { id: 'traces', icon: Path, title: 'Enable tracing', agentMessage: noTraces > 0 ? `No services have tracing. X-Ray shows the full request path — select which to enable.` : 'Tracing is enabled.', skip: noTraces === 0 },
@@ -57,6 +78,8 @@ function buildSteps(persona) {
 function RightSidebar({ stepItems, selections, deployedSteps, cost }) {
   const categories = [
     { id: 'cw-agent', icon: Cpu, label: 'CW Agent', color: 'text-cyan-400' },
+    { id: 'container-insights', icon: Package, label: 'Container Insights', color: 'text-green-400' },
+    { id: 'app-signals', icon: Broadcast, label: 'App Signals', color: 'text-purple-400' },
     { id: 'alarms', icon: Bell, label: 'Alarms', color: 'text-red-400' },
     { id: 'logs', icon: FileText, label: 'Logs', color: 'text-green-400' },
     { id: 'traces', icon: Path, label: 'Traces', color: 'text-orange-400' },
@@ -396,25 +419,21 @@ export default function GettingStartedPage() {
 
             return (
             <div className="ml-14 mb-4">
-              {/* What the agent unlocks — capabilities grid */}
+              {/* What the agent collects */}
               <div className="glass-card p-4 mb-4">
-                <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">What the agent enables</p>
-                <div className="grid grid-cols-2 gap-3">
+                <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">What the agent collects</p>
+                <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-lg bg-cyan-400/5 border border-cyan-400/20 p-3">
-                    <p className="text-[10px] text-cyan-400 font-medium mb-1">Enhanced Metrics</p>
-                    <p className="text-[9px] text-foreground-muted">Memory, disk, network, custom app metrics — not available without the agent</p>
+                    <p className="text-[10px] text-cyan-400 font-medium mb-1">Memory & Disk</p>
+                    <p className="text-[9px] text-foreground-muted">MemoryUtilization, DiskUsage, DiskIO — not available without the agent</p>
                   </div>
-                  <div className="rounded-lg bg-purple-400/5 border border-purple-400/20 p-3">
-                    <p className="text-[10px] text-purple-400 font-medium mb-1">Application Signals</p>
-                    <p className="text-[9px] text-foreground-muted">Auto-instrumented APM: service map, latency breakdown, error tracking, SLO-ready</p>
+                  <div className="rounded-lg bg-cyan-400/5 border border-cyan-400/20 p-3">
+                    <p className="text-[10px] text-cyan-400 font-medium mb-1">Network</p>
+                    <p className="text-[9px] text-foreground-muted">TCP connections, packets, bytes — per-container granularity</p>
                   </div>
-                  <div className="rounded-lg bg-green-400/5 border border-green-400/20 p-3">
-                    <p className="text-[10px] text-green-400 font-medium mb-1">Container Insights</p>
-                    <p className="text-[9px] text-foreground-muted">Cluster, node, pod, container-level metrics with enhanced observability</p>
-                  </div>
-                  <div className="rounded-lg bg-orange-400/5 border border-orange-400/20 p-3">
-                    <p className="text-[10px] text-orange-400 font-medium mb-1">Prometheus Metrics</p>
-                    <p className="text-[9px] text-foreground-muted">Auto-discovers and scrapes Prometheus endpoints from your workloads</p>
+                  <div className="rounded-lg bg-cyan-400/5 border border-cyan-400/20 p-3">
+                    <p className="text-[10px] text-cyan-400 font-medium mb-1">Custom Metrics</p>
+                    <p className="text-[9px] text-foreground-muted">StatsD (UDP 8125) and EMF (TCP 25888) endpoints for your app metrics</p>
                   </div>
                 </div>
               </div>
@@ -425,100 +444,16 @@ export default function GettingStartedPage() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-[11px] font-medium text-foreground">EKS — CloudWatch Observability Add-on</p>
-                      <p className="text-[9px] text-foreground-muted">Single add-on install per cluster. Most capabilities enabled by default.</p>
+                      <p className="text-[9px] text-foreground-muted">Installs the CW Agent as a DaemonSet. Also bundles Container Insights, App Signals, and Fluent Bit — configured in their own steps.</p>
                     </div>
                     <span className="text-[9px] text-foreground-disabled">{eksServices.length} cluster{eksServices.length > 1 ? 's' : ''} · ~3 min each</span>
                   </div>
 
-                  {/* Capabilities with config notes */}
-                  <div className="flex flex-col gap-2 mb-3">
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['container-insights'] ? 'opacity-40' : ''}`} onClick={() => capHelp['container-insights']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-cyan-400">Container Insights (Enhanced)</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('container-insights') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['container-insights'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['container-insights'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted">Cluster, node, pod, container metrics. Auto-detects GPUs, Trainium/Inferentia, and EFA adapters.</p>
-                    </div>
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['app-signals'] ? 'opacity-40' : ''}`} onClick={() => capHelp['app-signals']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('app-signals') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['app-signals'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['app-signals'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted mb-1.5">Auto-instruments Java, Python, Node.js, .NET. Generates service map, latency breakdown, error tracking.</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[8px] text-foreground-disabled">Namespaces:</span>
-                        {['default', 'payments', 'trading'].map(ns => (
-                          <span key={ns} className="text-[8px] px-1.5 py-0.5 rounded bg-purple-400/10 text-purple-400 border border-purple-400/20">{ns}</span>
-                        ))}
-                        <span className="text-[8px] text-foreground-disabled">(kube-system excluded)</span>
-                      </div>
-                    </div>
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['fluent-bit'] ? 'opacity-40' : ''}`} onClick={() => capHelp['fluent-bit']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-green-400">Fluent Bit Logs</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('fluent-bit') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['fluent-bit'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['fluent-bit'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted">Pod logs shipped to CloudWatch Logs. All namespaces collected by default.</p>
-                    </div>
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['prometheus'] ? 'opacity-40' : ''}`} onClick={() => capHelp['prometheus']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-orange-400">Prometheus Scraping</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Auto-discovery</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('prometheus') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['prometheus'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['prometheus'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted">Auto-discovers NGINX, Java/JMX, App Mesh exporters. Custom app metrics need <code className="text-[8px] bg-background-surface-1 px-1 rounded">prometheus.io/scrape: "true"</code> annotation.</p>
-                    </div>
+                  <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 mb-3">
+                    <p className="text-[9px] text-foreground-disabled mb-1">What the agent collects on EKS:</p>
+                    <p className="text-[9px] text-foreground-muted">Memory, disk, network per pod/container. Prometheus auto-discovery. StatsD/EMF custom metrics endpoint.</p>
                   </div>
 
-                  {/* Customize per namespace */}
-                  <button onClick={() => setShowCustomize(!showCustomize)} className="flex items-center gap-1.5 text-[9px] text-primary hover:text-primary-hover mb-3">
-                    <CaretRight size={10} className={`transition-transform ${showCustomize ? 'rotate-90' : ''}`} />
-                    Customize per namespace
-                  </button>
-                  {showCustomize && (
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-3 mb-3">
-                      <p className="text-[9px] text-foreground-disabled mb-2">Select which namespaces get each capability:</p>
-                      <table className="w-full text-[9px]">
-                        <thead>
-                          <tr className="border-b border-border-muted/20">
-                            <th className="text-left py-1 text-foreground-disabled font-medium">Namespace</th>
-                            <th className="text-center py-1 text-cyan-400 font-medium">Insights</th>
-                            <th className="text-center py-1 text-purple-400 font-medium">App Signals</th>
-                            <th className="text-center py-1 text-green-400 font-medium">Logs</th>
-                            <th className="text-center py-1 text-orange-400 font-medium">Prometheus</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {['default', 'payments', 'trading', 'analytics', 'kube-system'].map(ns => (
-                            <tr key={ns} className="border-b border-border-muted/10">
-                              <td className="py-1.5 text-foreground">{ns}</td>
-                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-cyan-400 inline" /></td>
-                              <td className="text-center">{ns === 'kube-system' ? <span className="text-foreground-disabled">—</span> : <CheckSquare size={12} weight="fill" className="text-purple-400 inline" />}</td>
-                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-green-400 inline" /></td>
-                              <td className="text-center">{ns === 'kube-system' ? <span className="text-foreground-disabled">—</span> : <CheckSquare size={12} weight="fill" className="text-orange-400 inline" />}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* Cluster selection */}
                   <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-1.5">Select clusters</p>
                   <div className="flex flex-col gap-0.5">
                     {eksServices.map(item => {
@@ -541,62 +476,18 @@ export default function GettingStartedPage() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-[11px] font-medium text-foreground">ECS — Sidecar per service</p>
-                      <p className="text-[9px] text-foreground-muted">CW Agent sidecar added to each task definition. Requires per-service configuration.</p>
+                      <p className="text-[9px] text-foreground-muted">CW Agent sidecar added to each task definition. Collects enhanced metrics and provides custom metrics endpoint.</p>
                     </div>
                     <span className="text-[9px] text-foreground-disabled">{ecsServices.length} service{ecsServices.length > 1 ? 's' : ''} · ~5 min total</span>
                   </div>
 
-                  {/* Capabilities with config notes */}
-                  <div className="flex flex-col gap-2 mb-3">
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['ecs-metrics'] ? 'opacity-40' : ''}`} onClick={() => capHelp['ecs-metrics']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-cyan-400">Enhanced Metrics</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Included with sidecar</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('ecs-metrics') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['ecs-metrics'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['ecs-metrics'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted">Memory, disk, network metrics. StatsD and EMF endpoints available for custom app metrics.</p>
-                    </div>
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['ecs-app-signals'] ? 'opacity-40' : ''}`} onClick={() => capHelp['ecs-app-signals']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Additional setup needed</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('ecs-app-signals') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['ecs-app-signals'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['ecs-app-signals'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted mb-1.5">Requires ADOT SDK init container per task definition + environment variables for service name and cluster.</p>
-                      <p className="text-[9px] text-foreground-muted">I'll generate the task definition changes — you review and deploy via your IaC pipeline.</p>
-                    </div>
-                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['ecs-container-insights'] ? 'opacity-40' : ''}`} onClick={() => capHelp['ecs-container-insights']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-green-400">Container Insights</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate enablement</span>
-                          <button onClick={(e) => { e.stopPropagation(); toggleCap('ecs-container-insights') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['ecs-container-insights'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['ecs-container-insights'] ? 'translate-x-3' : ''}`} /></button>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted">Enabled at the cluster level (not part of the agent sidecar). I'll configure this in the next step.</p>
-                    </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-logs']()}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-medium text-foreground-muted">Logs</span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate configuration</span>
-                          <Info size={10} className="text-foreground-disabled" />
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-foreground-muted">ECS logs use the awslogs log driver in the task definition — configured in the logging step, not the agent.</p>
-                    </div>
+                  <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 mb-3">
+                    <p className="text-[9px] text-foreground-disabled mb-1">What the agent collects on ECS:</p>
+                    <p className="text-[9px] text-foreground-muted">Memory, disk, network per container. StatsD (UDP 8125) and EMF (TCP 25888) endpoints for custom app metrics. Also acts as the receiver for Application Signals (configured in a later step).</p>
                   </div>
 
-                  {/* Service selection */}
                   <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-1.5">Select services</p>
-                  <div className="flex flex-col gap-0.5 mb-3">
+                  <div className="flex flex-col gap-0.5">
                     {ecsServices.map(item => {
                       const isSelected = selections.has(item.id)
                       return (
@@ -608,37 +499,6 @@ export default function GettingStartedPage() {
                       )
                     })}
                   </div>
-
-                  {/* Customize per service */}
-                  <button onClick={() => setShowCustomize(!showCustomize)} className="flex items-center gap-1.5 text-[9px] text-primary hover:text-primary-hover mb-3">
-                    <CaretRight size={10} className={`transition-transform ${showCustomize ? 'rotate-90' : ''}`} />
-                    Customize capabilities per service
-                  </button>
-                  {showCustomize && (
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-3 mb-3">
-                      <p className="text-[9px] text-foreground-disabled mb-2">Select which capabilities to enable per service:</p>
-                      <table className="w-full text-[9px]">
-                        <thead>
-                          <tr className="border-b border-border-muted/20">
-                            <th className="text-left py-1 text-foreground-disabled font-medium">Service</th>
-                            <th className="text-center py-1 text-cyan-400 font-medium">Metrics</th>
-                            <th className="text-center py-1 text-purple-400 font-medium">App Signals</th>
-                            <th className="text-center py-1 text-green-400 font-medium">Insights</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {ecsServices.filter(i => selections.has(i.id)).map(item => (
-                            <tr key={item.id} className="border-b border-border-muted/10">
-                              <td className="py-1.5 text-foreground">{item.label}</td>
-                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-cyan-400 inline" /></td>
-                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-purple-400 inline" /></td>
-                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-green-400 inline" /></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
                 </div>
               )}
 
