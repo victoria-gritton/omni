@@ -324,14 +324,14 @@ export default function GettingStartedPage() {
           const Icon = s.icon
           return (
             <div key={s.id} className="flex items-center flex-shrink-0">
-              <button onClick={() => setCurrentStep(i)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-primary/10 border border-primary/20' : ''}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-status-active/20 text-status-active' : isActive ? 'bg-primary/20 text-primary' : 'bg-background-surface-1 text-foreground-disabled'}`}>
+              <button onClick={() => setCurrentStep(i)} className="flex items-center gap-2 px-3 py-2 rounded-lg transition-all">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${isDone ? 'bg-status-active/20 text-status-active' : isActive ? 'bg-primary/20 text-primary' : 'bg-background-surface-1 text-foreground-disabled'}`}>
                   {isDone ? <CheckCircle size={12} weight="fill" /> : <Icon size={11} />}
                 </div>
-                <span className={`text-[10px] whitespace-nowrap ${isActive ? 'text-primary font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled'}`}>{s.title}</span>
+                <span className={`text-[10px] whitespace-nowrap transition-colors ${isActive ? 'text-primary font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled'}`}>{s.title}</span>
               </button>
               {i < steps.length - 1 && (
-                <div className={`w-6 h-0.5 flex-shrink-0 ${isDone ? 'bg-status-active/40' : 'bg-border-muted/30'}`} />
+                <div className={`w-6 h-0.5 flex-shrink-0 transition-colors ${isDone ? 'bg-status-active/40' : 'bg-border-muted/30'}`} />
               )}
             </div>
           )
@@ -339,7 +339,7 @@ export default function GettingStartedPage() {
       </div>
 
       <div className="grid grid-cols-[1fr_320px] gap-6">
-        <div ref={contentRef}>
+        <div ref={contentRef} key={step.id} style={{ animation: 'fadeIn 0.25s ease-out' }}>
           <div className="flex gap-4 mb-4">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
               <Sparkle size={18} weight="fill" />
