@@ -214,19 +214,24 @@ export default function GettingStartedPage() {
         <p className="text-body-s text-foreground-muted mt-0.5">Step {currentStep + 1} of {steps.length}</p>
       </div>
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
+      {/* Step indicator — timeline */}
+      <div className="flex items-start mb-8 overflow-x-auto pb-2">
         {steps.map((s, i) => {
           const isActive = i === currentStep
           const isDone = deployedSteps.has(s.id)
           const Icon = s.icon
           return (
-            <button key={s.id} onClick={() => setCurrentStep(i)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] whitespace-nowrap transition-all flex-shrink-0 ${isActive ? 'bg-primary/10 text-primary border border-primary/20 font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled hover:text-foreground-muted'}`}>
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-status-active/20' : isActive ? 'bg-primary/20' : 'bg-background-surface-1'}`}>
-                {isDone ? <CheckCircle size={10} weight="fill" /> : <Icon size={9} />}
-              </div>
-              {s.title}
-            </button>
+            <div key={s.id} className="flex items-start flex-shrink-0" style={{ minWidth: i < steps.length - 1 ? 0 : undefined }}>
+              <button onClick={() => setCurrentStep(i)} className="flex flex-col items-center gap-1.5 w-20">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDone ? 'bg-status-active/20 text-status-active' : isActive ? 'bg-primary/20 text-primary ring-2 ring-primary/30' : 'bg-background-surface-1 text-foreground-disabled'}`}>
+                  {isDone ? <CheckCircle size={16} weight="fill" /> : <Icon size={14} />}
+                </div>
+                <span className={`text-[9px] text-center leading-tight ${isActive ? 'text-primary font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled'}`}>{s.title}</span>
+              </button>
+              {i < steps.length - 1 && (
+                <div className={`h-0.5 mt-4 flex-1 min-w-6 ${isDone ? 'bg-status-active/40' : 'bg-border-muted/30'}`} />
+              )}
+            </div>
           )
         })}
       </div>
