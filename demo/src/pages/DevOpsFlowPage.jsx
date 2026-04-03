@@ -23,6 +23,9 @@ export default function DevOpsFlowPage() {
           <span className="text-[11px] text-foreground-muted">2AM Flow: DevOps</span>
           <a href="#/" className="text-[11px] text-link">Demos</a>
         </div>
+        <p className="text-body-m text-foreground text-center mb-2">
+          Click "Open on desktop" or "View investigation in CloudWatch+" to continue →
+        </p>
         <iframe
           srcDoc={devopsFlowHtml}
           className="flex-1 w-full border-0"

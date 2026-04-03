@@ -156,8 +156,8 @@ export default function PhoneView() {
           </div>
         </div>
 
-        <p className="text-body-s text-foreground-muted text-center max-w-[300px]">
-          AI summary + log context + actions. Tap to open the console.
+        <p className="text-body-m text-foreground text-center max-w-[500px]">
+          Click "View investigation in CloudWatch+" on the phone to continue →
         </p>
       </div>
     </div>
