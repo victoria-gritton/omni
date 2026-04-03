@@ -263,10 +263,16 @@ export default function GettingStartedPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <Globe size={14} className="text-primary" />
                         <span className="text-[11px] font-medium text-foreground">{app.name}</span>
+                        <span className="text-[9px] text-foreground-disabled ml-auto">{app.services.length} services</span>
                       </div>
-                      <p className="text-[10px] text-foreground-muted mb-2">{app.services.length} services</p>
-                      <div className="flex flex-wrap gap-1">
-                        {types.map(t => <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-background-surface-1 text-foreground-disabled">{t}</span>)}
+                      <div className="flex flex-col gap-1">
+                        {app.services.map(s => (
+                          <div key={s.name} className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled flex-shrink-0" />
+                            <span className="text-[10px] text-foreground">{s.name}</span>
+                            <span className="text-[8px] text-foreground-disabled ml-auto">{s.type}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
