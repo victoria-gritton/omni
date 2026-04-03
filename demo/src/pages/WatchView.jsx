@@ -180,6 +180,10 @@ export default function WatchView() {
           </div>
         </div>
 
+        <p className="text-body-m text-foreground max-w-[200px]">
+          Click on notification to view details on phone
+        </p>
+
         </div>
 
       </div>
