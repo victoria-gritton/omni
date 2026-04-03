@@ -469,7 +469,26 @@ export const PersonaContext = createContext(null)
 
 export function PersonaProvider({ children }) {
   const [activeId, setActiveId] = useState('maria')
-  const active = personas[activeId]
+  const raw = personas[activeId]
+  const allServices = raw.applications.flatMap(a => a.services)
+  const active = {
+    ...raw,
+    application: {
+      name: raw.user.company + ' Platform',
+      description: raw.applications.map(a => a.name).join(', '),
+      regions: [...new Set(allServices.map(() => 'us-east-1'))],
+      accounts: [{ id: '111222333444', name: raw.user.company.toLowerCase().replace(/\s/g, '-') + '-prod', env: 'production' }],
+    },
+    services: allServices,
+    coverage: {
+      totalServices: allServices.length,
+      withMetrics: allServices.length,
+      withAlarms: allServices.filter(s => s.hasAlarms).length,
+      withDashboards: 0,
+      withLogs: allServices.filter(s => s.hasLogs).length,
+      withTraces: allServices.filter(s => s.hasTraces).length,
+    },
+  }
   return (
     <PersonaContext.Provider value={{ persona: active, activeId, setActiveId, personaList }}>
       {children}
