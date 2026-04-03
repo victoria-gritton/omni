@@ -728,13 +728,13 @@ export default function Day0Page() {
       {/* Top row */}
       <div className={`grid ${!isGreenfield && persona.activeAlarms ? 'grid-cols-3' : 'grid-cols-[1fr_300px]'} gap-4 mb-6`}>
         {isGreenfield ? (
-          <button onClick={() => navigate('/gaps')} className="ai-glass-card p-5 text-left hover:border-primary/40 transition-all">
+          <button onClick={() => navigate('/getting-started')} className="ai-glass-card p-5 text-left hover:border-primary/40 transition-all">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0"><Rocket size={20} /></div>
               <div>
                 <h2 className="text-body-m font-semibold text-foreground">Get started</h2>
-                <p className="text-[11px] text-foreground-muted mt-1">I found {total} services with no monitoring. Set up alarms, logs, tracing, and dashboards.</p>
-                <span className="text-[10px] text-primary mt-2 inline-flex items-center gap-1">Set up monitoring <ArrowRight size={10} /></span>
+                <p className="text-[11px] text-foreground-muted mt-1">I found {total} services with no monitoring. Let me walk you through setting up.</p>
+                <span className="text-[10px] text-primary mt-2 inline-flex items-center gap-1">Start setup <ArrowRight size={10} /></span>
               </div>
             </div>
           </button>

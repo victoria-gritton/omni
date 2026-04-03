@@ -7,6 +7,7 @@ import ConsoleView from './pages/ConsoleView'
 import HomePage from './pages/HomePage'
 import Day0Page from './pages/Day0Page'
 import GapAnalysisPage from './pages/GapAnalysisPage'
+import GettingStartedPage from './pages/GettingStartedPage'
 import MonitorPage from './pages/MonitorPage'
 import LandingPage from './pages/LandingPage'
 import ConsoleLayout from './components/ConsoleLayout'
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/day0" element={<ConsoleLayout><Day0Page /></ConsoleLayout>} />
           <Route path="/gaps" element={<ConsoleLayout><GapAnalysisPage /></ConsoleLayout>} />
+          <Route path="/getting-started" element={<ConsoleLayout><GettingStartedPage /></ConsoleLayout>} />
           <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />
         </Routes>
       </HashRouter>
