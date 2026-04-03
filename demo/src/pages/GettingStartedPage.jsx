@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code,
-  Cpu, CheckSquare, Square, Globe, PaperPlaneRight,
+  Cpu, CheckSquare, Square, Globe, PaperPlaneRight, Info,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
@@ -346,6 +346,48 @@ export default function GettingStartedPage() {
             const hasEks = eksServices.length > 0
             const hasEcs = ecsServices.length > 0
 
+            const openHelp = (title, messages, followUps) => {
+              setDrawerInvestigation({ title, subtitle: 'CloudWatch Agent', messages, followUps })
+            }
+
+            const capHelp = {
+              'container-insights': () => openHelp('Container Insights (Enhanced)', [
+                { type: 'text', content: 'Enhanced Container Insights collects granular metrics at the cluster, node, pod, and container level — including CPU, memory, network, disk, and filesystem usage.' },
+                { type: 'finding', severity: 'info', title: 'Auto-detects accelerators', content: 'Automatically discovers NVIDIA GPUs, AWS Trainium, Inferentia, and Elastic Fabric Adapters. GPU metrics appear in dashboards without extra configuration.' },
+                { type: 'text', content: 'Enhanced mode is billed per observation rather than per metric stored. This is typically more cost-effective for large clusters.' },
+              ], ['What metrics are collected?', 'How does pricing work?', 'Can I use basic mode instead?']),
+              'app-signals': () => openHelp('Application Signals', [
+                { type: 'text', content: 'Application Signals auto-instruments your applications using OpenTelemetry. It generates a real-time service map, tracks latency per operation, and enables SLO creation.' },
+                { type: 'finding', severity: 'info', title: 'Supported languages', content: 'Java, Python, Node.js, and .NET are auto-instrumented. No code changes needed — the agent injects instrumentation at runtime.' },
+                { type: 'text', content: 'For EKS, instrumentation is per-namespace. For ECS, it requires an ADOT SDK init container per task definition.' },
+              ], ['Which namespaces should I instrument?', 'Does this add latency?', 'How do I create SLOs from this?']),
+              'fluent-bit': () => openHelp('Fluent Bit Log Collection', [
+                { type: 'text', content: 'Fluent Bit runs as a DaemonSet and collects pod logs from all namespaces by default. Logs are shipped to CloudWatch Logs with automatic log group creation.' },
+                { type: 'finding', severity: 'info', title: 'Log class selection', content: 'Standard class for active debugging ($0.50/GB). Infrequent Access for audit/compliance logs ($0.25/GB). You can configure per-namespace.' },
+              ], ['Which log class should I use?', 'Can I exclude certain namespaces?', 'How much will logs cost?']),
+              'prometheus': () => openHelp('Prometheus Metric Scraping', [
+                { type: 'text', content: 'The agent auto-discovers Prometheus exporters from common workloads: NGINX, Java/JMX, App Mesh, Memcached, HAProxy.' },
+                { type: 'finding', severity: 'info', title: 'Custom metrics', content: 'For your own application metrics, add the annotation prometheus.io/scrape: "true" to your pod spec. The agent will discover and scrape them automatically.' },
+              ], ['How do I expose custom Prometheus metrics?', 'What workloads are auto-discovered?', 'How are Prometheus metrics priced?']),
+              'ecs-metrics': () => openHelp('ECS Enhanced Metrics', [
+                { type: 'text', content: 'The CW Agent sidecar collects memory utilization, disk usage, and network metrics that ECS doesn\'t publish by default. It also exposes StatsD and EMF endpoints for custom application metrics.' },
+                { type: 'finding', severity: 'info', title: 'StatsD & EMF', content: 'Your application can push custom metrics to the agent via StatsD (UDP port 8125) or Embedded Metric Format (TCP port 25888). These appear as CloudWatch custom metrics.' },
+              ], ['What metrics does the sidecar collect?', 'How do I send custom metrics?', 'What\'s the memory overhead?']),
+              'ecs-app-signals': () => openHelp('Application Signals on ECS', [
+                { type: 'text', content: 'Unlike EKS where it\'s automatic, Application Signals on ECS requires manual setup: an ADOT SDK init container is added to each task definition, along with environment variables for service name and cluster.' },
+                { type: 'finding', severity: 'warning', title: 'Task definition changes required', content: 'I\'ll generate the updated task definitions with the init container and environment variables. You review and deploy through your IaC pipeline.' },
+                { type: 'text', content: 'Once deployed, you get the same capabilities as EKS: service map, latency breakdown, error tracking, and SLO support.' },
+              ], ['Show me the task definition changes', 'Can I enable it for just one service first?', 'Does the init container add startup latency?']),
+              'ecs-container-insights': () => openHelp('Container Insights on ECS', [
+                { type: 'text', content: 'Container Insights for ECS is enabled at the cluster level — it\'s a separate setting from the CW Agent sidecar. Once enabled, it collects task and service-level metrics.' },
+                { type: 'finding', severity: 'info', title: 'No restarts needed', content: 'Enabling Container Insights is a cluster configuration change. It takes effect immediately without restarting any tasks.' },
+              ], ['What metrics does it collect?', 'Is it the same as EKS Container Insights?', 'How much does it cost?']),
+              'ecs-logs': () => openHelp('ECS Log Configuration', [
+                { type: 'text', content: 'ECS logs use the awslogs log driver configured in the task definition — this is separate from the CW Agent. Each container in the task definition specifies its log group and stream prefix.' },
+                { type: 'finding', severity: 'info', title: 'Configured in the logging step', content: 'I\'ll set up the awslogs log driver when we get to the logging step. The CW Agent sidecar handles metrics, not logs.' },
+              ], ['Why are logs separate from the agent?', 'Can I use the agent for logs instead?']),
+            }
+
             return (
             <div className="ml-14 mb-4">
               {/* What the agent unlocks — capabilities grid */}
@@ -384,17 +426,23 @@ export default function GettingStartedPage() {
 
                   {/* Capabilities with config notes */}
                   <div className="flex flex-col gap-2 mb-3">
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['container-insights']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-cyan-400">Container Insights (Enhanced)</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Cluster, node, pod, container metrics. Auto-detects GPUs, Trainium/Inferentia, and EFA adapters.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['app-signals']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted mb-1.5">Auto-instruments Java, Python, Node.js, .NET. Generates service map, latency breakdown, error tracking.</p>
                       <div className="flex items-center gap-2">
@@ -405,17 +453,23 @@ export default function GettingStartedPage() {
                         <span className="text-[8px] text-foreground-disabled">(kube-system excluded)</span>
                       </div>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['fluent-bit']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-green-400">Fluent Bit Logs</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Pod logs shipped to CloudWatch Logs. All namespaces collected by default.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['prometheus']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-orange-400">Prometheus Scraping</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Auto-discovery</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Auto-discovery</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Auto-discovers NGINX, Java/JMX, App Mesh exporters. Custom app metrics need <code className="text-[8px] bg-background-surface-1 px-1 rounded">prometheus.io/scrape: "true"</code> annotation.</p>
                     </div>
@@ -451,32 +505,44 @@ export default function GettingStartedPage() {
 
                   {/* Capabilities with config notes */}
                   <div className="flex flex-col gap-2 mb-3">
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-metrics']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-cyan-400">Enhanced Metrics</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Included with sidecar</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Included with sidecar</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Memory, disk, network metrics. StatsD and EMF endpoints available for custom app metrics.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-app-signals']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Additional setup needed</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Additional setup needed</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted mb-1.5">Requires ADOT SDK init container per task definition + environment variables for service name and cluster.</p>
                       <p className="text-[9px] text-foreground-muted">I'll generate the task definition changes — you review and deploy via your IaC pipeline.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-container-insights']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-green-400">Container Insights</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate enablement</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate enablement</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Enabled at the cluster level (not part of the agent sidecar). I'll configure this in the next step.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-logs']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-foreground-muted">Logs</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate configuration</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate configuration</span>
+                          <Info size={10} className="text-foreground-disabled" />
+                        </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">ECS logs use the awslogs log driver in the task definition — configured in the logging step, not the agent.</p>
                     </div>
