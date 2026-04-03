@@ -227,76 +227,96 @@ export default function GettingStartedPage() {
   }, [currentStep])
 
   return (
-    <div className="flex gap-6 px-6 py-6 h-full">
-      {/* Left: Step sidebar */}
-      <StepSidebar steps={steps} currentStep={currentStep} completedSteps={completedSteps} onStepClick={setCurrentStep} />
+    <div className="px-6 py-6 max-w-[1400px] mx-auto">
+      <button onClick={() => navigate('/day0')} className="text-[11px] text-primary hover:text-primary-hover mb-4 flex items-center gap-1"><ArrowLeft size={10} /> Back to home</button>
 
-      {/* Center: Agent conversation */}
-      <div className="flex-1 min-w-0 flex flex-col" ref={contentRef}>
-        <button onClick={() => navigate('/day0')} className="text-[11px] text-primary hover:text-primary-hover mb-4 flex items-center gap-1 self-start"><ArrowLeft size={10} /> Back to home</button>
+      <div className="mb-6">
+        <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">Getting Started</h1>
+        <p className="text-body-s text-foreground-muted mt-0.5">Step {currentStep + 1} of {steps.length} · {[...completedSteps].filter(id => id !== 'welcome' && id !== 'done').length} completed</p>
+      </div>
 
-        <div className="flex gap-4 mb-6 flex-1">
-          <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-            <Sparkle size={18} weight="fill" />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-body-m font-semibold text-foreground">{step.title}</span>
-              {completedSteps.has(step.id) && <CheckCircle size={14} weight="fill" className="text-status-active" />}
-            </div>
-            <p className="text-body-s text-foreground-muted leading-relaxed mb-4">{step.agentMessage}</p>
-
-            {step.detail && (
-              <div className="glass-card p-4 mb-4">
-                <pre className="text-[11px] text-foreground-muted whitespace-pre-wrap leading-relaxed">{step.detail}</pre>
+      {/* Step indicator — horizontal */}
+      <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
+        {steps.map((s, i) => {
+          const isActive = i === currentStep
+          const isDone = completedSteps.has(s.id)
+          const Icon = s.icon
+          return (
+            <button key={s.id} onClick={() => setCurrentStep(i)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] whitespace-nowrap transition-all flex-shrink-0 ${isActive ? 'bg-primary/10 text-primary border border-primary/20 font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled hover:text-foreground-muted'}`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-status-active/20' : isActive ? 'bg-primary/20' : 'bg-background-surface-1'}`}>
+                {isDone ? <CheckCircle size={10} weight="fill" /> : <Icon size={9} />}
               </div>
-            )}
+              {s.title}
+            </button>
+          )
+        })}
+      </div>
 
-            {/* Action buttons */}
-            {step.action && !completedSteps.has(step.id) && !step.done && (
-              <div className="flex items-center gap-3 mb-4">
-                {step.action.type === 'deploy' && (
-                  <>
-                    <button onClick={handleDeploy} disabled={deploying} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors disabled:opacity-50">
-                      {deploying ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Deploying...</> : <><Play size={14} /> {step.action.label}</>}
+      {/* Main grid: content + right sidebar */}
+      <div className="grid grid-cols-[1fr_320px] gap-6">
+        <div ref={contentRef}>
+          {/* Agent conversation */}
+          <div className="flex gap-4 mb-6">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+              <Sparkle size={18} weight="fill" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-body-m font-semibold text-foreground">{step.title}</span>
+                {completedSteps.has(step.id) && <CheckCircle size={14} weight="fill" className="text-status-active" />}
+              </div>
+              <p className="text-body-s text-foreground-muted leading-relaxed mb-4">{step.agentMessage}</p>
+
+              {step.detail && (
+                <div className="glass-card p-4 mb-4">
+                  <pre className="text-[11px] text-foreground-muted whitespace-pre-wrap leading-relaxed">{step.detail}</pre>
+                </div>
+              )}
+
+              {step.action && !completedSteps.has(step.id) && !step.done && (
+                <div className="flex items-center gap-3 mb-4">
+                  {step.action.type === 'deploy' && (
+                    <>
+                      <button onClick={handleDeploy} disabled={deploying} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors disabled:opacity-50">
+                        {deploying ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Deploying...</> : <><Play size={14} /> {step.action.label}</>}
+                      </button>
+                      <button onClick={() => setShowExport(true)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
+                        <Code size={14} /> Export as code
+                      </button>
+                    </>
+                  )}
+                  {step.action.type === 'navigate' && (
+                    <button onClick={() => navigate(step.action.path)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors">
+                      {step.action.label} <ArrowRight size={14} />
                     </button>
-                    <button onClick={() => setShowExport(true)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
-                      <Code size={14} /> Export as code
-                    </button>
-                  </>
-                )}
-                {step.action.type === 'navigate' && (
-                  <button onClick={() => navigate(step.action.path)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors">
-                    {step.action.label} <ArrowRight size={14} />
+                  )}
+                </div>
+              )}
+
+              {(completedSteps.has(step.id) || step.done) && step.action?.type === 'deploy' && (
+                <div className="flex items-center gap-2 mb-4 text-status-active">
+                  <CheckCircle size={16} weight="fill" />
+                  <span className="text-body-s font-medium">Done</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-4 border-t border-border-muted/20">
+                <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
+                  <ArrowLeft size={14} /> Back
+                </button>
+                {!isLast && (
+                  <button onClick={handleNext} className="flex items-center gap-1 text-body-s text-primary hover:text-primary-hover font-medium">
+                    {canProceed ? 'Next' : 'Skip'} <ArrowRight size={14} />
                   </button>
                 )}
               </div>
-            )}
-
-            {(completedSteps.has(step.id) || step.done) && step.action?.type === 'deploy' && (
-              <div className="flex items-center gap-2 mb-4 text-status-active">
-                <CheckCircle size={16} weight="fill" />
-                <span className="text-body-s font-medium">Done</span>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between pt-4 border-t border-border-muted/20">
-              <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
-                <ArrowLeft size={14} /> Back
-              </button>
-              {!isLast && (
-                <button onClick={handleNext} className="flex items-center gap-1 text-body-s text-primary hover:text-primary-hover font-medium">
-                  {canProceed ? 'Next' : 'Skip'} <ArrowRight size={14} />
-                </button>
-              )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Right: Cost + Summary */}
-      <RightSidebar steps={steps} completedSteps={completedSteps} cost={persona.cost} persona={persona} />
+        {/* Right sidebar */}
+        <RightSidebar steps={steps} completedSteps={completedSteps} cost={persona.cost} persona={persona} />
+      </div>
 
       {showExport && <IaCExportModal onClose={() => setShowExport(false)} title={step.title} subtitle={step.agentMessage.substring(0, 60) + '...'} />}
     </div>
