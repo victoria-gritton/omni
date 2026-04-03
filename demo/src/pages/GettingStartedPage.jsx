@@ -1007,16 +1007,7 @@ export default function GettingStartedPage() {
               </div>
             )}
 
-            <div className="sticky bottom-0 flex items-center justify-between pt-4 pb-2 border-t border-border-muted/20 bg-background z-10 -mx-1 px-1">
-              <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
-                <ArrowLeft size={14} /> Back
-              </button>
-              {!isLast && (
-                <button onClick={handleNext} className="flex items-center gap-1 text-body-s text-primary hover:text-primary-hover font-medium">
-                  {isDeployed || step.skip || step.id === 'welcome' || (hasItems && selectedInStep === 0) ? 'Next' : 'Skip'} <ArrowRight size={14} />
-                </button>
-              )}
-            </div>
+            <div className="mb-16" />
           </div>
         </div>
 
@@ -1029,6 +1020,20 @@ export default function GettingStartedPage() {
               <button onClick={() => { if (agentInput.trim()) { setDrawerInvestigation({ title: 'Agent', subtitle: 'Getting Started', messages: [{ type: 'text', content: `You asked: "${agentInput}". I'm here to help with your setup.` }], followUps: ['What thresholds are you recommending?', 'Which services are most critical?', 'Show me the CloudFormation template'] }); setAgentInput('') } }} className="absolute right-1.5 top-1.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20"><PaperPlaneRight size={12} /></button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Fixed bottom nav bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border-muted/20 bg-background/95 backdrop-blur-sm">
+        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
+          <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
+            <ArrowLeft size={14} /> Back
+          </button>
+          {!isLast && (
+            <button onClick={handleNext} className="flex items-center gap-1 text-body-s text-primary hover:text-primary-hover font-medium">
+              {isDeployed || step.skip || step.id === 'welcome' || (hasItems && selectedInStep === 0) ? 'Next' : 'Skip'} <ArrowRight size={14} />
+            </button>
+          )}
         </div>
       </div>
 
