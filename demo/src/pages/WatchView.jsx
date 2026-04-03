@@ -22,8 +22,9 @@ export default function WatchView() {
           <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
 
-        <div className="flex items-center gap-12">
-        {/* Watch bezel */}
+        <div className="flex items-start gap-12">
+        {/* Watch column */}
+        <div className="flex flex-col items-center gap-3">
         <div className="flex items-center gap-12">
         {/* Watch bezel */}
         <div className="relative">
@@ -126,12 +127,10 @@ export default function WatchView() {
         </div>
         </div>
 
-
-
-
-
-
-
+        <p className="text-body-m text-foreground text-center max-w-[250px]">
+          Click "View investigation in CloudWatch+" on the phone →
+        </p>
+        </div>
 
         {/* iPhone - realistic iOS lock screen */}
         <div className="relative">
@@ -183,9 +182,6 @@ export default function WatchView() {
 
         </div>
 
-        <p className="text-body-m text-foreground text-center max-w-[500px]">
-          Click "View investigation in CloudWatch+" on the phone to continue →
-        </p>
       </div>
     </div>
   )
