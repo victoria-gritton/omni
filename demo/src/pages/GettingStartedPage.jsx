@@ -340,77 +340,133 @@ export default function GettingStartedPage() {
           )}
 
           {/* CW Agent step — rich content */}
-          {step.id === 'cw-agent' && (
+          {step.id === 'cw-agent' && (() => {
+            const eksServices = currentItems.filter(i => i.detail.includes('DaemonSet'))
+            const ecsServices = currentItems.filter(i => !i.detail.includes('DaemonSet'))
+            const hasEks = eksServices.length > 0
+            const hasEcs = ecsServices.length > 0
+
+            return (
             <div className="ml-14 mb-4">
-              {/* Before vs After */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="glass-card p-3">
-                  <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">Without Agent</p>
-                  <div className="flex flex-col gap-1.5">
-                    {['CPUUtilization', 'NetworkIn/Out', 'DiskReadOps'].map(m => (
-                      <div key={m} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                        <span className="text-[10px] text-foreground">{m}</span>
-                      </div>
-                    ))}
-                    {['MemoryUtilization', 'DiskUsage', 'Custom metrics'].map(m => (
-                      <div key={m} className="flex items-center gap-2 opacity-30">
-                        <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
-                        <span className="text-[10px] text-foreground-muted line-through">{m}</span>
-                      </div>
-                    ))}
+              {/* What the agent unlocks — capabilities grid */}
+              <div className="glass-card p-4 mb-4">
+                <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">What the agent enables</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-cyan-400/5 border border-cyan-400/20 p-3">
+                    <p className="text-[10px] text-cyan-400 font-medium mb-1">Enhanced Metrics</p>
+                    <p className="text-[9px] text-foreground-muted">Memory, disk, network, custom app metrics — not available without the agent</p>
                   </div>
-                </div>
-                <div className="glass-card p-3 border-l-2 border-l-cyan-400/50">
-                  <p className="text-[9px] text-cyan-400 uppercase tracking-wider font-semibold mb-2">With Agent</p>
-                  <div className="flex flex-col gap-1.5">
-                    {['CPUUtilization', 'NetworkIn/Out', 'DiskReadOps', 'MemoryUtilization', 'DiskUsage', 'Custom metrics'].map(m => (
-                      <div key={m} className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                        <span className="text-[10px] text-foreground">{m}</span>
-                      </div>
-                    ))}
+                  <div className="rounded-lg bg-purple-400/5 border border-purple-400/20 p-3">
+                    <p className="text-[10px] text-purple-400 font-medium mb-1">Application Signals</p>
+                    <p className="text-[9px] text-foreground-muted">Auto-instrumented APM: service map, latency breakdown, error tracking, SLO-ready</p>
+                  </div>
+                  <div className="rounded-lg bg-green-400/5 border border-green-400/20 p-3">
+                    <p className="text-[10px] text-green-400 font-medium mb-1">Container Insights</p>
+                    <p className="text-[9px] text-foreground-muted">Cluster, node, pod, container-level metrics with enhanced observability</p>
+                  </div>
+                  <div className="rounded-lg bg-orange-400/5 border border-orange-400/20 p-3">
+                    <p className="text-[10px] text-orange-400 font-medium mb-1">Prometheus Metrics</p>
+                    <p className="text-[9px] text-foreground-muted">Auto-discovers and scrapes Prometheus endpoints from your workloads</p>
                   </div>
                 </div>
               </div>
 
-              {/* Grouped by deployment type */}
-              {(() => {
-                const groups = {}
-                currentItems.forEach(item => {
-                  const method = item.detail.includes('DaemonSet') ? 'EKS — DaemonSet rollout' : 'ECS — Sidecar container'
-                  if (!groups[method]) groups[method] = []
-                  groups[method].push(item)
-                })
-                return Object.entries(groups).map(([method, items]) => (
-                  <div key={method} className="glass-card p-3 mb-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-medium text-foreground">{method}</span>
-                      <span className="text-[9px] text-foreground-disabled">{items.length} services · {method.includes('EKS') ? '~3 min per cluster' : '~5 min total'} · Zero downtime</span>
+              {/* EKS section */}
+              {hasEks && (
+                <div className="glass-card p-4 mb-3 border-l-2 border-l-cyan-400/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-[11px] font-medium text-foreground">EKS — CloudWatch Observability Add-on</p>
+                      <p className="text-[9px] text-foreground-muted">Single add-on install per cluster. Enables all capabilities at once.</p>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      {items.map(item => {
-                        const isSelected = selections.has(item.id)
-                        return (
-                          <div key={item.id} onClick={() => !isDeployed && toggleItem(item.id)} className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${isDeployed ? 'opacity-50' : 'cursor-pointer hover:bg-primary/5'} ${isSelected ? 'bg-primary/5' : ''}`}>
-                            {isSelected ? <CheckSquare size={14} weight="fill" className={isDeployed ? 'text-status-active' : 'text-primary'} /> : <Square size={14} className="text-foreground-disabled" />}
-                            <span className="text-[11px] text-foreground flex-1">{item.label}</span>
-                            <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}/mo</span>
-                          </div>
-                        )
-                      })}
+                    <span className="text-[9px] text-foreground-disabled">{eksServices.length} cluster{eksServices.length > 1 ? 's' : ''} · ~3 min each</span>
+                  </div>
+
+                  {/* What's included */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {['Container Insights', 'Application Signals', 'Fluent Bit logs', 'Prometheus scraping'].map(cap => (
+                      <span key={cap} className="text-[8px] px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/20">{cap}</span>
+                    ))}
+                  </div>
+
+                  {/* Auto-instrumentation languages detected */}
+                  <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 mb-3">
+                    <p className="text-[9px] text-foreground-disabled mb-1.5">Auto-instrumentation (detected languages)</p>
+                    <div className="flex gap-2">
+                      {['Java', 'Python', 'Node.js'].map(lang => (
+                        <span key={lang} className="text-[9px] px-2 py-0.5 rounded bg-purple-400/10 text-purple-400 border border-purple-400/20">{lang}</span>
+                      ))}
                     </div>
                   </div>
-                ))
-              })()}
+
+                  {/* Cluster selection */}
+                  <div className="flex flex-col gap-0.5">
+                    {eksServices.map(item => {
+                      const isSelected = selections.has(item.id)
+                      return (
+                        <div key={item.id} onClick={() => !isDeployed && toggleItem(item.id)} className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${isDeployed ? 'opacity-50' : 'cursor-pointer hover:bg-primary/5'} ${isSelected ? 'bg-primary/5' : ''}`}>
+                          {isSelected ? <CheckSquare size={14} weight="fill" className={isDeployed ? 'text-status-active' : 'text-primary'} /> : <Square size={14} className="text-foreground-disabled" />}
+                          <span className="text-[11px] text-foreground flex-1">{item.label}</span>
+                          <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}/mo</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ECS section */}
+              {hasEcs && (
+                <div className="glass-card p-4 mb-3 border-l-2 border-l-primary/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-[11px] font-medium text-foreground">ECS — Sidecar per service</p>
+                      <p className="text-[9px] text-foreground-muted">CW Agent added to each task definition. Supports Fargate + EC2.</p>
+                    </div>
+                    <span className="text-[9px] text-foreground-disabled">{ecsServices.length} service{ecsServices.length > 1 ? 's' : ''} · ~5 min total</span>
+                  </div>
+
+                  {/* What's included */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {['Enhanced metrics', 'Application Signals', 'StatsD/EMF support'].map(cap => (
+                      <span key={cap} className="text-[8px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{cap}</span>
+                    ))}
+                  </div>
+
+                  {/* Auto-instrumentation */}
+                  <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 mb-3">
+                    <p className="text-[9px] text-foreground-disabled mb-1.5">Application Signals auto-instrumentation</p>
+                    <p className="text-[9px] text-foreground-muted">ADOT SDK init container added per task. Service names auto-detected from task definition.</p>
+                  </div>
+
+                  {/* Service selection */}
+                  <div className="flex flex-col gap-0.5">
+                    {ecsServices.map(item => {
+                      const isSelected = selections.has(item.id)
+                      return (
+                        <div key={item.id} onClick={() => !isDeployed && toggleItem(item.id)} className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${isDeployed ? 'opacity-50' : 'cursor-pointer hover:bg-primary/5'} ${isSelected ? 'bg-primary/5' : ''}`}>
+                          {isSelected ? <CheckSquare size={14} weight="fill" className={isDeployed ? 'text-status-active' : 'text-primary'} /> : <Square size={14} className="text-foreground-disabled" />}
+                          <span className="text-[11px] text-foreground flex-1">{item.label}</span>
+                          <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}/mo</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Impact summary */}
               <div className="rounded-lg bg-status-degraded/5 border border-status-degraded/20 p-3">
                 <p className="text-[10px] text-status-degraded font-medium mb-1">⚡ Infrastructure impact</p>
-                <p className="text-[10px] text-foreground-muted">Rolling restarts for selected services. Each service restarts one task at a time — zero downtime. Fully reversible by removing the sidecar/DaemonSet.</p>
+                <p className="text-[10px] text-foreground-muted">
+                  {hasEks && 'EKS: add-on install, no pod restarts needed. '}
+                  {hasEcs && 'ECS: rolling restart per service (one task at a time, zero downtime). '}
+                  Fully reversible.
+                </p>
               </div>
             </div>
-          )}
+            )
+          })()}
 
           {/* Selectable items (not for welcome or cw-agent which have custom content) */}
           {hasItems && step.id !== 'cw-agent' && (
