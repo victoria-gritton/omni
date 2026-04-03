@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code,
-  Cpu, CheckSquare, Square, Globe, PaperPlaneRight, Info,
+  Cpu, CheckSquare, Square, Globe, PaperPlaneRight, Info, CaretRight,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
@@ -158,6 +158,12 @@ export default function GettingStartedPage() {
   const [showExport, setShowExport] = useState(false)
   const [drawerInvestigation, setDrawerInvestigation] = useState(null)
   const [agentInput, setAgentInput] = useState('')
+  const [showCustomize, setShowCustomize] = useState(false)
+  const [capabilities, setCapabilities] = useState({
+    'container-insights': true, 'app-signals': true, 'fluent-bit': true, 'prometheus': true,
+    'ecs-metrics': true, 'ecs-app-signals': true, 'ecs-container-insights': true,
+  })
+  const toggleCap = (id) => setCapabilities(prev => ({ ...prev, [id]: !prev[id] }))
   const contentRef = useRef(null)
 
   // Selections: empty by default, items get selected as user reaches each step
@@ -426,21 +432,23 @@ export default function GettingStartedPage() {
 
                   {/* Capabilities with config notes */}
                   <div className="flex flex-col gap-2 mb-3">
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['container-insights']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['container-insights'] ? 'opacity-40' : ''}`} onClick={() => capHelp['container-insights']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-cyan-400">Container Insights (Enhanced)</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('container-insights') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['container-insights'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['container-insights'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Cluster, node, pod, container metrics. Auto-detects GPUs, Trainium/Inferentia, and EFA adapters.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['app-signals']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['app-signals'] ? 'opacity-40' : ''}`} onClick={() => capHelp['app-signals']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('app-signals') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['app-signals'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['app-signals'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
@@ -453,27 +461,62 @@ export default function GettingStartedPage() {
                         <span className="text-[8px] text-foreground-disabled">(kube-system excluded)</span>
                       </div>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['fluent-bit']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['fluent-bit'] ? 'opacity-40' : ''}`} onClick={() => capHelp['fluent-bit']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-green-400">Fluent Bit Logs</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('fluent-bit') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['fluent-bit'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['fluent-bit'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Pod logs shipped to CloudWatch Logs. All namespaces collected by default.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['prometheus']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['prometheus'] ? 'opacity-40' : ''}`} onClick={() => capHelp['prometheus']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-orange-400">Prometheus Scraping</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Auto-discovery</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('prometheus') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['prometheus'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['prometheus'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Auto-discovers NGINX, Java/JMX, App Mesh exporters. Custom app metrics need <code className="text-[8px] bg-background-surface-1 px-1 rounded">prometheus.io/scrape: "true"</code> annotation.</p>
                     </div>
                   </div>
+
+                  {/* Customize per namespace */}
+                  <button onClick={() => setShowCustomize(!showCustomize)} className="flex items-center gap-1.5 text-[9px] text-primary hover:text-primary-hover mb-3">
+                    <CaretRight size={10} className={`transition-transform ${showCustomize ? 'rotate-90' : ''}`} />
+                    Customize per namespace
+                  </button>
+                  {showCustomize && (
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-3 mb-3">
+                      <p className="text-[9px] text-foreground-disabled mb-2">Select which namespaces get each capability:</p>
+                      <table className="w-full text-[9px]">
+                        <thead>
+                          <tr className="border-b border-border-muted/20">
+                            <th className="text-left py-1 text-foreground-disabled font-medium">Namespace</th>
+                            <th className="text-center py-1 text-cyan-400 font-medium">Insights</th>
+                            <th className="text-center py-1 text-purple-400 font-medium">App Signals</th>
+                            <th className="text-center py-1 text-green-400 font-medium">Logs</th>
+                            <th className="text-center py-1 text-orange-400 font-medium">Prometheus</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {['default', 'payments', 'trading', 'analytics', 'kube-system'].map(ns => (
+                            <tr key={ns} className="border-b border-border-muted/10">
+                              <td className="py-1.5 text-foreground">{ns}</td>
+                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-cyan-400 inline" /></td>
+                              <td className="text-center">{ns === 'kube-system' ? <span className="text-foreground-disabled">—</span> : <CheckSquare size={12} weight="fill" className="text-purple-400 inline" />}</td>
+                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-green-400 inline" /></td>
+                              <td className="text-center">{ns === 'kube-system' ? <span className="text-foreground-disabled">—</span> : <CheckSquare size={12} weight="fill" className="text-orange-400 inline" />}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
 
                   {/* Cluster selection */}
                   <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-1.5">Select clusters</p>
@@ -505,32 +548,35 @@ export default function GettingStartedPage() {
 
                   {/* Capabilities with config notes */}
                   <div className="flex flex-col gap-2 mb-3">
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-metrics']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['ecs-metrics'] ? 'opacity-40' : ''}`} onClick={() => capHelp['ecs-metrics']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-cyan-400">Enhanced Metrics</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Included with sidecar</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('ecs-metrics') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['ecs-metrics'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['ecs-metrics'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted">Memory, disk, network metrics. StatsD and EMF endpoints available for custom app metrics.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-app-signals']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['ecs-app-signals'] ? 'opacity-40' : ''}`} onClick={() => capHelp['ecs-app-signals']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Additional setup needed</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('ecs-app-signals') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['ecs-app-signals'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['ecs-app-signals'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
                       <p className="text-[9px] text-foreground-muted mb-1.5">Requires ADOT SDK init container per task definition + environment variables for service name and cluster.</p>
                       <p className="text-[9px] text-foreground-muted">I'll generate the task definition changes — you review and deploy via your IaC pipeline.</p>
                     </div>
-                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => capHelp['ecs-container-insights']()}>
+                    <div className={`rounded-lg bg-background/40 border border-border-muted/20 p-2.5 hover:border-primary/20 transition-colors cursor-pointer ${!capabilities['ecs-container-insights'] ? 'opacity-40' : ''}`} onClick={() => capHelp['ecs-container-insights']()}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] font-medium text-green-400">Container Insights</span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate enablement</span>
+                          <button onClick={(e) => { e.stopPropagation(); toggleCap('ecs-container-insights') }} className={`w-7 h-4 rounded-full flex items-center px-0.5 transition-colors ${capabilities['ecs-container-insights'] ? 'bg-primary' : 'bg-foreground-disabled/30'}`}><div className={`w-3 h-3 rounded-full bg-white transition-transform ${capabilities['ecs-container-insights'] ? 'translate-x-3' : ''}`} /></button>
                           <Info size={10} className="text-foreground-disabled" />
                         </div>
                       </div>
