@@ -596,7 +596,7 @@ export default function GettingStartedPage() {
 
                   {/* Service selection */}
                   <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-1.5">Select services</p>
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-0.5 mb-3">
                     {ecsServices.map(item => {
                       const isSelected = selections.has(item.id)
                       return (
@@ -608,6 +608,37 @@ export default function GettingStartedPage() {
                       )
                     })}
                   </div>
+
+                  {/* Customize per service */}
+                  <button onClick={() => setShowCustomize(!showCustomize)} className="flex items-center gap-1.5 text-[9px] text-primary hover:text-primary-hover mb-3">
+                    <CaretRight size={10} className={`transition-transform ${showCustomize ? 'rotate-90' : ''}`} />
+                    Customize capabilities per service
+                  </button>
+                  {showCustomize && (
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-3 mb-3">
+                      <p className="text-[9px] text-foreground-disabled mb-2">Select which capabilities to enable per service:</p>
+                      <table className="w-full text-[9px]">
+                        <thead>
+                          <tr className="border-b border-border-muted/20">
+                            <th className="text-left py-1 text-foreground-disabled font-medium">Service</th>
+                            <th className="text-center py-1 text-cyan-400 font-medium">Metrics</th>
+                            <th className="text-center py-1 text-purple-400 font-medium">App Signals</th>
+                            <th className="text-center py-1 text-green-400 font-medium">Insights</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ecsServices.filter(i => selections.has(i.id)).map(item => (
+                            <tr key={item.id} className="border-b border-border-muted/10">
+                              <td className="py-1.5 text-foreground">{item.label}</td>
+                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-cyan-400 inline" /></td>
+                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-purple-400 inline" /></td>
+                              <td className="text-center"><CheckSquare size={12} weight="fill" className="text-green-400 inline" /></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
 
