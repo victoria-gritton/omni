@@ -181,15 +181,32 @@ function RightSidebar({ stepItems, selections, deployedSteps, cost }) {
 
       <div className="glass-card p-4">
         <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Estimated Cost</h3>
-        <div className="flex items-baseline justify-between mb-1">
-          <span className="text-[10px] text-foreground-muted">Current</span>
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="text-[10px] text-foreground-muted">Current CW spend</span>
           <span className="text-body-s font-semibold text-foreground">${cost.current.total.toLocaleString()}/mo</span>
         </div>
+        <div className="flex flex-col gap-1.5 pt-2 border-t border-border-muted/20">
+          {rows.map(r => {
+            const items = stepItems[r.id] || []
+            const catCost = r.deployed ? items.filter(i => selections.has(i.id)).reduce((s, i) => s + (i.cost || 0), 0) : 0
+            const Icon = r.icon
+            return (
+              <div key={r.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Icon size={10} className={r.deployed ? 'text-status-active' : r.color} />
+                  <span className="text-[10px] text-foreground-muted">{r.label}</span>
+                </div>
+                <span className={`text-[10px] font-medium ${catCost > 0 ? 'text-foreground' : 'text-foreground-disabled'}`}>
+                  {catCost > 0 ? `+$${catCost.toFixed(2)}` : '—'}
+                </span>
+              </div>
+            )
+          })}
+        </div>
         <div className="flex items-baseline justify-between pt-2 border-t border-border-muted/20 mt-2">
-          <span className="text-[10px] text-foreground-muted">After deployment</span>
+          <span className="text-[10px] text-foreground-muted font-medium">Total after deployment</span>
           <span className="text-body-s font-semibold text-foreground">${(cost.current.total + deployedCost).toFixed(0)}/mo</span>
         </div>
-        {deployedCost > 0 && <p className="text-[9px] text-foreground-disabled mt-1">+${deployedCost.toFixed(2)}/mo for {totalDeployed} resources</p>}
       </div>
     </div>
   )
