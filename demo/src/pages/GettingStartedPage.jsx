@@ -3,206 +3,142 @@ import { useNavigate } from 'react-router-dom'
 import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code,
-  PaperPlaneRight, Cpu, Globe,
+  Cpu, CheckSquare, Square,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
 
-// Steps the agent walks the user through
+// Generate selectable items per step from persona services
+function buildStepItems(persona) {
+  const allServices = persona.applications.flatMap(a => a.services)
+  const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
+
+  const alarmTypes = { 'ECS Fargate': ['CPU > 90%', 'Memory > 85%'], 'EKS': ['Pod restarts > 5/hr', 'Node CPU > 85%', 'Node memory > 85%'], 'Lambda': ['Errors > 1%', 'Duration p99 > 10s'], 'RDS PostgreSQL': ['CPU > 80%', 'Read latency > 20ms'], 'Aurora PostgreSQL': ['CPU > 80%', 'Replica lag > 100ms'], 'DynamoDB': ['Throttled requests > 0'], 'ElastiCache Redis': ['CPU > 75%'], 'API Gateway': ['5xx > 1%', 'Latency p99 > 1s'], 'CloudFront': ['5xx > 1%'], 'SNS + SQS': ['Message age > 300s'], 'S3': ['4xx > 5%'] }
+
+  return {
+    'cw-agent': computeServices.map(s => ({ id: `cwa-${s.name}`, label: s.name, detail: `${s.type} · ${s.type === 'EKS' ? 'DaemonSet' : 'Sidecar'}`, cost: 0.50 })),
+    'alarms': allServices.filter(s => !s.hasAlarms).flatMap(s => (alarmTypes[s.type] || ['Health alarm']).map((a, i) => ({ id: `alarm-${s.name}-${i}`, label: `${s.name} — ${a}`, detail: s.type, cost: 0.10 }))),
+    'logs': allServices.filter(s => !s.hasLogs).map(s => ({ id: `log-${s.name}`, label: s.name, detail: s.type, cost: s.type === 'EKS' ? 5 : s.type === 'ECS Fargate' ? 3 : 1.5 })),
+    'traces': allServices.filter(s => !s.hasTraces).map(s => ({ id: `trace-${s.name}`, label: s.name, detail: s.type, cost: s.type === 'EKS' ? 1.5 : 0.5 })),
+    'dashboard': [{ id: 'dash-overview', label: 'Production overview', detail: 'Health, errors, latency, throughput', cost: 3 }],
+    'anomaly': [
+      { id: 'anom-traffic', label: 'API request count', detail: 'Traffic spikes/drops', cost: 1 },
+      { id: 'anom-cpu', label: 'Compute CPU/memory', detail: 'Resource exhaustion', cost: 1 },
+      { id: 'anom-db', label: 'Database latency', detail: 'Performance degradation', cost: 1 },
+      { id: 'anom-lambda', label: 'Lambda duration', detail: 'Cold starts, slowdowns', cost: 1 },
+      { id: 'anom-queue', label: 'Queue message age', detail: 'Processing delays', cost: 1 },
+    ],
+  }
+}
+
 function buildSteps(persona) {
   const allServices = persona.applications.flatMap(a => a.services)
   const total = allServices.length
   const noAlarms = allServices.filter(s => !s.hasAlarms).length
   const noLogs = allServices.filter(s => !s.hasLogs).length
   const noTraces = allServices.filter(s => !s.hasTraces).length
-  const alarmCount = Math.round(noAlarms * 2.6)
   const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
   const needsAgent = computeServices.length > 0
 
   return [
-    {
-      id: 'welcome', icon: Robot, color: 'text-primary',
-      title: 'Welcome',
-      agentMessage: `I just scanned your account and found ${total} services across ${persona.applications.length} applications. Let me walk you through getting your monitoring set up.`,
-      detail: `Here's what I found:\n${persona.applications.map(a => `• ${a.name} — ${a.services.length} services`).join('\n')}`,
-      action: null, costImpact: 0,
-    },
-    ...(needsAgent ? [{
-      id: 'cw-agent', icon: Cpu, color: 'text-cyan-400',
-      title: 'Install CloudWatch Agent',
-      agentMessage: `I found ${computeServices.length} compute services (ECS, EKS) that need the CloudWatch Agent. The agent unlocks memory, disk, and custom metrics that aren't available by default — without it, I can only create basic CPU alarms.`,
-      detail: `What the agent adds:\n• Memory utilization (not available by default)\n• Disk usage and I/O\n• Network metrics (connections, packets)\n• Custom application metrics\n\nDeployment:\n${computeServices.filter(s => s.type === 'ECS Fargate').length > 0 ? `• ECS: sidecar container (rolling restart, ~5 min, zero downtime)\n` : ''}${computeServices.filter(s => s.type === 'EKS').length > 0 ? `• EKS: DaemonSet rollout (~3 min per cluster)\n` : ''}\nThis is reversible.`,
-      action: { label: `Deploy agent on ${computeServices.length} services`, type: 'deploy' },
-      costImpact: computeServices.length * 0.5,
-    }] : []),
-    {
-      id: 'alarms', icon: Bell, color: 'text-red-400',
-      title: 'Set up alarms',
-      agentMessage: noAlarms > 0
-        ? `${noAlarms} of your ${total} services have no alarms. ${needsAgent ? 'Now that the CloudWatch Agent is installed, I can create the full set including memory and disk.' : ''} I recommend ~${alarmCount} alarms total.`
-        : 'All your services already have alarms configured.',
-      detail: noAlarms > 0 ? `I'll create alarms like:\n• ECS/EKS: CPU > 90%, Memory > 85%\n• Lambda: Errors > 1%, Duration p99 > 10s\n• RDS/Aurora: CPU > 80%, Read latency > 20ms\n• API Gateway: 5xx > 1%, Latency p99 > 1s\n\nEach alarm costs $0.10/month.` : null,
-      action: noAlarms > 0 ? { label: `Create ${alarmCount} alarms`, type: 'deploy' } : null,
-      done: noAlarms === 0, costImpact: alarmCount * 0.10,
-    },
-    {
-      id: 'logs', icon: FileText, color: 'text-green-400',
-      title: 'Enable logging',
-      agentMessage: noLogs > 0
-        ? `${noLogs} services aren't sending logs to CloudWatch. I'll configure log delivery for each service type.`
-        : 'All your services are already logging.',
-      detail: noLogs > 0 ? `What I'll set up:\n• ECS: awslogs log driver (rolling redeploy)\n• EKS: Fluent Bit DaemonSet\n• API Gateway: access logging (no restart)\n• RDS/Aurora: slow query + error logs\n• CloudFront: standard logging` : null,
-      action: noLogs > 0 ? { label: `Enable logs on ${noLogs} services`, type: 'deploy' } : null,
-      done: noLogs === 0, costImpact: 28,
-    },
-    {
-      id: 'traces', icon: Path, color: 'text-orange-400',
-      title: 'Enable tracing',
-      agentMessage: noTraces > 0
-        ? `None of your services have distributed tracing. X-Ray will show you the full request path — essential for debugging latency issues.`
-        : 'Tracing is already enabled.',
-      detail: noTraces > 0 ? `I'll enable:\n• API Gateway: X-Ray tracing on stage\n• ECS: X-Ray daemon sidecar\n• EKS: ADOT collector DaemonSet\n• Lambda: active tracing (config toggle)\n\nRolling restarts for ECS/EKS (~5 min, zero downtime).` : null,
-      action: noTraces > 0 ? { label: `Enable tracing on ${noTraces} services`, type: 'deploy' } : null,
-      done: noTraces === 0, costImpact: 8,
-    },
-    {
-      id: 'dashboard', icon: ChartBar, color: 'text-primary',
-      title: 'Create a dashboard',
-      agentMessage: 'I\'ll create a production overview dashboard with key metrics for all your services.',
-      detail: 'Dashboard sections:\n• Top row: service health, active alarms, error trend\n• Compute: CPU/memory per service\n• Data: database connections, cache hit ratio\n• Traffic: API requests, latency, errors',
-      action: { label: 'Create dashboard', type: 'deploy' }, costImpact: 3,
-    },
-    {
-      id: 'anomaly', icon: WaveTriangle, color: 'text-purple-400',
-      title: 'Enable anomaly detection',
-      agentMessage: 'I have 14 days of metric history. I\'ll set up anomaly detection on your key metrics — it learns your patterns and alerts on deviations.',
-      detail: 'Detectors:\n• API request count (traffic spikes/drops)\n• ECS/EKS CPU and memory (resource exhaustion)\n• Database latency (performance degradation)\n• Queue message age (processing delays)',
-      action: { label: 'Enable anomaly detection', type: 'deploy' }, costImpact: 5,
-    },
-    {
-      id: 'done', icon: CheckCircle, color: 'text-status-active',
-      title: 'You\'re all set',
-      agentMessage: 'Your monitoring is configured. Alarms, logs, tracing, dashboard, and anomaly detection are active. I\'ll keep watching and let you know if anything needs attention.',
-      detail: null,
-      action: { label: 'Go to your dashboard', type: 'navigate', path: '/day0' }, costImpact: 0,
-    },
+    { id: 'welcome', icon: Robot, title: 'Welcome', agentMessage: `I found ${total} services across ${persona.applications.length} applications. Let me walk you through setting up monitoring.`, detail: persona.applications.map(a => `• ${a.name} — ${a.services.length} services`).join('\n') },
+    ...(needsAgent ? [{ id: 'cw-agent', icon: Cpu, title: 'Install CloudWatch Agent', agentMessage: `${computeServices.length} compute services need the CW Agent for memory, disk, and custom metrics. Without it, I can only create basic CPU alarms.`, detail: `Deployment:\n${computeServices.filter(s => s.type === 'ECS Fargate').length > 0 ? '• ECS: sidecar (rolling restart, ~5 min)\n' : ''}${computeServices.filter(s => s.type === 'EKS').length > 0 ? '• EKS: DaemonSet (~3 min per cluster)\n' : ''}Reversible.` }] : []),
+    { id: 'alarms', icon: Bell, title: 'Set up alarms', agentMessage: noAlarms > 0 ? `${noAlarms} services have no alarms. Select which alarms you want — I've pre-selected the recommended ones.` : 'All services have alarms.', skip: noAlarms === 0 },
+    { id: 'logs', icon: FileText, title: 'Enable logging', agentMessage: noLogs > 0 ? `${noLogs} services need log delivery. Select which to enable.` : 'All services are logging.', skip: noLogs === 0 },
+    { id: 'traces', icon: Path, title: 'Enable tracing', agentMessage: noTraces > 0 ? `No services have tracing. X-Ray shows the full request path — select which to enable.` : 'Tracing is enabled.', skip: noTraces === 0 },
+    { id: 'dashboard', icon: ChartBar, title: 'Create a dashboard', agentMessage: 'I\'ll create a production overview dashboard with key metrics.' },
+    { id: 'anomaly', icon: WaveTriangle, title: 'Anomaly detection', agentMessage: 'Select which anomaly detectors to enable — they learn your patterns and alert on deviations.' },
+    { id: 'done', icon: CheckCircle, title: 'You\'re all set', agentMessage: 'Your monitoring is configured based on your selections. I\'ll keep watching and let you know if anything needs attention.' },
   ]
 }
 
-// ─── Left Sidebar: Step List ──────────────────────────────────────
-function StepSidebar({ steps, currentStep, completedSteps, onStepClick }) {
-  return (
-    <div className="w-56 flex-shrink-0">
-      <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3 px-3">Setup Guide</h3>
-      <div className="flex flex-col gap-0.5">
-        {steps.map((step, i) => {
-          const isActive = i === currentStep
-          const isDone = completedSteps.has(step.id)
-          const Icon = step.icon
-          const stepNum = step.id === 'welcome' ? null : step.id === 'done' ? null : i
-          return (
-            <button key={step.id} onClick={() => onStepClick(i)} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all w-full ${isActive ? 'bg-primary/10 border border-primary/20' : 'hover:bg-background-surface-2/30'}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-status-active/20 text-status-active' : isActive ? 'bg-primary/20 text-primary' : 'bg-background-surface-1 text-foreground-disabled'}`}>
-                {isDone ? <CheckCircle size={12} weight="fill" /> : <Icon size={11} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                {stepNum && <span className={`text-[8px] ${isActive ? 'text-primary' : 'text-foreground-disabled'}`}>Step {stepNum}</span>}
-                <p className={`text-[11px] leading-tight ${isActive ? 'text-primary font-medium' : isDone ? 'text-foreground-muted line-through' : 'text-foreground-muted'}`}>{step.title}</p>
-              </div>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+// ─── Right Sidebar ────────────────────────────────────────────────
+function RightSidebar({ stepItems, selections, deployedSteps, cost }) {
+  const categories = [
+    { id: 'cw-agent', icon: Cpu, label: 'CW Agent', color: 'text-cyan-400' },
+    { id: 'alarms', icon: Bell, label: 'Alarms', color: 'text-red-400' },
+    { id: 'logs', icon: FileText, label: 'Logs', color: 'text-green-400' },
+    { id: 'traces', icon: Path, label: 'Traces', color: 'text-orange-400' },
+    { id: 'dashboard', icon: ChartBar, label: 'Dashboards', color: 'text-primary' },
+    { id: 'anomaly', icon: WaveTriangle, label: 'Anomaly', color: 'text-purple-400' },
+  ]
 
-// ─── Right Sidebar: Cost + Summary ────────────────────────────────
-function RightSidebar({ steps, completedSteps, cost, persona }) {
-  const allServices = persona.applications.flatMap(a => a.services)
-  const completedCost = steps.filter(s => completedSteps.has(s.id)).reduce((sum, s) => sum + (s.costImpact || 0), 0)
-  const totalProjectedCost = steps.filter(s => s.action?.type === 'deploy').reduce((sum, s) => sum + (s.costImpact || 0), 0)
+  const rows = categories.map(cat => {
+    const items = stepItems[cat.id] || []
+    if (items.length === 0) return null
+    const selected = items.filter(i => selections.has(i.id)).length
+    const deployed = deployedSteps.has(cat.id)
+    return { ...cat, total: items.length, selected, deployed }
+  }).filter(Boolean)
 
-  const noAlarms = allServices.filter(s => !s.hasAlarms).length
-  const noLogs = allServices.filter(s => !s.hasLogs).length
-  const noTraces = allServices.filter(s => !s.hasTraces).length
-  const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
-  const alarmCount = Math.round(noAlarms * 2.6)
-
-  // Build resource summary from steps
-  const resources = [
-    computeServices.length > 0 && { icon: Cpu, label: 'CW Agent deployments', count: computeServices.length, done: completedSteps.has('cw-agent'), color: 'text-cyan-400' },
-    noAlarms > 0 && { icon: Bell, label: 'Alarms to create', count: alarmCount, done: completedSteps.has('alarms'), color: 'text-red-400' },
-    noLogs > 0 && { icon: FileText, label: 'Log configurations', count: noLogs, done: completedSteps.has('logs'), color: 'text-green-400' },
-    noTraces > 0 && { icon: Path, label: 'Trace configurations', count: noTraces, done: completedSteps.has('traces'), color: 'text-orange-400' },
-    { icon: ChartBar, label: 'Dashboards', count: 1, done: completedSteps.has('dashboard'), color: 'text-primary' },
-    { icon: WaveTriangle, label: 'Anomaly detectors', count: 5, done: completedSteps.has('anomaly'), color: 'text-purple-400' },
-  ].filter(Boolean)
-
-  const totalResources = resources.reduce((s, r) => s + r.count, 0)
-  const doneResources = resources.filter(r => r.done).reduce((s, r) => s + r.count, 0)
+  const totalSelected = rows.reduce((s, r) => s + r.selected, 0)
+  const totalRecommended = rows.reduce((s, r) => s + r.total, 0)
+  const selectedCost = Object.entries(stepItems).flatMap(([, items]) => items).filter(i => selections.has(i.id)).reduce((s, i) => s + (i.cost || 0), 0)
 
   return (
     <div className="flex flex-col gap-4">
-      {/* What you're setting up */}
       <div className="glass-card p-4">
-        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Setup Summary</h3>
+        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Your Selections</h3>
         <div className="flex items-baseline gap-1 mb-3">
-          <span className="text-heading-m font-semibold text-foreground">{totalResources}</span>
-          <span className="text-body-s text-foreground-muted">resources</span>
-          {doneResources > 0 && <span className="text-[10px] text-status-active ml-1">({doneResources} done)</span>}
+          <span className="text-heading-m font-semibold text-foreground">{totalSelected}</span>
+          <span className="text-body-s text-foreground-muted">/ {totalRecommended} recommended</span>
         </div>
         <div className="flex flex-col gap-2">
-          {resources.map(r => {
+          {rows.map(r => {
             const Icon = r.icon
             return (
-              <div key={r.label} className={`flex items-center gap-2.5 ${r.done ? 'opacity-50' : ''}`}>
-                <Icon size={12} className={r.done ? 'text-status-active' : r.color} />
-                <span className={`text-[11px] flex-1 ${r.done ? 'text-foreground-muted line-through' : 'text-foreground'}`}>{r.label}</span>
-                <span className={`text-[11px] font-medium ${r.done ? 'text-status-active' : 'text-foreground'}`}>{r.count}</span>
+              <div key={r.id} className="flex items-center gap-2.5">
+                <Icon size={12} className={r.deployed ? 'text-status-active' : r.color} />
+                <span className="text-[11px] flex-1 text-foreground">{r.label}</span>
+                <span className={`text-[11px] font-medium ${r.deployed ? 'text-status-active' : r.selected === 0 ? 'text-foreground-disabled' : 'text-foreground'}`}>
+                  {r.deployed ? `${r.selected} ✓` : `${r.selected} / ${r.total}`}
+                </span>
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* Cost */}
       <div className="glass-card p-4">
-        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">CloudWatch Cost</h3>
+        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Estimated Cost</h3>
         <div className="flex items-baseline justify-between mb-1">
           <span className="text-[10px] text-foreground-muted">Current</span>
           <span className="text-body-s font-semibold text-foreground">${cost.current.total.toLocaleString()}/mo</span>
         </div>
-        {doneResources > 0 && (
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="text-[10px] text-foreground-muted">Added so far</span>
-            <span className="text-body-s font-semibold text-status-degraded">+${completedCost.toFixed(0)}/mo</span>
-          </div>
-        )}
         <div className="flex items-baseline justify-between pt-2 border-t border-border-muted/20 mt-2">
-          <span className="text-[10px] text-foreground-muted">After full setup</span>
-          <span className="text-body-s font-semibold text-foreground">${(cost.current.total + totalProjectedCost).toFixed(0)}/mo</span>
+          <span className="text-[10px] text-foreground-muted">With selections</span>
+          <span className="text-body-s font-semibold text-foreground">${(cost.current.total + selectedCost).toFixed(0)}/mo</span>
         </div>
+        {selectedCost > 0 && <p className="text-[9px] text-foreground-disabled mt-1">+${selectedCost.toFixed(2)}/mo for {totalSelected} resources</p>}
       </div>
+    </div>
+  )
+}
 
-      {/* Observability posture */}
-      <div className="glass-card p-4">
-        <h3 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Posture</h3>
-        {[
-          { label: 'Alarms', have: allServices.filter(s => s.hasAlarms).length, total: allServices.length, color: 'bg-red-400' },
-          { label: 'Logs', have: allServices.filter(s => s.hasLogs).length, total: allServices.length, color: 'bg-green-400' },
-          { label: 'Traces', have: allServices.filter(s => s.hasTraces).length, total: allServices.length, color: 'bg-orange-400' },
-        ].map(b => (
-          <div key={b.label} className="mb-2">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] text-foreground-muted">{b.label}</span>
-              <span className="text-[10px] text-foreground">{b.have}/{b.total}</span>
+// ─── Item List (selectable per step) ──────────────────────────────
+function ItemList({ items, selections, onToggle, onToggleAll, deployed }) {
+  if (!items || items.length === 0) return null
+  const selectedCount = items.filter(i => selections.has(i.id)).length
+  const allSelected = selectedCount === items.length
+
+  return (
+    <div className="glass-card p-4 mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] text-foreground-disabled">{selectedCount} of {items.length} selected</span>
+        {!deployed && <button onClick={onToggleAll} className="text-[9px] text-primary hover:text-primary-hover">{allSelected ? 'Deselect all' : 'Select all'}</button>}
+      </div>
+      <div className="flex flex-col gap-0.5 max-h-[240px] overflow-y-auto">
+        {items.map(item => {
+          const isSelected = selections.has(item.id)
+          return (
+            <div key={item.id} onClick={() => !deployed && onToggle(item.id)} className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${deployed ? 'opacity-50' : 'cursor-pointer hover:bg-primary/5'} ${isSelected ? 'bg-primary/5' : ''}`}>
+              {isSelected ? <CheckSquare size={14} weight="fill" className={deployed ? 'text-status-active' : 'text-primary'} /> : <Square size={14} className="text-foreground-disabled" />}
+              <span className="text-[11px] text-foreground flex-1">{item.label}</span>
+              <span className="text-[9px] text-foreground-disabled">{item.detail}</span>
+              <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}</span>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
-              <div className={`h-full rounded-full ${b.color}`} style={{ width: `${b.total > 0 ? (b.have / b.total) * 100 : 0}%` }} />
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -213,37 +149,50 @@ export default function GettingStartedPage() {
   const navigate = useNavigate()
   const { persona } = usePersona()
   const steps = buildSteps(persona)
+  const stepItems = buildStepItems(persona)
   const [currentStep, setCurrentStep] = useState(0)
-  const [completedSteps, setCompletedSteps] = useState(new Set())
+  const [deployedSteps, setDeployedSteps] = useState(new Set())
   const [deploying, setDeploying] = useState(false)
   const [showExport, setShowExport] = useState(false)
   const contentRef = useRef(null)
 
+  // Selections: all items pre-selected by default
+  const [selections, setSelections] = useState(() => {
+    const all = new Set()
+    Object.values(stepItems).flat().forEach(i => all.add(i.id))
+    return all
+  })
+
   const step = steps[currentStep]
+  const currentItems = stepItems[step.id] || []
   const isFirst = currentStep === 0
   const isLast = currentStep === steps.length - 1
-  const canProceed = step.done || completedSteps.has(step.id) || !step.action || step.id === 'welcome'
+  const hasItems = currentItems.length > 0
+  const selectedInStep = currentItems.filter(i => selections.has(i.id)).length
+  const isDeployed = deployedSteps.has(step.id)
+
+  const toggleItem = (id) => setSelections(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggleAll = () => {
+    const allSelected = currentItems.every(i => selections.has(i.id))
+    setSelections(prev => { const n = new Set(prev); currentItems.forEach(i => allSelected ? n.delete(i.id) : n.add(i.id)); return n })
+  }
 
   const handleDeploy = () => {
     setDeploying(true)
     setTimeout(() => {
       setDeploying(false)
-      setCompletedSteps(prev => new Set(prev).add(step.id))
+      setDeployedSteps(prev => new Set(prev).add(step.id))
     }, 2000)
   }
 
   const handleNext = () => {
-    if (step.id === 'welcome' || step.done) {
-      setCompletedSteps(prev => new Set(prev).add(step.id))
-    }
+    if (step.id === 'welcome' || step.skip) setDeployedSteps(prev => new Set(prev).add(step.id))
     if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1)
   }
 
   const handleBack = () => { if (currentStep > 0) setCurrentStep(currentStep - 1) }
 
-  useEffect(() => {
-    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [currentStep])
+  useEffect(() => { contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }, [currentStep])
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
@@ -251,14 +200,14 @@ export default function GettingStartedPage() {
 
       <div className="mb-6">
         <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">Getting Started</h1>
-        <p className="text-body-s text-foreground-muted mt-0.5">Step {currentStep + 1} of {steps.length} · {[...completedSteps].filter(id => id !== 'welcome' && id !== 'done').length} completed</p>
+        <p className="text-body-s text-foreground-muted mt-0.5">Step {currentStep + 1} of {steps.length}</p>
       </div>
 
-      {/* Step indicator — horizontal */}
+      {/* Step indicator */}
       <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
         {steps.map((s, i) => {
           const isActive = i === currentStep
-          const isDone = completedSteps.has(s.id)
+          const isDone = deployedSteps.has(s.id)
           const Icon = s.icon
           return (
             <button key={s.id} onClick={() => setCurrentStep(i)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] whitespace-nowrap transition-all flex-shrink-0 ${isActive ? 'bg-primary/10 text-primary border border-primary/20 font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled hover:text-foreground-muted'}`}>
@@ -271,73 +220,77 @@ export default function GettingStartedPage() {
         })}
       </div>
 
-      {/* Main grid: content + right sidebar */}
       <div className="grid grid-cols-[1fr_320px] gap-6">
         <div ref={contentRef}>
-          {/* Agent conversation */}
-          <div className="flex gap-4 mb-6">
+          <div className="flex gap-4 mb-4">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
               <Sparkle size={18} weight="fill" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-body-m font-semibold text-foreground">{step.title}</span>
-                {completedSteps.has(step.id) && <CheckCircle size={14} weight="fill" className="text-status-active" />}
+                {isDeployed && <CheckCircle size={14} weight="fill" className="text-status-active" />}
               </div>
-              <p className="text-body-s text-foreground-muted leading-relaxed mb-4">{step.agentMessage}</p>
+              <p className="text-body-s text-foreground-muted leading-relaxed">{step.agentMessage}</p>
+            </div>
+          </div>
 
-              {step.detail && (
-                <div className="glass-card p-4 mb-4">
-                  <pre className="text-[11px] text-foreground-muted whitespace-pre-wrap leading-relaxed">{step.detail}</pre>
-                </div>
-              )}
+          {step.detail && (
+            <div className="glass-card p-4 mb-4 ml-14">
+              <pre className="text-[11px] text-foreground-muted whitespace-pre-wrap leading-relaxed">{step.detail}</pre>
+            </div>
+          )}
 
-              {step.action && !completedSteps.has(step.id) && !step.done && (
-                <div className="flex items-center gap-3 mb-4">
-                  {step.action.type === 'deploy' && (
-                    <>
-                      <button onClick={handleDeploy} disabled={deploying} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors disabled:opacity-50">
-                        {deploying ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Deploying...</> : <><Play size={14} /> {step.action.label}</>}
-                      </button>
-                      <button onClick={() => setShowExport(true)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
-                        <Code size={14} /> Export as code
-                      </button>
-                    </>
-                  )}
-                  {step.action.type === 'navigate' && (
-                    <button onClick={() => navigate(step.action.path)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors">
-                      {step.action.label} <ArrowRight size={14} />
-                    </button>
-                  )}
-                </div>
-              )}
+          {/* Selectable items */}
+          {hasItems && (
+            <div className="ml-14">
+              <ItemList items={currentItems} selections={selections} onToggle={toggleItem} onToggleAll={toggleAll} deployed={isDeployed} />
+            </div>
+          )}
 
-              {(completedSteps.has(step.id) || step.done) && step.action?.type === 'deploy' && (
-                <div className="flex items-center gap-2 mb-4 text-status-active">
-                  <CheckCircle size={16} weight="fill" />
-                  <span className="text-body-s font-medium">Done</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between pt-4 border-t border-border-muted/20">
-                <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
-                  <ArrowLeft size={14} /> Back
+          {/* Actions */}
+          <div className="ml-14">
+            {hasItems && !isDeployed && !step.skip && selectedInStep > 0 && (
+              <div className="flex items-center gap-3 mb-4">
+                <button onClick={handleDeploy} disabled={deploying} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors disabled:opacity-50">
+                  {deploying ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Deploying {selectedInStep} items...</> : <><Play size={14} /> Deploy {selectedInStep} selected</>}
                 </button>
-                {!isLast && (
-                  <button onClick={handleNext} className="flex items-center gap-1 text-body-s text-primary hover:text-primary-hover font-medium">
-                    {canProceed ? 'Next' : 'Skip'} <ArrowRight size={14} />
-                  </button>
-                )}
+                <button onClick={() => setShowExport(true)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">
+                  <Code size={14} /> Export as code
+                </button>
               </div>
+            )}
+
+            {isDeployed && hasItems && (
+              <div className="flex items-center gap-2 mb-4 text-status-active">
+                <CheckCircle size={16} weight="fill" />
+                <span className="text-body-s font-medium">{selectedInStep} items deployed</span>
+              </div>
+            )}
+
+            {step.id === 'done' && (
+              <button onClick={() => navigate('/day0')} className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors mb-4">
+                Go to your dashboard <ArrowRight size={14} />
+              </button>
+            )}
+
+            <div className="flex items-center justify-between pt-4 border-t border-border-muted/20">
+              <button onClick={handleBack} disabled={isFirst} className={`flex items-center gap-1 text-body-s ${isFirst ? 'text-foreground-disabled' : 'text-foreground-muted hover:text-foreground'}`}>
+                <ArrowLeft size={14} /> Back
+              </button>
+              {!isLast && (
+                <button onClick={handleNext} className="flex items-center gap-1 text-body-s text-primary hover:text-primary-hover font-medium">
+                  {isDeployed || step.skip || step.id === 'welcome' || (hasItems && selectedInStep === 0) ? 'Next' : 'Skip'} <ArrowRight size={14} />
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <RightSidebar steps={steps} completedSteps={completedSteps} cost={persona.cost} persona={persona} />
+        <RightSidebar stepItems={stepItems} selections={selections} deployedSteps={deployedSteps} cost={persona.cost} />
       </div>
 
-      {showExport && <IaCExportModal onClose={() => setShowExport(false)} title={step.title} subtitle={step.agentMessage.substring(0, 60) + '...'} />}
+      {showExport && <IaCExportModal onClose={() => setShowExport(false)} title={step.title} subtitle={`${selectedInStep} items selected`} />}
     </div>
   )
 }
