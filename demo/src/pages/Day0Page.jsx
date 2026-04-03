@@ -1,215 +1,453 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  PaperPlaneRight, Bell, ChartBar, Sparkle, Robot, ArrowRight, Play,
-  WaveTriangle, Cpu, FileText, Path, Package, Broadcast,
-  CheckCircle, CircleNotch, Globe, Gauge, Lightning,
-  Download, Rocket, Info, CaretRight,
+  PaperPlaneRight, Bell, ChartBar, Sparkle, ArrowRight,
+  Rocket, Warning, TrendUp, Path, FileText, Gauge,
+  WaveTriangle, CaretDown, CaretRight, Database,
+  Lightning, Globe, Cpu, Clock, Package, ArrowSquareOut,
+  MagnifyingGlass, X, Download,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
+import { LineChart, MultiLineChart, BarChart, mockTimeSeries } from '../components/Chart'
+import { AgentDrawer } from '../components/Drawer'
+import { getInvestigation } from '../data/investigations'
 
-// ─── Sparkline ────────────────────────────────────────────────────
-function Sparkline({ color = '#0ea5e9', height = 24, points = 12 }) {
-  const data = useRef(Array.from({ length: points }, () => 20 + Math.random() * 60)).current
-  const max = Math.max(...data)
-  const w = 100
-  const path = data.map((v, i) => `${(i / (points - 1)) * w},${height - (v / max) * height}`).join(' ')
+// ─── Empty State ──────────────────────────────────────────────────
+function EmptyW({ icon: Icon, label, action, color = 'text-foreground-disabled' }) {
   return (
-    <svg width={w} height={height} viewBox={`0 0 ${w} ${height}`} className="overflow-visible">
-      <polyline points={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-// ─── Simulation ───────────────────────────────────────────────────
-const simConfig = {
-  'cw-agent': { steps: 6, label: (n, t) => `Deploying to service ${n} of ${t}...`, done: 'Agent deployed' },
-  'alarms': { steps: 42, label: (n, t) => `Creating alarm ${n} of ${t}...`, done: 'Alarms created' },
-  'dashboard': { steps: 4, label: (n, t) => `Adding widget ${n} of ${t}...`, done: 'Dashboard created' },
-  'logs': { steps: 6, label: (n, t) => `Enabling logs on ${n} of ${t}...`, done: 'Logs enabled' },
-  'traces': { steps: 3, label: (n, t) => `Enabling tracing on ${n} of ${t}...`, done: 'Tracing enabled' },
-  'anomaly': { steps: 5, label: (n, t) => `Configuring detector ${n} of ${t}...`, done: 'Anomaly detection enabled' },
-  'service-map': { steps: 3, label: (n, t) => `Mapping dependencies ${n} of ${t}...`, done: 'Service map generated' },
-  'slos': { steps: 3, label: (n, t) => `Creating SLO ${n} of ${t}...`, done: 'SLOs configured' },
-  'container-insights': { steps: 3, label: (n, t) => `Updating cluster ${n} of ${t}...`, done: 'Container Insights enabled' },
-}
-
-function useSimulation() {
-  const [states, setStates] = useState({})
-  const [progress, setProgress] = useState({})
-  const timers = useRef({})
-  const run = useCallback((id) => {
-    const config = simConfig[id]
-    if (!config) return
-    setStates(s => ({ ...s, [id]: 'running' }))
-    setProgress(p => ({ ...p, [id]: 0 }))
-    let step = 0
-    timers.current[id] = setInterval(() => {
-      step++
-      if (step >= config.steps) {
-        clearInterval(timers.current[id])
-        setStates(s => ({ ...s, [id]: 'done' }))
-        setProgress(p => ({ ...p, [id]: config.steps }))
-      } else {
-        setProgress(p => ({ ...p, [id]: step }))
-      }
-    }, 80)
-  }, [])
-  useEffect(() => () => Object.values(timers.current).forEach(clearInterval), [])
-  return { states, progress, run }
-}
-
-// ─── CW Agent Banner ──────────────────────────────────────────────
-function AgentBanner({ state, progress, onInstall }) {
-  if (state === 'done') {
-    return (
-      <div className="glass-card p-4 border-l-2 border-l-status-active/50 flex items-center gap-3 animate-fadeIn">
-        <CheckCircle size={20} weight="fill" className="text-status-active" />
-        <div className="flex-1">
-          <p className="text-body-s font-medium text-foreground">CloudWatch Agent installed</p>
-          <p className="text-[11px] text-foreground-muted">Collecting memory, disk, and custom metrics from all services.</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (state === 'running') {
-    const config = simConfig['cw-agent']
-    const step = progress['cw-agent'] || 0
-    return (
-      <div className="ai-glass-card p-5">
-        <div className="flex items-center gap-3 mb-3">
-          <CircleNotch size={20} className="text-primary animate-spin" />
-          <div className="flex-1">
-            <p className="text-body-s font-medium text-foreground">Installing CloudWatch Agent...</p>
-            <p className="text-[11px] text-foreground-muted">{config.label(step, config.steps)}</p>
-          </div>
-        </div>
-        <div className="w-full h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
-          <div className="h-full bg-primary rounded-full transition-all duration-100" style={{ width: `${(step / config.steps) * 100}%` }} />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="ai-glass-card p-5">
-      <div className="flex items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-          <Download size={22} />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-body-m font-semibold text-foreground">Install CloudWatch Agent</h2>
-          <p className="text-[11px] text-foreground-muted mt-1">
-            The CloudWatch Agent unlocks memory, disk, and custom metrics for your services. This is the foundation for full observability.
-          </p>
-          <div className="flex items-center gap-3 mt-3">
-            <button
-              onClick={onInstall}
-              className="h-8 px-4 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium flex items-center gap-2 transition-colors"
-            >
-              <Rocket size={14} />
-              Install now
-            </button>
-            <span className="text-[10px] text-foreground-disabled">Deploys as sidecar/DaemonSet. Zero downtime. ~2 min.</span>
-          </div>
-        </div>
-      </div>
+    <div className="rounded-lg border border-border-muted/20 border-dashed p-4 flex flex-col items-center justify-center text-center h-full min-h-[120px]">
+      <Icon size={20} className={`${color} mb-2`} />
+      <p className="text-[10px] text-foreground-disabled mb-1">{label}</p>
+      {action && <button className="text-[9px] text-primary hover:text-primary-hover">{action}</button>}
     </div>
   )
 }
 
-// ─── Empty State Widget ───────────────────────────────────────────
-function EmptyWidget({ icon: Icon, title, description, actionLabel, color, state, progress, simId, onAction, requiresAgent, agentInstalled }) {
-  const config = simConfig[simId]
-  const needsAgent = requiresAgent && !agentInstalled
-
-  if (state === 'done') return null
-
-  if (state === 'running') {
-    const step = progress[simId] || 0
-    return (
-      <div className="glass-card p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <CircleNotch size={16} className="text-primary animate-spin" />
-          <h3 className="text-body-s font-semibold text-foreground">{title}</h3>
-        </div>
-        <p className="text-[11px] text-foreground-muted mb-2">{config?.label(step, config.steps)}</p>
-        <div className="w-full h-1 rounded-full bg-border-muted/30 overflow-hidden">
-          <div className="h-full bg-primary rounded-full transition-all duration-100" style={{ width: `${(step / config.steps) * 100}%` }} />
-        </div>
-      </div>
-    )
-  }
-
+function WidgetHeader({ icon: Icon, title, color, action, actionLabel = 'View all', onInvestigate }) {
   return (
-    <div className="glass-card p-4 border border-dashed border-border-muted/50">
-      <div className="flex items-center gap-2 mb-3">
-        <Icon size={16} className={color} style={{ opacity: 0.5 }} />
-        <h3 className="text-body-s font-semibold text-foreground/50">{title}</h3>
-        {needsAgent && (
-          <span className="text-[10px] text-status-degraded bg-status-degraded/10 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
-            <Cpu size={8} /> Requires CW Agent
-          </span>
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-1.5">
+        <Icon size={14} className={color} />
+        <span className="text-[11px] font-medium text-foreground">{title}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {onInvestigate && (
+          <button onClick={onInvestigate} className="flex items-center gap-1 text-[9px] text-primary hover:text-primary-hover transition-colors">
+            <MagnifyingGlass size={10} /> Investigate
+          </button>
+        )}
+        {action && (
+          <button onClick={action} className="flex items-center gap-0.5 text-[9px] text-primary hover:text-primary-hover">
+            {actionLabel} <ArrowSquareOut size={9} />
+          </button>
         )}
       </div>
-      <p className="text-[11px] text-foreground-disabled mb-3">{description}</p>
-      <button
-        onClick={onAction}
-        className={`h-7 px-3 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
-          needsAgent
-            ? 'bg-foreground-muted/10 text-foreground-disabled cursor-not-allowed'
-            : 'bg-primary/10 hover:bg-primary/20 text-primary'
-        }`}
-        disabled={needsAgent}
-      >
-        <Sparkle size={12} weight="fill" />
-        {needsAgent ? 'Install CW Agent first' : actionLabel}
+    </div>
+  )
+}
+
+// ─── Alarm Widget ─────────────────────────────────────────────────
+function AlarmsW({ services }) {
+  const w = services.filter(s => s.hasAlarms).length
+  if (w === 0) return <EmptyW icon={Bell} label="No alarms configured" action="Set up alarms →" />
+  const [hoverSeg, setHoverSeg] = useState(null)
+
+  // Mock 24h status timeline with alarm names
+  const segments = useMemo(() => [
+    { start: 0, end: 65, status: 'ok', count: w, alarms: [], timeRange: '6:00 AM – 3:36 PM' },
+    { start: 65, end: 78, status: 'alarm', count: 2, alarms: ['transactions-db-cpu', 'fraud-model-latency'], timeRange: '3:36 PM – 4:43 PM' },
+    { start: 78, end: 100, status: 'ok', count: w, alarms: [], timeRange: '4:43 PM – Now' },
+  ], [w])
+
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Bell} title="Alarms" color="text-status-active" actionLabel="Manage" />
+      <div className="flex gap-3 mb-3">
+        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center"><p className="text-body-l font-semibold text-status-active">{w}</p><p className="text-[8px] text-foreground-muted">OK</p></div>
+        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center"><p className="text-body-l font-semibold text-status-degraded">0</p><p className="text-[8px] text-foreground-muted">Alarm</p></div>
+        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">0</p><p className="text-[8px] text-foreground-muted">Insuff.</p></div>
+      </div>
+      <p className="text-[9px] text-foreground-disabled mb-1">Alarm state changes (24h)</p>
+      <div className="mt-auto relative" onMouseLeave={() => setHoverSeg(null)}>
+        <svg width="100%" height="6" className="rounded-full overflow-hidden cursor-crosshair">
+          {segments.map((seg, i) => (
+            <rect key={i} x={`${seg.start}%`} y="0" width={`${seg.end - seg.start}%`} height="6" fill={seg.status === 'alarm' ? '#ef4444' : '#22c55e'} opacity={hoverSeg !== null && hoverSeg !== i ? 0.3 : 1} className="transition-opacity" onMouseEnter={() => setHoverSeg(i)} />
+          ))}
+        </svg>
+        {hoverSeg !== null && (() => {
+          const seg = segments[hoverSeg]
+          const left = (seg.start + seg.end) / 2
+          return (
+            <div className="absolute bottom-full mb-2 bg-background-surface-2 border border-border-muted rounded-lg px-2.5 py-1.5 text-[9px] pointer-events-none z-10 shadow-lg whitespace-nowrap" style={{ left: `${left}%`, transform: 'translateX(-50%)' }}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${seg.status === 'alarm' ? 'bg-red-400' : 'bg-green-400'}`} />
+                <span className={`font-medium ${seg.status === 'alarm' ? 'text-red-400' : 'text-green-400'}`}>{seg.status === 'alarm' ? 'In Alarm' : 'All OK'}</span>
+                <span className="text-foreground-muted">· {seg.count} alarm{seg.count !== 1 ? 's' : ''}</span>
+              </div>
+              <p className="text-foreground-disabled pl-3 mb-0.5">{seg.timeRange}</p>
+              {seg.alarms.length > 0 && seg.alarms.map(a => (
+                <p key={a} className="text-foreground-muted pl-3">{a}</p>
+              ))}
+            </div>
+          )
+        })()}
+        <div className="flex justify-between mt-1">
+          <span className="text-[7px] text-foreground-disabled">24h ago</span>
+          <span className="text-[7px] text-foreground-disabled">Now</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Error Rate Widget ────────────────────────────────────────────
+function ErrorRateW({ services = [] }) {
+  const series = useMemo(() => services.map((s, i) => ({
+    name: s, color: ['#f87171', '#fb923c', '#fbbf24'][i % 3],
+    data: mockTimeSeries(24, 0.5 + Math.random() * 2, 1.5), unit: '%',
+  })), [services])
+  if (!services.length) return <EmptyW icon={Warning} label="No error data" color="text-red-400" />
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Warning} title="Error Rate" color="text-red-400" actionLabel="Investigate" />
+      <div className="mt-auto"><MultiLineChart series={series} height={80} /></div>
+      <div className="flex gap-3 mt-2">
+        {series.map(s => (
+          <div key={s.name} className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+            <span className="text-[8px] text-foreground-muted">{s.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Latency Waterfall Widget ─────────────────────────────────────
+function LatencyWaterfallW({ services = [] }) {
+  const colors = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#22c55e', '#f97316']
+  const series = useMemo(() => services.map((s, i) => ({
+    name: s, color: colors[i % colors.length],
+    data: mockTimeSeries(24, 50 + i * 40, 30 + i * 10), unit: 'ms',
+  })), [services])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={TrendUp} title="Latency" color="text-primary" actionLabel="View traces" />
+      <div className="mt-auto"><MultiLineChart series={series} height={80} /></div>
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+        {series.map(s => (
+          <div key={s.name} className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+            <span className="text-[8px] text-foreground-muted">{s.name}</span>
+            <span className="text-[8px] text-foreground-disabled">p50: {s.data[s.data.length - 1]?.value.toFixed(0)}ms</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Throughput Widget ────────────────────────────────────────────
+function ThroughputW({ label = 'Throughput' }) {
+  const data = useMemo(() => mockTimeSeries(24, 5000, 2000, 50), [])
+  const current = data[data.length - 1]?.value || 0
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={ChartBar} title={label} color="text-primary" />
+      <p className="text-heading-m font-semibold text-foreground mb-1">{(current / 1000).toFixed(1)}K<span className="text-[10px] text-foreground-muted font-normal"> req/min</span></p>
+      <div className="mt-auto"><LineChart data={data} color="#0ea5e9" height={64} unit=" req/min" /></div>
+    </div>
+  )
+}
+
+// ─── DB Connections Widget ────────────────────────────────────────
+function DbConnectionsW({ service = '' }) {
+  const data = useMemo(() => mockTimeSeries(24, 24, 8), [])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Database} title={`${service}`} color="text-green-400" />
+      <div className="flex items-baseline gap-2 mb-1">
+        <span className="text-body-l font-semibold text-foreground">{data[data.length - 1]?.value.toFixed(0)}</span>
+        <span className="text-[10px] text-foreground-muted">/ 100 connections</span>
+      </div>
+      <div className="mt-auto"><LineChart data={data} color="#22c55e" height={64} unit=" conn" thresholdValue={80} thresholdLabel="Max 100" /></div>
+    </div>
+  )
+}
+
+// ─── Cache Hit Widget ─────────────────────────────────────────────
+function CacheHitW({ label = 'Cache hit ratio' }) {
+  const data = useMemo(() => mockTimeSeries(24, 92, 6), [])
+  const current = data[data.length - 1]?.value || 0
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Lightning} title={label} color="text-yellow-400" />
+      <p className="text-heading-m font-semibold text-foreground mb-1">{current.toFixed(1)}%</p>
+      <div className="mt-auto"><LineChart data={data} color="#facc15" height={64} unit="%" thresholdValue={80} thresholdLabel="Target 80%" /></div>
+    </div>
+  )
+}
+
+// ─── Lambda Stats Widget ──────────────────────────────────────────
+function LambdaStatsW({ service = '' }) {
+  const durData = useMemo(() => mockTimeSeries(24, 142, 60), [])
+  const errData = useMemo(() => mockTimeSeries(24, 0.3, 0.5), [])
+  const items = useMemo(() => [
+    { label: '6h', value: 120 + Math.random() * 40, unit: 'ms' },
+    { label: '5h', value: 130 + Math.random() * 50, unit: 'ms' },
+    { label: '4h', value: 110 + Math.random() * 60, unit: 'ms' },
+    { label: '3h', value: 140 + Math.random() * 40, unit: 'ms' },
+    { label: '2h', value: 150 + Math.random() * 30, unit: 'ms' },
+    { label: '1h', value: 135 + Math.random() * 45, unit: 'ms' },
+    { label: 'now', value: 142 + Math.random() * 30, unit: 'ms' },
+  ], [])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Lightning} title={service} color="text-amber-400" actionLabel="View function" />
+      <div className="flex gap-4 mb-3">
+        <div><p className="text-body-s font-semibold text-foreground">{durData[durData.length - 1]?.value.toFixed(0)}ms</p><p className="text-[8px] text-foreground-muted">p50 duration</p></div>
+        <div><p className="text-body-s font-semibold text-foreground">{(durData[durData.length - 1]?.value * 2.5).toFixed(0)}ms</p><p className="text-[8px] text-foreground-muted">p99 duration</p></div>
+        <div><p className="text-body-s font-semibold text-status-active">{errData[errData.length - 1]?.value.toFixed(2)}%</p><p className="text-[8px] text-foreground-muted">error rate</p></div>
+      </div>
+      <p className="text-[9px] text-foreground-disabled mb-1">Duration distribution (7h)</p>
+      <div className="mt-auto"><BarChart items={items} height={64} color="#f59e0b" /></div>
+    </div>
+  )
+}
+
+// ─── DynamoDB Capacity Widget ─────────────────────────────────────
+function DynamoCapacityW({ service = '' }) {
+  const readData = useMemo(() => mockTimeSeries(24, 120, 40), [])
+  const writeData = useMemo(() => mockTimeSeries(24, 80, 30), [])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Database} title={`${service} capacity`} color="text-blue-400" />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-baseline gap-1 mb-1"><span className="text-body-s font-semibold text-foreground">{readData[readData.length - 1]?.value.toFixed(0)}</span><span className="text-[9px] text-foreground-muted">RCU</span></div>
+          <div className="mt-auto"><LineChart data={readData} color="#60a5fa" height={64} unit=" RCU" /></div>
+        </div>
+        <div>
+          <div className="flex items-baseline gap-1 mb-1"><span className="text-body-s font-semibold text-foreground">{writeData[writeData.length - 1]?.value.toFixed(0)}</span><span className="text-[9px] text-foreground-muted">WCU</span></div>
+          <div className="mt-auto"><LineChart data={writeData} color="#818cf8" height={64} unit=" WCU" /></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Queue Depth Widget ───────────────────────────────────────────
+function QueueDepthW({ service = '' }) {
+  const data = useMemo(() => mockTimeSeries(24, 12, 15), [])
+  const ageData = useMemo(() => mockTimeSeries(24, 2.4, 3), [])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Package} title={`${service}`} color="text-orange-400" />
+      <div className="flex gap-4 mb-2">
+        <div><p className="text-body-s font-semibold text-foreground">{data[data.length - 1]?.value.toFixed(0)}</p><p className="text-[8px] text-foreground-muted">queue depth</p></div>
+        <div><p className="text-body-s font-semibold text-foreground">{ageData[ageData.length - 1]?.value.toFixed(1)}s</p><p className="text-[8px] text-foreground-muted">oldest msg</p></div>
+      </div>
+      <div className="mt-auto"><LineChart data={data} color="#fb923c" height={64} unit=" msgs" thresholdValue={50} thresholdLabel="Alert > 50" /></div>
+    </div>
+  )
+}
+
+// ─── Resource Utilization Widget ──────────────────────────────────
+function ResourceUtilW({ services = [], label = 'Resource utilization' }) {
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Cpu} title={label} color="text-cyan-400" />
+      {services.map(s => {
+        const cpu = Math.round(30 + Math.random() * 50)
+        const mem = Math.round(35 + Math.random() * 45)
+        return (
+          <div key={s} className="mb-2.5 last:mb-0">
+            <span className="text-[10px] text-foreground-muted">{s}</span>
+            <div className="flex gap-3 mt-1">
+              <div className="flex-1">
+                <div className="flex justify-between text-[8px] text-foreground-disabled mb-0.5"><span>CPU</span><span className={cpu > 80 ? 'text-red-400' : ''}>{cpu}%</span></div>
+                <div className="h-2 rounded-full bg-border-muted/30 overflow-hidden"><div className={`h-full rounded-full transition-all ${cpu > 80 ? 'bg-red-400' : 'bg-cyan-400/70'}`} style={{ width: `${cpu}%` }} /></div>
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between text-[8px] text-foreground-disabled mb-0.5"><span>Memory</span><span className={mem > 80 ? 'text-red-400' : ''}>{mem}%</span></div>
+                <div className="h-2 rounded-full bg-border-muted/30 overflow-hidden"><div className={`h-full rounded-full transition-all ${mem > 80 ? 'bg-red-400' : 'bg-purple-400/70'}`} style={{ width: `${mem}%` }} /></div>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Model Latency Widget ─────────────────────────────────────────
+function ModelLatencyW({ label = 'Model latency' }) {
+  const data = useMemo(() => mockTimeSeries(24, 120, 60), [])
+  const p50 = data[data.length - 1]?.value || 0
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Gauge} title={label} color="text-pink-400" actionLabel="View model" />
+      <div className="flex gap-4 mb-2">
+        <div><p className="text-body-s font-semibold text-foreground">{p50.toFixed(0)}ms</p><p className="text-[8px] text-foreground-muted">p50</p></div>
+        <div><p className="text-body-s font-semibold text-foreground">{(p50 * 2.2).toFixed(0)}ms</p><p className="text-[8px] text-foreground-muted">p95</p></div>
+        <div><p className="text-body-s font-semibold text-foreground">{(p50 * 3.1).toFixed(0)}ms</p><p className="text-[8px] text-foreground-muted">p99</p></div>
+      </div>
+      <div className="mt-auto"><LineChart data={data} color="#ec4899" height={64} unit="ms" thresholdValue={300} thresholdLabel="SLA 300ms" /></div>
+    </div>
+  )
+}
+
+// ─── Stream / Consumer Lag Widget ─────────────────────────────────
+function StreamLagW({ label = 'Stream lag' }) {
+  const data = useMemo(() => mockTimeSeries(24, 1200, 800), [])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Clock} title={label} color="text-orange-400" />
+      <p className="text-heading-m font-semibold text-foreground mb-1">{(data[data.length - 1]?.value / 1000).toFixed(1)}s</p>
+      <div className="mt-auto"><LineChart data={data} color="#fb923c" height={64} unit="ms" thresholdValue={5000} thresholdLabel="Alert > 5s" /></div>
+    </div>
+  )
+}
+
+function ConsumerLagW({ label = 'Consumer lag' }) {
+  const data = useMemo(() => mockTimeSeries(24, 342, 200), [])
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Clock} title={label} color="text-amber-400" />
+      <p className="text-heading-m font-semibold text-foreground mb-1">{data[data.length - 1]?.value.toFixed(0)}<span className="text-[10px] text-foreground-muted font-normal"> msgs behind</span></p>
+      <div className="mt-auto"><LineChart data={data} color="#f59e0b" height={64} unit=" msgs" thresholdValue={1000} thresholdLabel="Alert > 1K" /></div>
+    </div>
+  )
+}
+
+// ─── Top Errors Widget ────────────────────────────────────────────
+function TopErrorsW({ services = [] }) {
+  const errors = [
+    { time: '2 min ago', svc: services[0] || 'service', msg: 'ConnectionTimeout: upstream failed to respond within 30s', count: 12 },
+    { time: '8 min ago', svc: services[1] || services[0] || 'service', msg: 'ValidationError: missing required field "account_id"', count: 5 },
+    { time: '14 min ago', svc: services[0] || 'service', msg: 'RateLimitExceeded: too many requests from 10.0.3.42', count: 3 },
+    { time: '22 min ago', svc: services[2] || services[0] || 'service', msg: 'DatabaseError: deadlock detected on table "transactions"', count: 1 },
+  ]
+  return (
+    <div className="glass-card p-4 h-full flex flex-col">
+      <WidgetHeader icon={Warning} title="Recent Errors" color="text-red-400" actionLabel="View logs" />
+      {errors.map((e, i) => (
+        <div key={i} className="py-2 border-b border-border-muted/20 last:border-0 hover:bg-primary/5 rounded px-1 -mx-1 cursor-pointer transition-colors">
+          <div className="flex items-center justify-between mb-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-foreground-disabled">{e.time}</span>
+              <span className="text-[9px] text-primary">{e.svc}</span>
+            </div>
+            <span className="text-[9px] text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded">{e.count}×</span>
+          </div>
+          <p className="text-[10px] text-foreground-muted truncate">{e.msg}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Widget Renderer ──────────────────────────────────────────────
+const WIDGETS = {
+  'alarms': AlarmsW, 'error-rate': ErrorRateW, 'latency-waterfall': LatencyWaterfallW,
+  'throughput': ThroughputW, 'db-connections': DbConnectionsW, 'cache-hit': CacheHitW,
+  'lambda-stats': LambdaStatsW, 'dynamo-capacity': DynamoCapacityW, 'queue-depth': QueueDepthW,
+  'resource-util': ResourceUtilW, 'model-latency': ModelLatencyW, 'stream-lag': StreamLagW,
+  'consumer-lag': ConsumerLagW, 'top-errors': TopErrorsW,
+}
+
+function AppSection({ app }) {
+  const [expanded, setExpanded] = useState(true)
+  const alarmed = app.services.filter(s => s.hasAlarms).length
+  const logged = app.services.filter(s => s.hasLogs).length
+  const traced = app.services.filter(s => s.hasTraces).length
+
+  return (
+    <div className="mb-2">
+      <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-3 w-full text-left py-3 border-b border-border-muted/20 hover:bg-primary/5 rounded px-2 -mx-2 transition-colors">
+        {expanded ? <CaretDown size={14} className="text-foreground-muted" /> : <CaretRight size={14} className="text-foreground-muted" />}
+        <h2 className="text-body-m font-semibold text-foreground">{app.name}</h2>
+        <span className="text-[10px] text-foreground-disabled">{app.services.length} services</span>
+        <span className="flex-1" />
+        <div className="flex items-center gap-4 text-[10px]">
+          <span className={alarmed > 0 ? 'text-status-active' : 'text-foreground-disabled'}><Bell size={10} className="inline mr-0.5" />{alarmed}/{app.services.length}</span>
+          <span className={logged > 0 ? 'text-green-400' : 'text-foreground-disabled'}><FileText size={10} className="inline mr-0.5" />{logged}/{app.services.length}</span>
+          <span className={traced > 0 ? 'text-orange-400' : 'text-foreground-disabled'}><Path size={10} className="inline mr-0.5" />{traced}/{app.services.length}</span>
+        </div>
       </button>
-    </div>
-  )
-}
 
-// ─── Filled Widgets (shown after setup) ───────────────────────────
-
-function FilledAlarmWidget({ data }) {
-  const d = data.alarms
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><Bell size={16} className="text-status-active" /><h3 className="text-body-s font-semibold text-foreground">Alarms</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{d.total} configured</span>
-      </div>
-      <div className="flex gap-2 mb-3">
-        <div className="flex-1 rounded-lg bg-status-active/10 p-2 text-center"><p className="text-body-l font-semibold text-status-active">{d.ok}</p><p className="text-[10px] text-foreground-muted">OK</p></div>
-        <div className="flex-1 rounded-lg bg-status-degraded/10 p-2 text-center"><p className="text-body-l font-semibold text-status-degraded">{d.alarm}</p><p className="text-[10px] text-foreground-muted">In alarm</p></div>
-        <div className="flex-1 rounded-lg bg-foreground-muted/10 p-2 text-center"><p className="text-body-l font-semibold text-foreground-muted">{d.insufficient}</p><p className="text-[10px] text-foreground-muted">Insufficient</p></div>
-      </div>
-      <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-1.5">Closest to threshold</p>
-      {d.nearThreshold.slice(0, 3).map(a => (
-        <div key={a.name} className="flex items-center gap-2 py-1">
-          <span className="text-[10px] text-foreground w-28 truncate">{a.name}</span>
-          <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-status-degraded/60" style={{ width: `${(a.value / a.threshold) * 100}%` }} /></div>
-          <span className="text-[10px] text-foreground-muted w-16 text-right">{a.value}/{a.threshold}{a.unit}</span>
+      {expanded && (
+        <div className="grid grid-cols-4 gap-3 pt-4 pb-2">
+          {(app.widgets || []).map((w, i) => {
+            const Comp = WIDGETS[w.type]
+            if (!Comp) return null
+            return (
+              <div key={i} className={`${w.span === 2 ? 'col-span-2' : ''}`}>
+                <Comp {...w} services={w.services || app.services} />
+              </div>
+            )
+          })}
         </div>
-      ))}
+      )}
     </div>
   )
 }
 
-function FilledDashboardWidget({ data }) {
-  const metrics = data.dashboard.metrics
+// ─── Compute contextual attention items ───────────────────────────
+function computeAttention(services, appName, personaAttention = []) {
+  const items = []
+  const noAlarms = services.filter(s => !s.hasAlarms)
+  const noLogs = services.filter(s => !s.hasLogs)
+  const noTraces = services.filter(s => !s.hasTraces)
+
+  if (noAlarms.length > 0) {
+    items.push({ id: `att-alarms-${appName}`, severity: 'critical', category: 'coverage', title: `${noAlarms.length} service${noAlarms.length > 1 ? 's' : ''} with no alarms`, description: `${noAlarms.map(s => s.name).slice(0, 3).join(', ')}${noAlarms.length > 3 ? ` and ${noAlarms.length - 3} more` : ''} have no CloudWatch alarms.`, app: appName, time: 'Detected just now' })
+  }
+  if (noTraces.length > 0) {
+    items.push({ id: `att-traces-${appName}`, severity: 'high', category: 'coverage', title: `No tracing on ${noTraces.length} service${noTraces.length > 1 ? 's' : ''}`, description: `X-Ray is not enabled. No visibility into request flows.`, app: appName, time: 'Detected just now' })
+  }
+  if (noLogs.length > 0) {
+    items.push({ id: `att-logs-${appName}`, severity: 'high', category: 'coverage', title: `${noLogs.length} service${noLogs.length > 1 ? 's' : ''} missing logs`, description: `${noLogs.map(s => s.name).slice(0, 3).join(', ')}${noLogs.length > 3 ? ` and ${noLogs.length - 3} more` : ''} not sending logs.`, app: appName, time: 'Detected just now' })
+  }
+
+  // Add persona-specific non-coverage items (insights, alarms, compliance, cost)
+  const filtered = personaAttention.filter(a => {
+    if (a.category === 'coverage') return false // we computed these above
+    if (appName === 'All') return true
+    return a.app === appName || a.app === 'All'
+  })
+  items.push(...filtered)
+
+  // Sort by severity — critical first
+  const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 }
+  return [...items].sort((a, b) => (sevOrder[a.severity] ?? 3) - (sevOrder[b.severity] ?? 3))
+}
+
+// ─── Needs Your Attention Feed ────────────────────────────────────
+function AttentionFeed({ items, onInvestigate, services }) {
+  const sevColors = { critical: 'bg-red-500', high: 'bg-status-degraded', medium: 'bg-primary', low: 'bg-foreground-muted' }
+  const catLabels = { alarm: 'ALARM', coverage: 'COVERAGE', insight: 'INSIGHT', compliance: 'COMPLIANCE', cost: 'COST' }
+  const catColors = { alarm: 'text-red-400 bg-red-400/10', coverage: 'text-status-degraded bg-status-degraded/10', insight: 'text-primary bg-primary/10', compliance: 'text-purple-400 bg-purple-400/10', cost: 'text-status-active bg-status-active/10' }
+
+  if (!items || items.length === 0) return null
   return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><ChartBar size={16} className="text-primary" /><h3 className="text-body-s font-semibold text-foreground">Production Dashboard</h3></div>
-        <span className="text-[10px] text-primary cursor-pointer hover:text-primary-hover">Open →</span>
-      </div>
-      <div className={`grid gap-2 ${metrics.length > 4 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        {metrics.map(m => (
-          <div key={m.name} className="rounded-lg bg-background/40 border border-border-muted/30 p-2">
-            <p className="text-[10px] text-foreground-muted mb-1">{m.name}</p>
-            <Sparkline color={m.color} height={20} />
+    <div className="glass-card p-4 flex flex-col col-span-2 overflow-hidden min-w-0" style={{ maxHeight: 280 }}>
+      <WidgetHeader icon={Bell} title="Needs your attention" color="text-red-400" actionLabel={`${items.length} issues`} />
+      <div className="flex flex-col flex-1 overflow-y-auto -mr-2 pr-2">
+        {items.slice(0, 8).map((item) => (
+          <div key={item.id} className="flex gap-2 py-2 border-b border-border-muted/20 last:border-0 hover:bg-primary/5 rounded px-1.5 -mx-1.5 cursor-pointer transition-colors" onClick={() => {
+            const typeMap = { alarm: 'alarms', coverage: item.title.includes('alarm') ? 'alarms' : item.title.includes('log') ? 'enable-logs' : item.title.includes('trac') ? 'enable-tracing' : 'alarms', insight: 'insight', compliance: 'alarms', cost: item.title.includes('log') ? 'optimize-logs' : item.title.includes('stale') ? 'cleanup-stale' : 'alarms' }
+            onInvestigate && onInvestigate(typeMap[item.category] || 'alarms', { appName: item.app, services })
+          }}>
+            <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${sevColors[item.severity]}`} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[7px] px-1 py-0 rounded font-medium ${catColors[item.category]}`}>{catLabels[item.category]}</span>
+                <span className="text-[10px] font-medium text-foreground truncate">{item.title}</span>
+              </div>
+              <p className="text-[9px] text-foreground-muted truncate">{item.description}</p>
+            </div>
+            <span className="text-[8px] text-foreground-disabled flex-shrink-0 mt-0.5">{item.time}</span>
           </div>
         ))}
       </div>
@@ -217,145 +455,231 @@ function FilledDashboardWidget({ data }) {
   )
 }
 
-function FilledLogsWidget({ data }) {
-  const d = data.logs
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><FileText size={16} className="text-green-400" /><h3 className="text-body-s font-semibold text-foreground">Logs</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{d.total} services</span>
+// ─── Service Map Widget ───────────────────────────────────────────
+function ServiceMapW({ mapData, onEnableTracing }) {
+  const allUnknown = mapData && mapData.nodes.every(n => n.status === 'unknown')
+
+  if (!mapData) return (
+    <div className="glass-card p-4 h-full flex flex-col col-span-2">
+      <WidgetHeader icon={Globe} title="Service Map" color="text-primary" />
+      <div className="flex-1 flex flex-col items-center justify-center gap-2">
+        <Globe size={24} className="text-foreground-disabled" />
+        <p className="text-[10px] text-foreground-disabled">Enable tracing to see service dependencies</p>
+        <button onClick={onEnableTracing} className="text-[10px] text-primary hover:text-primary-hover flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors">
+          <Path size={12} /> Enable tracing →
+        </button>
       </div>
-      <div className="flex gap-2 mb-2 text-[10px]">
-        <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400">Standard: {d.standard}</span>
-        <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">IA: {d.ia}</span>
-      </div>
-      <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-1">Top by volume</p>
-      {d.topByVolume.slice(0, 3).map(g => (
-        <div key={g.name} className="flex items-center justify-between py-0.5">
-          <span className="text-[10px] text-foreground">{g.name}</span>
-          <span className="text-[10px] text-foreground-muted">{g.volume}</span>
-        </div>
-      ))}
     </div>
   )
-}
 
-function FilledTracesWidget({ data }) {
-  const latency = data.traces.latency
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><Path size={16} className="text-orange-400" /><h3 className="text-body-s font-semibold text-foreground">Traces</h3></div>
-        <span className="text-[10px] text-foreground-disabled">X-Ray active</span>
-      </div>
-      <p className="text-[10px] text-foreground-disabled uppercase tracking-wider mb-1.5">Critical path latency</p>
-      <div className="flex gap-3">
-        {latency.map(p => (
-          <div key={p.label} className="flex-1 text-center"><p className="text-body-s font-semibold text-foreground">{p.value}</p><p className="text-[10px] text-foreground-muted">{p.label}</p></div>
-        ))}
-      </div>
-      <div className="mt-2"><Sparkline color="#fb923c" height={16} /></div>
-    </div>
-  )
-}
+  const statusColors = { healthy: '#22c55e', warning: '#f59e0b', critical: '#ef4444', unknown: '#475569' }
 
-function FilledAnomalyWidget({ data }) {
-  const detectors = data.anomaly.detectors
   return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><WaveTriangle size={16} className="text-purple-400" /><h3 className="text-body-s font-semibold text-foreground">Anomaly Detection</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{detectors.length} active</span>
-      </div>
-      {detectors.slice(0, 5).map(d => (
-        <div key={d.metric} className="flex items-center gap-2 py-0.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-status-active" />
-          <span className="text-[10px] text-foreground flex-1">{d.metric}</span>
-          <span className="text-[10px] text-foreground-disabled">{d.distance} from band</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FilledServiceMapWidget() {
-  const nodes = ['API GW', 'Checkout', 'Payment', 'Orders DB', 'Inventory', 'Cache']
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><Globe size={16} className="text-cyan-400" /><h3 className="text-body-s font-semibold text-foreground">Service Map</h3></div>
-        <span className="text-[10px] text-cyan-400 cursor-pointer hover:text-cyan-300">Open full map →</span>
-      </div>
-      <div className="flex items-center justify-center gap-1 py-2">
-        {nodes.map((n, i) => (
-          <div key={n} className="flex items-center gap-1">
-            <div className="px-2 py-1 rounded bg-background/60 border border-border-muted/30 text-[10px] text-foreground-muted">{n}</div>
-            {i < nodes.length - 1 && <div className="w-3 h-px bg-cyan-400/40" />}
+    <div className="glass-card p-4 h-full flex flex-col col-span-2">
+      <WidgetHeader icon={Globe} title="Service Map" color="text-primary" actionLabel="Full map" />
+      <div className="flex-1 relative" style={{ minHeight: 160 }}>
+        <svg width="100%" height="100%" viewBox="0 0 100 100" className="absolute inset-0">
+          {mapData.edges.map((e, i) => {
+            const from = mapData.nodes.find(n => n.id === e.from)
+            const to = mapData.nodes.find(n => n.id === e.to)
+            if (!from || !to) return null
+            return <line key={i} x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="rgba(51,65,85,0.4)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+          })}
+        </svg>
+        {mapData.nodes.map(node => (
+          <div key={node.id} className="absolute flex flex-col items-center" style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)' }}>
+            <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center bg-background/80 backdrop-blur-sm" style={{ borderColor: statusColors[node.status] }}>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors[node.status] }} />
+            </div>
+            <span className="text-[7px] text-foreground-muted mt-1 whitespace-nowrap">{node.label}</span>
+            <span className="text-[6px] text-foreground-disabled">{node.type}</span>
           </div>
         ))}
-      </div>
-    </div>
-  )
-}
-
-function FilledSLOWidget() {
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2"><Gauge size={16} className="text-emerald-400" /><h3 className="text-body-s font-semibold text-foreground">SLOs</h3></div>
-        <span className="text-[10px] text-foreground-disabled">3 objectives</span>
-      </div>
-      {[
-        { name: 'Checkout availability', target: '99.9%', current: '99.94%', ok: true },
-        { name: 'Payment latency p99', target: '< 500ms', current: '320ms', ok: true },
-        { name: 'API error rate', target: '< 0.5%', current: '0.12%', ok: true },
-      ].map(s => (
-        <div key={s.name} className="flex items-center gap-2 py-1">
-          <div className={`w-1.5 h-1.5 rounded-full ${s.ok ? 'bg-status-active' : 'bg-status-outage'}`} />
-          <span className="text-[10px] text-foreground flex-1">{s.name}</span>
-          <span className="text-[10px] text-foreground-muted">{s.current}</span>
-          <span className="text-[10px] text-foreground-disabled">/ {s.target}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function FilledContainerInsightsWidget({ data }) {
-  const clusters = data.containerInsights.clusters
-  return (
-    <div className="glass-card p-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2"><Package size={16} className="text-teal-400" /><h3 className="text-body-s font-semibold text-foreground">Container Insights</h3></div>
-        <span className="text-[10px] text-foreground-disabled">{clusters.length} clusters</span>
-      </div>
-      <div className="flex gap-2">
-        {clusters.map(c => (
-          <div key={c.name} className="flex-1 rounded-lg bg-background/40 border border-border-muted/30 p-2 text-center">
-            <p className="text-body-s font-semibold text-foreground">{c.tasks}</p>
-            <p className="text-[10px] text-foreground-muted">{c.name}</p>
+        {allUnknown && (
+          <div className="absolute inset-0 flex flex-col items-center justify-end pb-2 pointer-events-none">
+            <div className="pointer-events-auto flex flex-col items-center gap-1 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2">
+              <p className="text-[9px] text-foreground-disabled">Health status unavailable — tracing not enabled</p>
+              <button onClick={onEnableTracing} className="text-[9px] text-primary hover:text-primary-hover flex items-center gap-1">
+                <Path size={10} /> Enable tracing →
+              </button>
+            </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   )
 }
 
-// ─── Playground Card ──────────────────────────────────────────────
-function PlaygroundCard() {
-  const navigate = useNavigate()
+// ─── CW Agent Coverage Widget ─────────────────────────────────────
+function CWAgentWidget({ cwAgent, onInstall }) {
+  if (!cwAgent) return null
+  const { installed, notInstalled, summary } = cwAgent
+  const total = summary.total
+  const installedCount = installed.length
+
   return (
-    <div className="glass-card p-4 hover:border-primary/20 transition-colors cursor-pointer" onClick={() => navigate('/watch')}>
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 flex-shrink-0">
-          <Rocket size={18} />
+    <div className="glass-card p-4 h-full flex flex-col col-span-2">
+      <WidgetHeader icon={Cpu} title="CloudWatch Agent" color="text-cyan-400" actionLabel={installedCount === 0 ? '' : `${installedCount} installed`} />
+      {total === 0 ? (
+        <div className="flex-1 flex items-center justify-center"><p className="text-[10px] text-foreground-disabled">No compute resources detected</p></div>
+      ) : (
+        <>
+          <div className="flex gap-3 mb-3">
+            {summary.ecs > 0 && (
+              <div className="flex-1 rounded-lg bg-background/30 border border-border-muted/20 p-2.5">
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-[9px] text-foreground-muted">ECS Fargate</span>
+                  <span className="text-[8px] text-foreground-disabled">0% coverage</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-border-muted/30 overflow-hidden mb-1.5"><div className="h-full rounded-full bg-cyan-400/60" style={{ width: '0%' }} /></div>
+                <div className="flex justify-between text-[8px]">
+                  <span className="text-foreground-muted">0/{summary.ecs} services</span>
+                  <span className="text-foreground-disabled">0/{notInstalled.filter(s => s.type === 'ECS Fargate').reduce((sum, s) => sum + (s.tasks || 0), 0)} instances</span>
+                </div>
+              </div>
+            )}
+            {summary.eks > 0 && (
+              <div className="flex-1 rounded-lg bg-background/30 border border-border-muted/20 p-2.5">
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-[9px] text-foreground-muted">EKS</span>
+                  <span className="text-[8px] text-foreground-disabled">0% coverage</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-border-muted/30 overflow-hidden mb-1.5"><div className="h-full rounded-full bg-cyan-400/60" style={{ width: '0%' }} /></div>
+                <div className="flex justify-between text-[8px]">
+                  <span className="text-foreground-muted">0/{summary.eks} clusters</span>
+                  <span className="text-foreground-disabled">0/{notInstalled.filter(s => s.type === 'EKS').reduce((sum, s) => sum + (s.pods || 0), 0)} pods</span>
+                </div>
+              </div>
+            )}
+            {summary.ec2 > 0 && (
+              <div className="flex-1 rounded-lg bg-background/30 border border-border-muted/20 p-2.5">
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-[9px] text-foreground-muted">EC2</span>
+                  <span className="text-[8px] text-foreground-disabled">0% coverage</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-border-muted/30 overflow-hidden mb-1.5"><div className="h-full rounded-full bg-cyan-400/60" style={{ width: '0%' }} /></div>
+                <div className="flex justify-between text-[8px]">
+                  <span className="text-foreground-muted">0/{summary.ec2} instances</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-foreground-muted mb-2">Without the CW Agent, you're missing memory, disk, and custom metrics on {total} compute resources.</p>
+          <button onClick={onInstall} className="text-[10px] text-primary hover:text-primary-hover flex items-center gap-1 self-start px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/15 transition-colors">
+            <Cpu size={12} /> Install CW Agent →
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── IaC Export Modal ──────────────────────────────────────────────
+function IaCExportModal({ onClose, title, subtitle }) {
+  const [format, setFormat] = useState('cloudformation')
+  const [showShare, setShowShare] = useState(false)
+  const [shareMethod, setShareMethod] = useState('slack')
+  const [shareDestination, setShareDestination] = useState('')
+  const [shareMessage, setShareMessage] = useState('Here\'s the CloudWatch config I\'d like to deploy. Please review and approve.')
+  const formats = [{ id: 'cloudformation', label: 'CloudFormation' }, { id: 'terraform', label: 'Terraform' }, { id: 'json', label: 'JSON' }]
+  const shareMethods = [{ id: 'slack', label: 'Slack', placeholder: '#ops-team or @admin', icon: '💬' }, { id: 'email', label: 'Email', placeholder: 'admin@company.com', icon: '✉️' }, { id: 'jira', label: 'Jira', placeholder: 'OPS-123', icon: '🎫' }]
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="glass-card w-[640px] max-h-[80vh] flex flex-col shadow-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-border-muted">
+          <div><h2 className="text-body-m font-semibold text-foreground">Export as Code</h2><p className="text-[11px] text-foreground-muted">{title} · {subtitle}</p></div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-background-surface-2 text-foreground-muted"><X size={16} /></button>
         </div>
-        <div className="flex-1">
-          <h3 className="text-body-s font-semibold text-foreground">Explore CloudWatch Playground</h3>
-          <p className="text-[11px] text-foreground-muted mt-0.5">See what CloudWatch can do with sample data — dashboards, alarms, traces, and AI-powered troubleshooting.</p>
-          <span className="text-[11px] text-purple-400 mt-2 inline-flex items-center gap-1">
-            Try the 2AM SRE demo <CaretRight size={10} />
-          </span>
+        <div className="flex gap-2 px-4 pt-3">
+          {formats.map(f => <button key={f.id} onClick={() => setFormat(f.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${format === f.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>{f.label}</button>)}
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">
+          <pre className="text-[10px] text-foreground-muted bg-background/60 rounded-lg p-4 border border-border-muted/30 overflow-x-auto leading-relaxed">
+            {format === 'cloudformation' && `AWSTemplateFormatVersion: '2010-09-09'\nDescription: ${title}\n  Generated by CloudWatch Omni Agent\n\nResources:\n  # Selected items will be included here\n  # Full template generated on export`}
+            {format === 'terraform' && `# ${title}\n# Generated by CloudWatch Omni Agent\n\n# Selected items will be included here\n# Full template generated on export`}
+            {format === 'json' && JSON.stringify({ description: title, generatedBy: 'CloudWatch Omni Agent', resources: '...' }, null, 2)}
+          </pre>
+        </div>
+        <div className="p-4 border-t border-border-muted">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-foreground-disabled">Preview only</span>
+            <div className="flex gap-2">
+              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors">Copy</button>
+              <button className="px-4 py-2 rounded-lg bg-background-surface-1 border border-border-muted text-body-s text-foreground hover:bg-background-surface-2 transition-colors flex items-center gap-1.5"><Download size={14} /> Download</button>
+              <button onClick={() => setShowShare(!showShare)} className="px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-body-s font-medium transition-colors">Share</button>
+            </div>
+          </div>
+          {showShare && (
+            <div className="mt-4 pt-4 border-t border-border-muted/30">
+              <div className="flex gap-2 mb-3">{shareMethods.map(m => <button key={m.id} onClick={() => setShareMethod(m.id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] transition-colors ${shareMethod === m.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>{m.icon} {m.label}</button>)}</div>
+              <input type="text" value={shareDestination} onChange={(e) => setShareDestination(e.target.value)} placeholder={shareMethods.find(m => m.id === shareMethod)?.placeholder} className="w-full h-9 rounded-lg bg-background-surface-1 border border-border-muted px-3 text-[12px] text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 mb-2" />
+              <textarea value={shareMessage} onChange={(e) => setShareMessage(e.target.value)} rows={2} className="w-full rounded-lg bg-background-surface-1 border border-border-muted px-3 py-2 text-[11px] text-foreground focus:outline-none focus:border-primary/40 resize-none mb-3" />
+              <button className="w-full px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-[11px] font-medium">Send via {shareMethods.find(m => m.id === shareMethod)?.label}</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── All Overview (aggregated cross-app view) ─────────────────────
+function AllOverview({ applications, onInvestigate, attention, serviceMaps, onEnableTracing, cwAgent, onInstallAgent }) {
+  const allServices = applications.flatMap(a => a.services)
+  const withAlarms = allServices.filter(s => s.hasAlarms).length
+  const withLogs = allServices.filter(s => s.hasLogs).length
+  const withTraces = allServices.filter(s => s.hasTraces).length
+  const total = allServices.length
+
+  const inv = (type, extra = {}) => () => onInvestigate(type, { appName: 'All applications', total, alarmed: withAlarms, ...extra })
+
+  return (
+    <div className="grid grid-cols-4 gap-3">
+      {/* 1. Needs your attention + Service map */}
+      <AttentionFeed items={computeAttention(allServices, 'All', attention)} onInvestigate={onInvestigate} services={allServices} />
+      <ServiceMapW mapData={null} onEnableTracing={onEnableTracing} />
+
+      {/* 2. CW Agent coverage + Alarms */}
+      <CWAgentWidget cwAgent={cwAgent} onInstall={onInstallAgent} />
+      <div className="relative group"><AlarmsW services={allServices} /><button onClick={inv('alarms')} className="absolute top-3 right-3 flex items-center gap-1 text-[9px] text-primary bg-background-surface-2/90 border border-border-muted rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10"><MagnifyingGlass size={10} /> Investigate</button></div>
+
+      {/* 3. Error rate + Latency */}
+      <div className="relative group"><ErrorRateW services={applications.map(a => a.name)} /><button onClick={inv('error-rate')} className="absolute top-3 right-3 flex items-center gap-1 text-[9px] text-primary bg-background-surface-2/90 border border-border-muted rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10"><MagnifyingGlass size={10} /> Investigate</button></div>
+      <div className="relative group col-span-2"><LatencyWaterfallW services={applications.map(a => a.name)} /><button onClick={inv('latency-waterfall')} className="absolute top-3 right-3 flex items-center gap-1 text-[9px] text-primary bg-background-surface-2/90 border border-border-muted rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10"><MagnifyingGlass size={10} /> Investigate</button></div>
+
+      {/* 4. Top errors + Throughput */}
+      <div className="relative group"><TopErrorsW services={applications.flatMap(a => a.services.slice(0, 1).map(s => s.name))} /><button onClick={inv('top-errors')} className="absolute top-3 right-3 flex items-center gap-1 text-[9px] text-primary bg-background-surface-2/90 border border-border-muted rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10"><MagnifyingGlass size={10} /> Investigate</button></div>
+      <div className="relative group"><ThroughputW label="Total throughput" /><button onClick={inv('throughput', { label: 'Total throughput' })} className="absolute top-3 right-3 flex items-center gap-1 text-[9px] text-primary bg-background-surface-2/90 border border-border-muted rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10"><MagnifyingGlass size={10} /> Investigate</button></div>
+
+      {/* 5. Observability posture + Application health */}
+      <div className="glass-card p-4 h-full flex flex-col">
+        <WidgetHeader icon={Globe} title="Observability Posture" color="text-primary" />
+        <div className="flex flex-col gap-2.5 mt-auto">
+          <div><div className="flex justify-between text-[9px] text-foreground-disabled mb-0.5"><span>Alarms</span><span>{withAlarms}/{total}</span></div><div className="h-2 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-status-degraded" style={{ width: `${total > 0 ? (withAlarms / total) * 100 : 0}%` }} /></div></div>
+          <div><div className="flex justify-between text-[9px] text-foreground-disabled mb-0.5"><span>Logs</span><span>{withLogs}/{total}</span></div><div className="h-2 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-green-400" style={{ width: `${total > 0 ? (withLogs / total) * 100 : 0}%` }} /></div></div>
+          <div><div className="flex justify-between text-[9px] text-foreground-disabled mb-0.5"><span>Traces</span><span>{withTraces}/{total}</span></div><div className="h-2 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-purple-400" style={{ width: `${total > 0 ? (withTraces / total) * 100 : 0}%` }} /></div></div>
+        </div>
+      </div>
+
+      <div className="glass-card p-4 h-full flex flex-col col-span-2">
+        <WidgetHeader icon={ChartBar} title="Application Health" color="text-primary" />
+        <div className="flex flex-col gap-2 mt-auto">
+          {applications.map(app => {
+            const svcCount = app.services.length
+            const alarmed = app.services.filter(s => s.hasAlarms).length
+            const logged = app.services.filter(s => s.hasLogs).length
+            return (
+              <div key={app.id} className="flex items-center gap-3 py-1">
+                <span className="text-[10px] text-foreground w-32 truncate">{app.name}</span>
+                <div className="flex-1 flex gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-status-degraded/70" style={{ width: `${(alarmed / svcCount) * 100}%` }} /></div>
+                  <div className="flex-1 h-1.5 rounded-full bg-border-muted/30 overflow-hidden"><div className="h-full rounded-full bg-green-400/70" style={{ width: `${(logged / svcCount) * 100}%` }} /></div>
+                </div>
+                <span className="text-[9px] text-foreground-disabled w-16 text-right">{svcCount} services</span>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -363,122 +687,172 @@ function PlaygroundCard() {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────
-
-const widgetConfig = [
-  { id: 'alarms', icon: Bell, title: 'Alarms', color: 'text-status-active', description: 'No alarms configured yet. The agent can create recommended alarms based on your infrastructure.', actionLabel: 'Auto-configure alarms', requiresAgent: false },
-  { id: 'dashboard', icon: ChartBar, title: 'Dashboard', color: 'text-primary', description: 'No dashboards yet. The agent can generate a production overview with key metrics.', actionLabel: 'Generate dashboard', requiresAgent: false },
-  { id: 'logs', icon: FileText, title: 'Logs', color: 'text-green-400', description: 'Most services aren\'t sending logs to CloudWatch yet. Enable log delivery to start querying.', actionLabel: 'Enable logging', requiresAgent: false },
-  { id: 'traces', icon: Path, title: 'Traces', color: 'text-orange-400', description: 'No distributed tracing enabled. X-Ray tracing shows the full request path across services.', actionLabel: 'Enable tracing', requiresAgent: false },
-  { id: 'service-map', icon: Globe, title: 'Service Map', color: 'text-cyan-400', description: 'See how your services connect. Enable tracing first to generate the dependency map.', actionLabel: 'Generate service map', requiresAgent: false },
-  { id: 'anomaly', icon: WaveTriangle, title: 'Anomaly Detection', color: 'text-purple-400', description: 'CloudWatch has 14 days of metric history. Enable anomaly detection to catch unusual patterns.', actionLabel: 'Enable anomaly detection', requiresAgent: false },
-  { id: 'slos', icon: Gauge, title: 'SLOs', color: 'text-emerald-400', description: 'Define Service Level Objectives for your critical path. Requires Application Signals.', actionLabel: 'Define SLOs', requiresAgent: true },
-  { id: 'container-insights', icon: Package, title: 'Container Insights', color: 'text-teal-400', description: 'Cluster, node, and pod-level metrics for your ECS/EKS workloads.', actionLabel: 'Enable Container Insights', requiresAgent: true },
-]
-
-const filledWidgets = {
-  alarms: FilledAlarmWidget,
-  dashboard: FilledDashboardWidget,
-  logs: FilledLogsWidget,
-  traces: FilledTracesWidget,
-  'service-map': FilledServiceMapWidget,
-  anomaly: FilledAnomalyWidget,
-  slos: FilledSLOWidget,
-  'container-insights': FilledContainerInsightsWidget,
-}
-
 export default function Day0Page() {
   const [input, setInput] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
+  const [drawerInvestigation, setDrawerInvestigation] = useState(null)
+  const [showIaCModal, setShowIaCModal] = useState(false)
   const navigate = useNavigate()
   const { persona } = usePersona()
-  const { user, application, coverage, services } = persona
-  const { states, progress, run } = useSimulation()
+  const { user, applications, gaps, cost, attention, serviceMaps, cwAgent } = persona
 
   const firstName = user.name.split(' ')[0]
+  const allServices = applications.flatMap(a => a.services)
+  const total = allServices.length
+  const isGreenfield = allServices.filter(s => s.hasAlarms).length === 0
 
-  const agentInstalled = states['cw-agent'] === 'done'
+  const activeApp = activeTab !== 'all' ? applications.find(a => a.id === activeTab) : null
+
+  const openInvestigation = (widgetType, context) => {
+    setDrawerInvestigation(getInvestigation(widgetType, context))
+  }
 
   return (
     <div className="px-6 py-6">
-      <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">
-        Home
-      </h1>
-      <div className="mb-6" />
-
-      <div className="max-w-6xl mx-auto">
-
-        {/* Welcome text */}
-        <p className="text-body-s text-foreground mb-3">
-          Welcome, {firstName}. I found <span className="text-primary font-medium">{coverage.totalServices} services</span> across <span className="text-primary font-medium">{application.regions.length} regions</span>.
-          {coverage.withAlarms === 0 ? ' No monitoring is configured yet. Let\'s get started.' : ` You have partial monitoring — ${coverage.withAlarms} services with alarms.`}
-        </p>
-
-        {/* Playground card */}
-        <div className="mb-4">
-          <PlaygroundCard />
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 className="text-heading-xl font-normal tracking-tighter text-foreground">{isGreenfield ? `Welcome, ${firstName}` : 'Home'}</h1>
+          <p className="text-body-s text-foreground-muted mt-0.5">{total} services · {applications.length} applications</p>
         </div>
+        <div className="flex items-center gap-2"><Sparkle size={14} className="text-primary" weight="fill" /><span className="text-[11px] text-primary font-medium">Agent active</span></div>
+      </div>
 
-        {/* CW Agent Banner — first priority */}
-        <div className="mb-4">
-          <AgentBanner
-            state={states['cw-agent'] || 'idle'}
-            progress={progress}
-            onInstall={() => run('cw-agent')}
-          />
+      {/* Chat */}
+      <div className="max-w-3xl mb-6">
+        <div className="relative">
+          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask about your services, metrics, or alarms..." className="w-full h-11 rounded-xl bg-background-surface-1 border border-border-muted px-4 pr-12 text-body-s text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40 transition-colors" />
+          <button className="absolute right-2 top-1.5 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"><PaperPlaneRight size={14} /></button>
         </div>
+      </div>
 
-        {/* Widget grid — empty states that fill in as user configures */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {widgetConfig.map(w => {
-            const isDone = states[w.id] === 'done'
-            const FilledWidget = filledWidgets[w.id]
+      {/* Top row */}
+      <div className={`grid ${!isGreenfield && persona.activeAlarms ? 'grid-cols-3' : 'grid-cols-[1fr_300px]'} gap-4 mb-6`}>
+        {isGreenfield ? (
+          <button onClick={() => navigate('/getting-started')} className="ai-glass-card p-5 text-left hover:border-primary/40 transition-all">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary flex-shrink-0"><Rocket size={20} /></div>
+              <div>
+                <h2 className="text-body-m font-semibold text-foreground">Get started</h2>
+                <p className="text-[11px] text-foreground-muted mt-1">I found {total} services with no monitoring. Let me walk you through setting up.</p>
+                <span className="text-[10px] text-primary mt-2 inline-flex items-center gap-1">Start setup <ArrowRight size={10} /></span>
+              </div>
+            </div>
+          </button>
+        ) : (
+          <button onClick={() => navigate('/gaps')} className="ai-glass-card p-5 text-left hover:border-primary/40 transition-all">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-status-degraded/20 flex items-center justify-center text-status-degraded flex-shrink-0"><Warning size={20} /></div>
+              <div>
+                <h2 className="text-body-m font-semibold text-foreground">{gaps.length} observability gaps found</h2>
+                <p className="text-[11px] text-foreground-muted mt-1">{gaps.filter(g => g.severity === 'critical').length} critical. Select what to fix and export as code.</p>
+                <span className="text-[10px] text-primary mt-2 inline-flex items-center gap-1">View gap analysis <ArrowRight size={10} /></span>
+              </div>
+            </div>
+          </button>
+        )}
+        {/* Monitor widget — only for personas with active monitoring */}
+        {!isGreenfield && persona.activeAlarms && (() => {
+          const alarms = persona.activeAlarms
+          const alarming = alarms.filter(a => a.state === 'ALARM')
+          const slosData = persona.slos || []
+          const sloAtRisk = slosData.filter(s => s.status === 'at-risk')
+          const sloTotal = slosData.length
+          const overallOk = alarming.length === 0 && sloAtRisk.length === 0
+          const topAlarm = alarming.sort((a, b) => ({ critical: 0, high: 1, medium: 2, low: 3 }[a.severity] ?? 3) - ({ critical: 0, high: 1, medium: 2, low: 3 }[b.severity] ?? 3))[0]
 
-            if (isDone && FilledWidget) {
-              return <FilledWidget key={w.id} data={persona.widgetData} />
-            }
+          return (
+            <button onClick={() => navigate('/monitor')} className="glass-card p-4 text-left hover:border-primary/30 transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-body-s font-semibold text-foreground">System Health</span>
+                <span className="text-[10px] text-primary inline-flex items-center gap-1">Monitor <ArrowRight size={10} /></span>
+              </div>
 
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-3 h-3 rounded-full ${overallOk ? 'bg-green-400' : alarming.length > 0 ? 'bg-red-400' : 'bg-orange-400'}`} style={!overallOk ? { animation: 'pulse 2s ease-in-out infinite' } : undefined} />
+                <span className={`text-[11px] ${overallOk ? 'text-green-400' : alarming.length > 0 ? 'text-red-400' : 'text-orange-400'}`}>{overallOk ? 'All clear' : 'Attention needed'}</span>
+              </div>
+
+              <div className="flex gap-3 mb-2">
+                <div><p className={`text-heading-m font-semibold ${alarming.length > 0 ? 'text-red-400' : 'text-green-400'}`}>{alarming.length}</p><p className="text-[8px] text-foreground-muted">Active alarms</p></div>
+                <div><p className={`text-heading-m font-semibold ${sloAtRisk.length > 0 ? 'text-orange-400' : 'text-green-400'}`}>{sloTotal - sloAtRisk.length}/{sloTotal}</p><p className="text-[8px] text-foreground-muted">SLOs on target</p></div>
+              </div>
+
+              {topAlarm && (
+                <p className="text-[9px] text-foreground-muted truncate">⚠ {topAlarm.name}: {topAlarm.value}</p>
+              )}
+              {sloAtRisk.length > 0 && (
+                <p className="text-[9px] text-foreground-muted truncate">⚠ {sloAtRisk[0].name} burning {sloAtRisk[0].burnRate}×</p>
+              )}
+            </button>
+          )
+        })()}
+        <div className="glass-card p-4">
+          <span className="text-body-s font-semibold text-foreground">CloudWatch Cost</span>
+          <p className="text-heading-m font-semibold text-foreground mt-1 mb-2">${cost.current.total.toLocaleString()}<span className="text-[11px] text-foreground-muted font-normal">/mo</span></p>
+          {cost.current.breakdown.slice(0, 3).map((item, i) => (
+            <div key={i} className="flex items-center justify-between py-0.5"><span className="text-[10px] text-foreground-muted">{item.category}</span><span className="text-[10px] text-foreground">${item.amount.toLocaleString()}</span></div>
+          ))}
+          {cost.savings?.length > 0 && <p className="text-[9px] text-status-active mt-2">Potential savings: ${cost.savings.reduce((s, x) => s + x.amount, 0).toLocaleString()}/mo</p>}
+        </div>
+      </div>
+
+      {/* Application tabs */}
+      <div className="flex gap-2 mb-5">
+        <button onClick={() => setActiveTab('all')} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${activeTab === 'all' ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
+          All ({total})
+        </button>
+        {applications.map(app => (
+          <button key={app.id} onClick={() => setActiveTab(app.id)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${activeTab === app.id ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-background-surface-1 text-foreground-muted border border-border-muted hover:border-primary/20'}`}>
+            {app.name} ({app.services.length})
+          </button>
+        ))}
+      </div>
+
+      {/* Content based on active tab */}
+      {activeTab === 'all' ? (
+        <AllOverview applications={applications} onInvestigate={openInvestigation} attention={attention} serviceMaps={serviceMaps} onEnableTracing={() => openInvestigation('enable-tracing', { appName: 'All applications', services: allServices })} cwAgent={cwAgent} onInstallAgent={() => openInvestigation('install-cw-agent', { appName: 'All applications', cwAgent })} />
+      ) : activeApp ? (
+        <div className="grid grid-cols-4 gap-3">
+          {/* Attention + Service Map at top */}
+          <AttentionFeed items={computeAttention(activeApp.services, activeApp.name, attention)} onInvestigate={openInvestigation} services={activeApp.services} />
+          <ServiceMapW mapData={serviceMaps?.[activeApp.id]} onEnableTracing={() => openInvestigation('enable-tracing', { appName: activeApp.name, services: activeApp.services })} />
+
+          {/* CW Agent — filtered to this app's compute services */}
+          {(() => {
+            const appTag = activeApp.tag?.split(':')[1]
+            const appAgentItems = cwAgent?.notInstalled?.filter(s => s.tags?.Application === appTag) || []
+            if (appAgentItems.length === 0) return null
+            const appCwAgent = { installed: [], notInstalled: appAgentItems, summary: { ecs: appAgentItems.filter(s => s.type === 'ECS Fargate').length, eks: appAgentItems.filter(s => s.type === 'EKS').length, ec2: 0, total: appAgentItems.length } }
+            return <CWAgentWidget cwAgent={appCwAgent} onInstall={() => openInvestigation('install-cw-agent', { appName: activeApp.name, cwAgent: appCwAgent })} />
+          })()}
+
+          {(activeApp.widgets || []).map((w, i) => {
+            const Comp = WIDGETS[w.type]
+            if (!Comp) return null
             return (
-              <EmptyWidget
-                key={w.id}
-                icon={w.icon}
-                title={w.title}
-                description={w.description}
-                actionLabel={w.actionLabel}
-                color={w.color}
-                state={states[w.id] || 'idle'}
-                progress={progress}
-                simId={w.id}
-                onAction={() => run(w.id)}
-                requiresAgent={w.requiresAgent}
-                agentInstalled={agentInstalled}
-              />
+              <div key={i} className={`${w.span === 2 ? 'col-span-2' : ''} relative group`}>
+                <Comp {...w} services={w.services || activeApp.services} />
+                <button onClick={() => openInvestigation(w.type, { appName: activeApp.name, total: activeApp.services.length, alarmed: activeApp.services.filter(s => s.hasAlarms).length, ...w })} className="absolute top-3 right-3 flex items-center gap-1 text-[9px] text-primary bg-background-surface-2/90 border border-border-muted rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary/10">
+                  <MagnifyingGlass size={10} /> Investigate
+                </button>
+              </div>
             )
           })}
         </div>
+      ) : null}
 
-        {/* Discovered services */}
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-body-s font-semibold text-foreground">Discovered Services</h3>
-            <span className="text-[10px] text-foreground-disabled">{services.length} services</span>
-          </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-            {services.slice(0, 10).map(svc => (
-              <div key={svc.name} className="flex items-center justify-between py-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
-                  <span className="text-[11px] text-foreground">{svc.name}</span>
-                </div>
-                <span className="text-[10px] text-foreground-disabled">{svc.type}</span>
-              </div>
-            ))}
-          </div>
-          {services.length > 10 && (
-            <button className="text-[11px] text-primary hover:text-primary-hover mt-2 text-left">
-              View all {services.length} services →
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Agent Drawer */}
+      {drawerInvestigation && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setDrawerInvestigation(null)} />
+          <AgentDrawer investigation={drawerInvestigation} onClose={() => setDrawerInvestigation(null)} onExportCode={() => setShowIaCModal(true)} />
+        </>
+      )}
+
+      {/* IaC Modal */}
+      {showIaCModal && (
+        <IaCExportModal onClose={() => setShowIaCModal(false)} title={drawerInvestigation?.title || 'Export'} subtitle={drawerInvestigation?.subtitle || ''} />
+      )}
     </div>
   )
 }

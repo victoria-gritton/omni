@@ -1,57 +1,26 @@
 // ─── Persona Definitions ──────────────────────────────────────────
-// Two personas for demo: light user (Maria) and heavy user (James)
-// The active persona is selected via PersonaContext
+// Restructured around applications, observability gaps, and use cases
+// Based on feedback: use-case-driven, IaC-first, application-centric
 
 import { createContext, useContext, useState } from 'react'
-
-// ─── Shared tier labels ───────────────────────────────────────────
-const TIER_LABELS = {
-  tier1: {
-    label: 'CloudWatch-only — no infrastructure changes',
-    description: 'These create alarms, dashboards, and detection models inside CloudWatch. Your running services are not touched.',
-    badge: 'Metadata only',
-    badgeTooltip: 'These actions only create CloudWatch resources (alarms, dashboards, models). Your running services, task definitions, and infrastructure are not modified.',
-  },
-  tier2: {
-    label: 'Infrastructure changes — needs your OK',
-    description: 'These modify your running services (sidecars, task definitions, parameter groups). May cause rolling restarts.',
-    badge: 'Modifies infrastructure',
-    badgeTooltip: 'These actions update your running AWS resources — ECS task definitions, RDS parameter groups, API Gateway stages. Some may trigger rolling restarts or redeployments.',
-  },
-  tier3: {
-    label: 'Business decisions — needs your input',
-    description: 'These require choices the agent can\'t infer from your infrastructure — targets, routing, and org structure.',
-    badge: 'Your call',
-    badgeTooltip: 'These require business decisions the agent can\'t infer from your infrastructure — like SLO targets, alert routing destinations, or cross-account permissions.',
-  },
-}
 
 // ─── PERSONA 1: Maria Chen — Mid-tier e-commerce (light) ─────────
 const maria = {
   id: 'maria',
-  user: {
-    name: 'Maria Chen',
-    role: 'Senior SRE',
-    team: 'Platform Engineering',
-    company: 'NovaMart',
-    email: 'mchen@novamart.io',
-    avatar: null,
-    timezone: 'America/New_York',
-    lastLogin: null,
-  },
+  user: { name: 'Maria Chen', role: 'Senior SRE', team: 'Platform Engineering', company: 'NovaMart', avatar: null, timezone: 'America/New_York' },
   demo: {
     observabilityMaturity: 'Beginner',
-    observabilityDetail: 'First time using CloudWatch beyond basic console checks. No prior alarm, dashboard, or tracing setup.',
+    observabilityDetail: 'First time using CloudWatch. No alarms, dashboards, or tracing.',
     spendingCohort: 'Mid-tier',
     monthlyAWSSpend: '~$18,000/mo',
     cloudWatchSpend: '$0 (default free tier only)',
     teamSize: 5,
     oncallRotation: true,
-    incidentTooling: 'PagerDuty (not yet integrated with CloudWatch)',
+    incidentTooling: 'PagerDuty (not integrated)',
     goals: [
-      'Get visibility into production health without manual log diving',
-      'Reduce MTTR — currently ~45 min to diagnose issues',
-      'Set up proactive alerting before customers notice problems',
+      'Get visibility into production health',
+      'Reduce MTTR from ~45 min',
+      'Set up proactive alerting',
     ],
     awsServiceBreakdown: {
       compute: '6 ECS Fargate services (22 tasks), 2 Lambda functions',
@@ -60,391 +29,466 @@ const maria = {
       messaging: '1 SNS/SQS event bus',
     },
   },
-  application: {
-    name: 'NovaMart Platform',
-    description: 'E-commerce platform serving ~2M monthly active users across NA and EU',
-    environments: ['production', 'staging', 'dev'],
-    regions: ['us-east-1', 'us-east-2', 'eu-west-1'],
-    accounts: [
-      { id: '111222333444', name: 'novamart-prod', env: 'production' },
-      { id: '555666777888', name: 'novamart-staging', env: 'staging' },
+
+  // Applications — grouped by tags/dependencies
+  applications: [
+    {
+      id: 'novamart-checkout',
+      name: 'Checkout Flow',
+      tag: 'Application:NovaMart-Checkout',
+      services: [
+        { name: 'api-gateway', type: 'API Gateway', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'checkout-service', type: 'ECS Fargate', region: 'us-east-2', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'payment-service', type: 'ECS Fargate', region: 'us-east-2', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'order-service', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'orders-db', type: 'RDS PostgreSQL', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'error-rate', span: 1, services: ['api-gateway', 'checkout-service', 'payment-service'] },
+        { type: 'latency-waterfall', span: 2, services: ['api-gateway', 'checkout-service', 'payment-service', 'orders-db'] },
+        { type: 'throughput', span: 1, service: 'api-gateway', label: 'API Gateway requests' },
+        { type: 'db-connections', span: 1, service: 'orders-db' },
+      ],
+    },
+    {
+      id: 'novamart-catalog',
+      name: 'Product Catalog',
+      tag: 'Application:NovaMart-Catalog',
+      services: [
+        { name: 'search-service', type: 'ECS Fargate', region: 'us-west-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'product-catalog', type: 'DynamoDB', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'image-processor', type: 'Lambda', region: 'us-east-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+        { name: 'cdn', type: 'CloudFront', region: 'global', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'static-assets', type: 'S3', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'throughput', span: 1, service: 'search-service', label: 'Search queries' },
+        { type: 'cache-hit', span: 1, service: 'cdn', label: 'CDN cache hit ratio' },
+        { type: 'lambda-stats', span: 1, service: 'image-processor' },
+        { type: 'dynamo-capacity', span: 2, service: 'product-catalog' },
+      ],
+    },
+    {
+      id: 'novamart-platform',
+      name: 'Platform Services',
+      tag: 'Application:NovaMart-Platform',
+      services: [
+        { name: 'user-service', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'notification-service', type: 'Lambda', region: 'us-west-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+        { name: 'session-cache', type: 'ElastiCache Redis', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'event-bus', type: 'SNS + SQS', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'inventory-service', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'users-db', type: 'RDS PostgreSQL', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'cache-hit', span: 1, service: 'session-cache', label: 'Session cache hit ratio' },
+        { type: 'queue-depth', span: 1, service: 'event-bus' },
+        { type: 'lambda-stats', span: 1, service: 'notification-service' },
+        { type: 'db-connections', span: 1, service: 'users-db' },
+        { type: 'resource-util', span: 1, services: ['user-service', 'inventory-service'] },
+      ],
+    },
+  ],
+
+  // CloudWatch Agent coverage
+  cwAgent: {
+    installed: [],
+    notInstalled: [
+      { name: 'checkout-service', type: 'ECS Fargate', tasks: 6, workload: 'web-server', tags: { Application: 'NovaMart-Checkout', Environment: 'production' } },
+      { name: 'payment-service', type: 'ECS Fargate', tasks: 4, workload: 'web-server', tags: { Application: 'NovaMart-Checkout', Environment: 'production' } },
+      { name: 'order-service', type: 'ECS Fargate', tasks: 3, workload: 'web-server', tags: { Application: 'NovaMart-Checkout', Environment: 'production' } },
+      { name: 'user-service', type: 'ECS Fargate', tasks: 4, workload: 'web-server', tags: { Application: 'NovaMart-Platform', Environment: 'production' } },
+      { name: 'inventory-service', type: 'ECS Fargate', tasks: 2, workload: 'web-server', tags: { Application: 'NovaMart-Platform', Environment: 'production' } },
+      { name: 'search-service', type: 'ECS Fargate', tasks: 3, workload: 'web-server', tags: { Application: 'NovaMart-Catalog', Environment: 'production' } },
+    ],
+    summary: { ecs: 6, eks: 0, ec2: 0, total: 6 },
+  },
+
+  // Observability gaps — selectable items for batch IaC generation
+  gaps: [
+    { id: 'g-alarms', category: 'alarms', appIds: ['all'], title: 'No alarms configured', description: '0 of 16 services have alarms. Recommended: 42 alarms across all services.', severity: 'critical', services: 16, fixCount: 42, fixLabel: '42 alarms' },
+    { id: 'g-logs', category: 'logs', appIds: ['all'], title: 'Logging missing on 14 services', description: 'Only Lambda functions have auto-created log groups. ECS, RDS, API Gateway, and others need log delivery enabled.', severity: 'high', services: 14, fixCount: 14, fixLabel: '14 log configurations' },
+    { id: 'g-traces', category: 'traces', appIds: ['all'], title: 'No distributed tracing', description: 'X-Ray is not enabled on any service. You have no visibility into request flows across services.', severity: 'high', services: 16, fixCount: 16, fixLabel: '16 trace configurations' },
+    { id: 'g-dashboards', category: 'dashboards', appIds: ['all'], title: 'No dashboards', description: 'No custom dashboards exist. Recommended: 1 production overview dashboard.', severity: 'medium', services: 16, fixCount: 1, fixLabel: '1 dashboard' },
+    { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Baselines exist from 14 days of auto-collected metrics but no anomaly detectors are configured.', severity: 'medium', services: 0, fixCount: 5, fixLabel: '5 anomaly detectors' },
+    { id: 'g-slos', category: 'slos', appIds: ['novamart-checkout'], title: 'No SLOs defined', description: 'No Service Level Objectives configured. Recommended for the checkout critical path.', severity: 'low', services: 0, fixCount: 3, fixLabel: '3 SLOs' },
+    { id: 'g-cw-agent', category: 'cw-agent', appIds: ['all'], title: 'CloudWatch Agent not installed', description: 'None of your 6 ECS services have the CW Agent. Missing memory, disk, and custom metrics.', severity: 'high', services: 6, fixCount: 6, fixLabel: '6 agent deployments' },
+    { id: 'g-no-actions', category: 'alarm-actions', appIds: ['all'], title: 'No alarm actions configured', description: 'Alarms will detect issues but won\'t notify anyone. Configure SNS, Slack, or email routing.', severity: 'medium', services: 0, fixCount: 0, fixLabel: 'Configure routing' },
+  ],
+
+  // Cost data
+  cost: {
+    current: { total: 0, breakdown: [{ category: 'Metrics (auto-collected)', amount: 0, note: 'Free tier' }] },
+    projected: [
+      { gapId: 'g-alarms', category: 'Alarms', amount: 4.20, note: '$0.10/alarm' },
+      { gapId: 'g-dashboards', category: 'Dashboards', amount: 3, note: '$3/dashboard' },
+      { gapId: 'g-logs', category: 'Logs ingestion', amount: 28, note: '~56 GB/mo' },
+      { gapId: 'g-traces', category: 'X-Ray traces', amount: 8, note: '~1.6M traces/mo' },
+      { gapId: 'g-anomaly', category: 'Anomaly detection', amount: 5, note: '5 detectors' },
     ],
   },
-  services: [
-    { name: 'api-gateway', type: 'API Gateway', aws: 'Amazon API Gateway', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, requests: '~14M/day' },
-    { name: 'user-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 4 },
-    { name: 'checkout-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-2', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 6 },
-    { name: 'payment-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-2', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 4 },
-    { name: 'order-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 3 },
-    { name: 'inventory-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 2 },
-    { name: 'notification-service', type: 'Lambda', aws: 'AWS Lambda', region: 'us-west-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false, invocations: '~80K/day' },
-    { name: 'search-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-west-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 3 },
-    { name: 'orders-db', type: 'RDS PostgreSQL', aws: 'Amazon RDS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, instance: 'db.r6g.xlarge', multiAZ: true },
-    { name: 'users-db', type: 'RDS PostgreSQL', aws: 'Amazon RDS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, instance: 'db.r6g.large', multiAZ: true },
-    { name: 'session-cache', type: 'ElastiCache Redis', aws: 'Amazon ElastiCache', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, nodes: 2 },
-    { name: 'product-catalog', type: 'DynamoDB', aws: 'Amazon DynamoDB', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
-    { name: 'event-bus', type: 'SNS + SQS', aws: 'Amazon SNS / SQS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
-    { name: 'cdn', type: 'CloudFront', aws: 'Amazon CloudFront', region: 'global', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
-    { name: 'image-processor', type: 'Lambda', aws: 'AWS Lambda', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false, invocations: '~12K/day' },
-    { name: 'static-assets', type: 'S3', aws: 'Amazon S3', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
+
+  // Agent-suggested use cases based on discovered infrastructure
+  useCases: [
+    { id: 'uc-1', title: 'Monitor checkout flow end-to-end', description: 'Set up alarms, logs, tracing, and a dashboard for api-gateway → checkout → payment → orders-db', icon: 'rocket', gapIds: ['g-alarms', 'g-logs', 'g-traces', 'g-dashboards'] },
+    { id: 'uc-2', title: 'Get alerted before customers notice', description: 'Create recommended alarms with anomaly detection on all 16 services', icon: 'bell', gapIds: ['g-alarms', 'g-anomaly'] },
+    { id: 'uc-3', title: 'Enable full-stack observability', description: 'Alarms, logs, traces, dashboards, and anomaly detection for everything', icon: 'globe', gapIds: ['g-alarms', 'g-logs', 'g-traces', 'g-dashboards', 'g-anomaly'] },
   ],
-  coverage: { totalServices: 16, withMetrics: 16, withAlarms: 0, withDashboards: 0, withLogs: 2, withTraces: 0 },
-  setup: {
-    summary: { headline: 'I can set up monitoring for all 16 services', subtext: 'Based on what I found, here\'s my recommended plan. The basics take about 2 minutes — I\'ll handle everything.' },
-    tier1: { ...TIER_LABELS.tier1, items: [
-      { id: 't1-alarms', title: 'Create 42 recommended alarms', description: 'CPU > 90%, memory > 85%, 5xx errors > 1%, p99 latency thresholds per service type', icon: 'bell', viewLabel: 'View alarms', viewPath: '/console', detailsPerResource: true, details: [
-        { service: 'ECS services (6)', alarms: 'CPUUtilization > 90%, MemoryUtilization > 85%, RunningTaskCount < desired' },
-        { service: 'Lambda functions (2)', alarms: 'Errors > 1%, Duration p99 > 10s, Throttles > 0' },
-        { service: 'RDS databases (2)', alarms: 'CPUUtilization > 80%, FreeableMemory < 500MB, ReadLatency > 20ms' },
-        { service: 'API Gateway', alarms: '5XXError > 1%, Latency p99 > 1s, Count anomaly band' },
-        { service: 'DynamoDB', alarms: 'ThrottledRequests > 0, SystemErrors > 0' },
-        { service: 'ElastiCache', alarms: 'CPUUtilization > 75%, EngineCPUUtilization > 80%, CurrConnections anomaly' },
-        { service: 'CloudFront', alarms: '5xxErrorRate > 1%, OriginLatency > 2s' },
-        { service: 'SNS/SQS', alarms: 'NumberOfMessagesPublished anomaly, ApproximateAgeOfOldestMessage > 300s' },
-      ]},
-      { id: 't1-dashboard', title: 'Generate production dashboard', description: 'Overview with health, latency, errors, and throughput for all services', icon: 'chart', viewLabel: 'View dashboard', viewPath: '/home', details: [
-        { section: 'Top row', widgets: 'Service health summary, active alarms count, error rate trend' },
-        { section: 'Compute', widgets: 'ECS CPU/memory per service, Lambda invocations/errors/duration' },
-        { section: 'Data', widgets: 'RDS connections/latency, DynamoDB read/write capacity, ElastiCache hit rate' },
-        { section: 'Traffic', widgets: 'API Gateway requests/latency/errors, CloudFront cache hit ratio' },
-      ]},
-      { id: 't1-anomaly', title: 'Enable anomaly detection', description: 'Using 14 days of existing metric history to establish baselines', icon: 'wave', viewLabel: 'View detectors', viewPath: '/home', details: [
-        { metric: 'API Gateway request count', reason: 'Detect traffic spikes or drops' },
-        { metric: 'ECS CPU/memory per service', reason: 'Catch resource exhaustion early' },
-        { metric: 'RDS read/write latency', reason: 'Database performance degradation' },
-        { metric: 'Lambda duration', reason: 'Cold start or dependency slowdowns' },
-        { metric: 'SQS message age', reason: 'Queue backup / consumer lag' },
-      ]},
-      { id: 't1-logclass', title: 'Optimize Lambda log classes', description: 'Move notification-service logs to Infrequent Access (low volume, saves ~$12/mo)', icon: 'archive', viewLabel: 'View log groups', viewPath: '/home', details: [
-        { logGroup: '/aws/lambda/notification-service', currentClass: 'Standard', recommended: 'Infrequent Access', reason: 'Low query frequency, ~80K invocations/day' },
-        { logGroup: '/aws/lambda/image-processor', currentClass: 'Standard', recommended: 'Keep Standard', reason: 'May need real-time debugging for image failures' },
-      ]},
-    ]},
-    tier2: { ...TIER_LABELS.tier2, items: [
-      { id: 't2-cw-agent', title: 'Deploy CloudWatch Agent on ECS services', description: 'Adds memory, disk, and custom metrics via sidecar.', impact: 'Rolling restart of 6 ECS services (~22 tasks). ~5 min total. Zero-downtime. Reversible.', defaultOn: true, icon: 'cpu', viewLabel: 'View agents', viewPath: '/home', detailsPerResource: true, details: [
-        { service: 'user-service (4 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
-        { service: 'checkout-service (6 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
-        { service: 'payment-service (4 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
-        { service: 'order-service (3 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
-        { service: 'inventory-service (2 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
-        { service: 'search-service (3 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network' },
-      ]},
-      { id: 't2-logs', title: 'Enable log delivery for 14 services', description: 'API Gateway access logs, RDS slow query logs, ECS container logs, CloudFront access logs.', impact: 'API GW, RDS, CloudFront: config only. ECS: rolling redeploy (~5 min). All reversible.', defaultOn: true, icon: 'file', viewLabel: 'View logs', viewPath: '/home', detailsPerResource: true, details: [
-        { service: 'API Gateway', action: 'Enable access logging to CloudWatch Logs (no restart)' },
-        { service: '6 ECS services', action: 'Add awslogs log driver to task definitions (rolling redeploy)' },
-        { service: '2 RDS databases', action: 'Enable slow query log + error log export (parameter group update)' },
-        { service: 'CloudFront', action: 'Enable standard logging to S3 + CloudWatch (no restart)' },
-        { service: 'DynamoDB', action: 'Enable CloudTrail data events for read/write tracking' },
-        { service: 'ElastiCache', action: 'Enable slow log to CloudWatch Logs' },
-      ]},
-      { id: 't2-traces', title: 'Enable X-Ray tracing', description: 'Adds X-Ray sidecar to ECS tasks and enables tracing on API Gateway.', impact: 'ECS: rolling restart (~5 min, zero downtime). API GW: config update. Lambda: instant. Reversible.', defaultOn: true, icon: 'path', viewLabel: 'View traces', viewPath: '/home', detailsPerResource: true, details: [
-        { service: 'API Gateway', action: 'Enable X-Ray tracing on stage (config update, no downtime)' },
-        { service: '6 ECS services', action: 'Add X-Ray daemon sidecar container (rolling redeploy)' },
-        { service: '2 Lambda functions', action: 'Enable active tracing (config update, no cold start impact)' },
-      ]},
-      { id: 't2-container-insights', title: 'Enable Container Insights', description: 'Cluster-level and task-level metrics for all ECS services.', impact: 'Cluster setting update only — no restarts, no downtime. Immediate. Reversible.', defaultOn: true, icon: 'container', viewLabel: 'View insights', viewPath: '/home', detailsPerResource: true, details: [
-        { cluster: 'novamart-east-1', services: 4, action: 'Enable containerInsights account setting' },
-        { cluster: 'novamart-east-2', services: 2, action: 'Enable containerInsights account setting' },
-        { cluster: 'novamart-west-1', services: 1, action: 'Enable containerInsights account setting' },
-      ]},
-      { id: 't2-app-signals', title: 'Enable Application Signals', description: 'APM-level visibility: service map, latency breakdown, error tracking.', impact: 'Rolling restart of ECS services (~5 min, zero downtime). +10-15% memory overhead. Reversible.', defaultOn: false, icon: 'signal', viewLabel: 'View service map', viewPath: '/home', details: [
-        { what: 'Auto-instrumentation', action: 'Adds OpenTelemetry auto-instrumentation to ECS tasks via CW Agent' },
-        { what: 'Service map', action: 'Generates real-time dependency map from trace data' },
-        { what: 'SLO-ready', action: 'Once enabled, you can define SLOs on discovered service operations' },
-      ]},
-    ]},
-    tier3: { ...TIER_LABELS.tier3, items: [
-      { id: 't3-slos', title: 'Define Service Level Objectives', question: 'What availability target for your critical path? (e.g., 99.9%, 99.95%)', suggestion: 'Based on your traffic patterns, I\'d recommend 99.9% availability and p99 latency < 500ms for the checkout flow.', icon: 'target' },
-      { id: 't3-alerts', title: 'Configure alert routing', question: 'Where should critical alarms go? SNS topic, Slack, PagerDuty, or email?', suggestion: 'I can create an SNS topic now and you can add integrations later.', icon: 'route' },
-      { id: 't3-cross-account', title: 'Set up cross-account observability', question: 'Want to link your staging account (novamart-staging) for unified monitoring?', suggestion: 'I\'ll generate a CloudFormation template for both accounts. Someone with admin access will need to deploy it.', icon: 'link' },
-    ]},
+
+  // Needs your attention — ranked issues
+  attention: [
+    { id: 'att-1', severity: 'critical', category: 'coverage', title: 'No alarms on any service', description: 'None of your 16 services have CloudWatch alarms configured. You won\'t be notified of issues.', app: 'All', time: 'Detected just now' },
+    { id: 'att-2', severity: 'high', category: 'coverage', title: 'No distributed tracing', description: 'X-Ray is not enabled. You have no visibility into request flows across services.', app: 'All', time: 'Detected just now' },
+    { id: 'att-3', severity: 'high', category: 'coverage', title: '14 services missing logs', description: 'Only Lambda functions have auto-created log groups. ECS, RDS, and API Gateway need log delivery.', app: 'All', time: 'Detected just now' },
+    { id: 'att-4', severity: 'medium', category: 'insight', title: 'checkout-service CPU trending up', description: 'CPU utilization increased 15% over the past 7 days based on auto-collected metrics.', app: 'Checkout Flow', time: '7 day trend' },
+  ],
+
+  // Service dependency map per application
+  serviceMaps: {
+    'novamart-checkout': {
+      nodes: [
+        { id: 'api-gateway', label: 'API Gateway', type: 'API Gateway', status: 'unknown', x: 10, y: 50 },
+        { id: 'checkout-service', label: 'Checkout', type: 'ECS', status: 'unknown', x: 35, y: 30 },
+        { id: 'payment-service', label: 'Payment', type: 'ECS', status: 'unknown', x: 35, y: 70 },
+        { id: 'order-service', label: 'Orders', type: 'ECS', status: 'unknown', x: 60, y: 50 },
+        { id: 'orders-db', label: 'Orders DB', type: 'RDS', status: 'unknown', x: 85, y: 50 },
+      ],
+      edges: [
+        { from: 'api-gateway', to: 'checkout-service' },
+        { from: 'api-gateway', to: 'payment-service' },
+        { from: 'checkout-service', to: 'order-service' },
+        { from: 'payment-service', to: 'order-service' },
+        { from: 'order-service', to: 'orders-db' },
+      ],
+    },
+    'novamart-catalog': {
+      nodes: [
+        { id: 'search-service', label: 'Search', type: 'ECS', status: 'unknown', x: 15, y: 50 },
+        { id: 'product-catalog', label: 'Catalog DB', type: 'DynamoDB', status: 'unknown', x: 40, y: 30 },
+        { id: 'image-processor', label: 'Image Proc', type: 'Lambda', status: 'unknown', x: 40, y: 70 },
+        { id: 'cdn', label: 'CDN', type: 'CloudFront', status: 'unknown', x: 65, y: 50 },
+        { id: 'static-assets', label: 'Assets', type: 'S3', status: 'unknown', x: 85, y: 50 },
+      ],
+      edges: [
+        { from: 'search-service', to: 'product-catalog' },
+        { from: 'search-service', to: 'image-processor' },
+        { from: 'image-processor', to: 'static-assets' },
+        { from: 'cdn', to: 'static-assets' },
+      ],
+    },
+    'novamart-platform': {
+      nodes: [
+        { id: 'user-service', label: 'Users', type: 'ECS', status: 'unknown', x: 15, y: 30 },
+        { id: 'notification-service', label: 'Notifications', type: 'Lambda', status: 'unknown', x: 15, y: 70 },
+        { id: 'session-cache', label: 'Session Cache', type: 'Redis', status: 'unknown', x: 45, y: 30 },
+        { id: 'users-db', label: 'Users DB', type: 'RDS', status: 'unknown', x: 45, y: 70 },
+        { id: 'inventory-service', label: 'Inventory', type: 'ECS', status: 'unknown', x: 75, y: 30 },
+        { id: 'event-bus', label: 'Event Bus', type: 'SNS/SQS', status: 'unknown', x: 75, y: 70 },
+      ],
+      edges: [
+        { from: 'user-service', to: 'session-cache' },
+        { from: 'user-service', to: 'users-db' },
+        { from: 'notification-service', to: 'event-bus' },
+        { from: 'inventory-service', to: 'event-bus' },
+        { from: 'inventory-service', to: 'users-db' },
+      ],
+    },
   },
-  // Widget display data — persona-specific
-  widgetData: {
-    alarms: { total: 42, ok: 42, alarm: 0, insufficient: 0, nearThreshold: [
-      { name: 'payment-service', metric: 'CPU', value: 72, threshold: 90, unit: '%' },
-      { name: 'orders-db', metric: 'ReadLatency', value: 14, threshold: 20, unit: 'ms' },
-      { name: 'checkout-service', metric: 'Memory', value: 68, threshold: 85, unit: '%' },
-    ]},
-    dashboard: { metrics: [
-      { name: 'API GW', color: '#0ea5e9' },
-      { name: 'Checkout', color: '#8b5cf6' },
-      { name: 'Payment', color: '#f59e0b' },
-      { name: 'Orders DB', color: '#22c55e' },
-    ]},
-    anomaly: { detectors: [
-      { metric: 'API GW requests', distance: '12%' },
-      { metric: 'ECS CPU', distance: '24%' },
-      { metric: 'RDS latency', distance: '8%' },
-      { metric: 'Lambda duration', distance: '31%' },
-      { metric: 'SQS age', distance: '5%' },
-    ]},
-    logs: { total: 14, standard: 13, ia: 1, topByVolume: [
-      { name: 'checkout-service', volume: '1.8 GB/day' },
-      { name: 'payment-service', volume: '1.2 GB/day' },
-      { name: 'api-gateway', volume: '0.9 GB/day' },
-    ]},
-    traces: { latency: [
-      { label: 'p50', value: '82ms' },
-      { label: 'p95', value: '210ms' },
-      { label: 'p99', value: '480ms' },
-    ]},
-    cwAgent: { services: [
-      { name: 'checkout', mem: 62 }, { name: 'payment', mem: 58 },
-      { name: 'user', mem: 45 }, { name: 'order', mem: 41 },
-      { name: 'inventory', mem: 33 }, { name: 'search', mem: 52 },
-    ]},
-    containerInsights: { clusters: [
-      { name: 'east-1', tasks: 13 }, { name: 'east-2', tasks: 10 }, { name: 'west-1', tasks: 3 },
-    ]},
-    logClass: { saved: '~$12/mo', detail: 'notification-service → Infrequent Access. image-processor → Standard (kept).' },
-    appSignals: { detail: 'Service map, latency breakdown, and error tracking enabled.' },
-  },
+
   agentActivity: [
-    { time: 'Just now', action: 'Mapped service dependencies: api-gateway → checkout → payment → orders-db' },
+    { time: 'Just now', action: 'Grouped services into 3 applications by tags' },
     { time: 'Just now', action: 'Found 0 alarms, 0 dashboards, 0 traces configured' },
-    { time: 'Just now', action: 'Analyzed 14 days of default metrics to establish baselines' },
-    { time: 'Just now', action: 'Generated setup plan — waiting for your go-ahead' },
+    { time: 'Just now', action: 'Analyzed 14 days of default metrics for baselines' },
+    { time: 'Just now', action: 'Ready — select gaps to fix or choose a use case' },
   ],
 }
 
 // ─── PERSONA 2: James Okafor — Enterprise fintech (heavy) ────────
 const james = {
   id: 'james',
-  user: {
-    name: 'James Okafor',
-    role: 'Principal Engineer, Observability',
-    team: 'Cloud Platform',
-    company: 'Meridian Financial',
-    email: 'jokafor@meridianfin.com',
-    avatar: null,
-    timezone: 'America/Los_Angeles',
-    lastLogin: null,
-  },
+  user: { name: 'James Okafor', role: 'Principal Engineer, Observability', team: 'Cloud Platform', company: 'Meridian Financial', avatar: null, timezone: 'America/Los_Angeles' },
   demo: {
     observabilityMaturity: 'Intermediate',
-    observabilityDetail: 'Has fragmented monitoring — some teams set up alarms, others didn\'t. 3 stale dashboards. Datadog in some accounts. Wants to consolidate on CloudWatch.',
+    observabilityDetail: 'Fragmented monitoring — some teams set up alarms, others didn\'t. 3 stale dashboards. Datadog in some accounts.',
     spendingCohort: 'Enterprise',
     monthlyAWSSpend: '~$420,000/mo',
     cloudWatchSpend: '~$2,800/mo (fragmented, unoptimized)',
     teamSize: 38,
     oncallRotation: true,
-    incidentTooling: 'PagerDuty + Slack + internal runbook system',
+    incidentTooling: 'PagerDuty + Slack + internal runbooks',
     goals: [
-      'Consolidate from Datadog + fragmented CloudWatch into unified CW Omni',
-      'Get cross-account visibility across 12 accounts in 5 regions',
-      'Reduce alert noise — currently 200+ alarms, 40% are stale or misconfigured',
-      'Enable SLOs for PCI-DSS compliance reporting',
-      'Cut observability costs by consolidating tooling',
+      'Consolidate from Datadog + fragmented CW into unified CW Omni',
+      'Cross-account visibility across 12 accounts',
+      'Reduce alert noise — 147 alarms, 52 stale',
+      'Enable SLOs for PCI-DSS compliance',
     ],
     awsServiceBreakdown: {
       compute: '3 EKS clusters (480 pods), 14 ECS services (86 tasks), 23 Lambda functions',
-      data: '6 RDS (PostgreSQL + Aurora), 4 DynamoDB, 3 ElastiCache Redis, 1 Neptune, 2 Redshift',
-      networking: '3 API Gateways, 2 ALBs, 2 NLBs, 3 CloudFront distributions, 1 Global Accelerator',
-      messaging: '4 SQS queues, 3 SNS topics, 2 EventBridge buses, 1 Kinesis stream, 1 MSK cluster',
-      ai: '2 SageMaker endpoints (fraud detection, risk scoring), 1 Bedrock agent',
-      storage: '12 S3 buckets, 2 EFS volumes',
+      data: '6 RDS/Aurora, 4 DynamoDB, 3 ElastiCache, 1 Neptune, 2 Redshift',
+      networking: '3 API Gateways, 2 ALBs, 2 NLBs, 3 CloudFront, 1 Global Accelerator',
+      messaging: '4 SQS, 3 SNS, 2 EventBridge, 1 Kinesis, 1 MSK',
+      ai: '2 SageMaker endpoints, 1 Bedrock agent',
+      storage: '12 S3 buckets, 2 EFS',
     },
   },
-  application: {
-    name: 'Meridian Banking Platform',
-    description: 'Enterprise fintech platform processing ~$2B/day in transactions across NA, EU, and APAC',
-    environments: ['production', 'staging', 'qa', 'dev', 'sandbox'],
-    regions: ['us-east-1', 'us-west-2', 'eu-west-1', 'eu-central-1', 'ap-southeast-1'],
-    accounts: [
-      { id: '100200300401', name: 'meridian-prod-us', env: 'production' },
-      { id: '100200300402', name: 'meridian-prod-eu', env: 'production' },
-      { id: '100200300403', name: 'meridian-prod-apac', env: 'production' },
-      { id: '100200300404', name: 'meridian-staging', env: 'staging' },
-      { id: '100200300405', name: 'meridian-qa', env: 'qa' },
-      { id: '100200300406', name: 'meridian-dev', env: 'dev' },
-      { id: '100200300407', name: 'meridian-data', env: 'production' },
-      { id: '100200300408', name: 'meridian-ml', env: 'production' },
-      { id: '100200300409', name: 'meridian-security', env: 'production' },
-      { id: '100200300410', name: 'meridian-shared-services', env: 'production' },
-      { id: '100200300411', name: 'meridian-network', env: 'production' },
-      { id: '100200300412', name: 'meridian-sandbox', env: 'sandbox' },
+
+  applications: [
+    {
+      id: 'meridian-payments',
+      name: 'Payments Platform',
+      tag: 'Application:Meridian-Payments',
+      services: [
+        { name: 'public-api', type: 'API Gateway', region: 'us-east-1', hasAlarms: true, hasLogs: true, hasTraces: false },
+        { name: 'payments-cluster', type: 'EKS', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'transaction-processor', type: 'Lambda', region: 'us-east-1', hasAlarms: true, hasLogs: true, hasTraces: false },
+        { name: 'fraud-scorer', type: 'Lambda', region: 'us-east-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+        { name: 'fraud-model', type: 'SageMaker', region: 'us-east-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+        { name: 'transactions-db', type: 'Aurora PostgreSQL', region: 'us-east-1', hasAlarms: true, hasLogs: false, hasTraces: false },
+        { name: 'transaction-stream', type: 'Kinesis', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'error-rate', span: 1, services: ['public-api', 'transaction-processor'] },
+        { type: 'latency-waterfall', span: 2, services: ['public-api', 'payments-cluster', 'transactions-db'] },
+        { type: 'throughput', span: 1, service: 'public-api', label: 'API requests (~85M/day)' },
+        { type: 'model-latency', span: 1, service: 'fraud-model', label: 'Fraud model latency' },
+        { type: 'stream-lag', span: 1, service: 'transaction-stream', label: 'Kinesis iterator age' },
+        { type: 'db-connections', span: 1, service: 'transactions-db' },
+      ],
+    },
+    {
+      id: 'meridian-trading',
+      name: 'Trading Engine',
+      tag: 'Application:Meridian-Trading',
+      services: [
+        { name: 'partner-api', type: 'API Gateway', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'trading-cluster', type: 'EKS', region: 'us-west-2', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'risk-model', type: 'SageMaker', region: 'us-east-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+        { name: 'event-backbone', type: 'MSK', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'ledger-db', type: 'DynamoDB', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'resource-util', span: 1, services: ['trading-cluster'], label: 'EKS cluster (220 pods)' },
+        { type: 'model-latency', span: 1, service: 'risk-model', label: 'Risk model latency' },
+        { type: 'consumer-lag', span: 1, service: 'event-backbone', label: 'MSK consumer lag' },
+        { type: 'dynamo-capacity', span: 1, service: 'ledger-db' },
+        { type: 'throughput', span: 1, service: 'partner-api', label: 'Partner API (~12M/day)' },
+      ],
+    },
+    {
+      id: 'meridian-core',
+      name: 'Core Services',
+      tag: 'Application:Meridian-Core',
+      services: [
+        { name: 'auth-service', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: true, hasLogs: true, hasTraces: false },
+        { name: 'account-service', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: true, hasLogs: false, hasTraces: false },
+        { name: 'accounts-db', type: 'Aurora PostgreSQL', region: 'us-east-1', hasAlarms: true, hasLogs: false, hasTraces: false },
+        { name: 'session-store', type: 'ElastiCache Redis', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'notification-hub', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'error-rate', span: 1, services: ['auth-service', 'account-service'] },
+        { type: 'cache-hit', span: 1, service: 'session-store', label: 'Session cache hit ratio' },
+        { type: 'db-connections', span: 1, service: 'accounts-db' },
+        { type: 'resource-util', span: 2, services: ['auth-service', 'account-service', 'notification-hub'] },
+      ],
+    },
+    {
+      id: 'meridian-compliance',
+      name: 'Compliance & Analytics',
+      tag: 'Application:Meridian-Compliance',
+      services: [
+        { name: 'compliance-engine', type: 'ECS Fargate', region: 'us-east-1', hasAlarms: true, hasLogs: true, hasTraces: false },
+        { name: 'kyc-service', type: 'ECS Fargate', region: 'eu-central-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'analytics-cluster', type: 'EKS', region: 'eu-west-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+        { name: 'report-generator', type: 'Lambda', region: 'us-east-1', hasAlarms: false, hasLogs: true, hasTraces: false },
+        { name: 'advisor-agent', type: 'Bedrock Agent', region: 'us-east-1', hasAlarms: false, hasLogs: false, hasTraces: false },
+      ],
+      widgets: [
+        { type: 'alarms', span: 1 },
+        { type: 'resource-util', span: 1, services: ['compliance-engine', 'kyc-service'] },
+        { type: 'lambda-stats', span: 1, service: 'report-generator' },
+        { type: 'model-latency', span: 1, service: 'advisor-agent', label: 'Bedrock advisor latency' },
+        { type: 'top-errors', span: 2, services: ['compliance-engine', 'kyc-service', 'analytics-cluster'] },
+      ],
+    },
+  ],
+
+  cwAgent: {
+    installed: [],
+    notInstalled: [
+      { name: 'payments-cluster', type: 'EKS', pods: 180, workload: 'payment-processing', tags: { Application: 'Meridian-Payments', Environment: 'production' } },
+      { name: 'trading-cluster', type: 'EKS', pods: 220, workload: 'trading-engine', tags: { Application: 'Meridian-Trading', Environment: 'production' } },
+      { name: 'analytics-cluster', type: 'EKS', pods: 80, workload: 'analytics', tags: { Application: 'Meridian-Compliance', Environment: 'production' } },
+      { name: 'auth-service', type: 'ECS Fargate', tasks: 12, workload: 'auth', tags: { Application: 'Meridian-Core', Environment: 'production' } },
+      { name: 'account-service', type: 'ECS Fargate', tasks: 8, workload: 'web-server', tags: { Application: 'Meridian-Core', Environment: 'production' } },
+      { name: 'notification-hub', type: 'ECS Fargate', tasks: 4, workload: 'worker', tags: { Application: 'Meridian-Core', Environment: 'production' } },
+      { name: 'compliance-engine', type: 'ECS Fargate', tasks: 6, workload: 'compliance', tags: { Application: 'Meridian-Compliance', Environment: 'production' } },
+      { name: 'kyc-service', type: 'ECS Fargate', tasks: 4, workload: 'web-server', tags: { Application: 'Meridian-Compliance', Environment: 'eu-central-1' } },
+    ],
+    summary: { ecs: 5, eks: 3, ec2: 0, total: 8 },
+  },
+
+  gaps: [
+    { id: 'g-stale', category: 'alarms', appIds: ['all'], title: '52 stale/misconfigured alarms', description: 'Orphaned alarms for deleted resources, outdated thresholds, and duplicate alarms across accounts.', severity: 'critical', services: 8, fixCount: 52, fixLabel: '52 alarms to fix' },
+    { id: 'g-alarms', category: 'alarms', appIds: ['meridian-trading', 'meridian-compliance'], title: '14 services have no alarms', description: 'EKS clusters, Lambda functions, Kinesis, MSK, and SageMaker endpoints have no alarm coverage.', severity: 'critical', services: 14, fixCount: 91, fixLabel: '91 new alarms' },
+    { id: 'g-logs', category: 'logs', appIds: ['all'], title: '13 services missing logs', description: 'EKS pod logs, remaining ECS services, Aurora audit logs, and API Gateway access logs not configured.', severity: 'high', services: 13, fixCount: 13, fixLabel: '13 log configurations' },
+    { id: 'g-traces', category: 'traces', appIds: ['all'], title: 'No distributed tracing', description: 'X-Ray/ADOT not enabled. No visibility into request flows across 22 services and 12 accounts.', severity: 'high', services: 22, fixCount: 22, fixLabel: '22 trace configurations' },
+    { id: 'g-dashboards', category: 'dashboards', appIds: ['all'], title: '3 stale dashboards + 4 missing', description: 'Existing dashboards last updated 4 months ago. Missing: EKS Ops, Data Pipeline, ML Models, Cross-Region.', severity: 'medium', services: 22, fixCount: 7, fixLabel: '3 rebuilt + 4 new dashboards' },
+    { id: 'g-anomaly', category: 'anomaly', appIds: ['all'], title: 'No anomaly detection', description: 'Historical data available but no anomaly detectors configured across any service.', severity: 'medium', services: 0, fixCount: 28, fixLabel: '28 anomaly detectors' },
+    { id: 'g-slos', category: 'slos', appIds: ['meridian-payments'], title: 'No SLOs (PCI-DSS gap)', description: 'PCI-DSS compliance requires documented SLOs on payment processing. None configured.', severity: 'critical', services: 0, fixCount: 5, fixLabel: '5 SLOs' },
+    { id: 'g-cross-account', category: 'cross-account', appIds: ['all'], title: 'No cross-account observability', description: '12 accounts operate in silos. No unified view of metrics, logs, or traces across accounts.', severity: 'high', services: 22, fixCount: 1, fixLabel: '1 observability access manager config' },
+    { id: 'g-cw-agent', category: 'cw-agent', appIds: ['all'], title: 'CloudWatch Agent not installed', description: 'None of your 5 ECS services or 3 EKS clusters have the CW Agent. Missing memory, disk, and custom metrics on 8 compute resources.', severity: 'high', services: 8, fixCount: 8, fixLabel: '8 agent deployments' },
+  ],
+
+  cost: {
+    current: { total: 2800, breakdown: [
+      { category: 'Metrics', amount: 820, note: '~2,700 custom metrics' },
+      { category: 'Alarms', amount: 14.70, note: '147 alarms × $0.10' },
+      { category: 'Dashboards', amount: 9, note: '3 dashboards × $3' },
+      { category: 'Logs ingestion', amount: 1400, note: '~2.8 TB/mo (Standard class)' },
+      { category: 'Logs storage', amount: 520, note: '~17 TB retained' },
+      { category: 'Other', amount: 36, note: 'API calls, contributor insights' },
+    ]},
+    projected: [
+      { gapId: 'g-stale', category: 'Fix stale alarms', amount: -5.20, note: 'Remove 52 orphaned alarms' },
+      { gapId: 'g-alarms', category: 'New alarms', amount: 9.10, note: '91 alarms × $0.10' },
+      { gapId: 'g-logs', category: 'Log ingestion', amount: 100, note: '+EKS pod logs, Aurora audit logs' },
+      { gapId: 'g-traces', category: 'X-Ray traces', amount: 180, note: '~36M traces/mo' },
+      { gapId: 'g-dashboards', category: 'Dashboards', amount: 12, note: '4 new × $3' },
+      { gapId: 'g-anomaly', category: 'Anomaly detection', amount: 84, note: '28 detectors' },
+      { gapId: 'g-slos', category: 'SLOs', amount: 0, note: 'Included with Application Signals' },
+      { gapId: 'g-cross-account', category: 'Cross-account', amount: 0, note: 'No additional cost' },
+    ],
+    savings: [
+      { description: 'Move low-query logs to Infrequent Access', amount: 340 },
+      { description: 'Consolidate Datadog (estimated)', amount: 8000 },
     ],
   },
-  services: [
-    // EKS
-    { name: 'payments-cluster', type: 'EKS', aws: 'Amazon EKS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, pods: 180 },
-    { name: 'trading-cluster', type: 'EKS', aws: 'Amazon EKS', region: 'us-west-2', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, pods: 220 },
-    { name: 'analytics-cluster', type: 'EKS', aws: 'Amazon EKS', region: 'eu-west-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, pods: 80 },
-    // ECS
-    { name: 'auth-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: false, hasLogs: true, hasTraces: false, tasks: 12 },
-    { name: 'account-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 8 },
-    { name: 'notification-hub', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false, tasks: 4 },
-    { name: 'compliance-engine', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: true, hasLogs: true, hasTraces: false, tasks: 6 },
-    { name: 'kyc-service', type: 'ECS Fargate', aws: 'Amazon ECS', region: 'eu-central-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, tasks: 4 },
-    // Lambda
-    { name: 'transaction-processor', type: 'Lambda', aws: 'AWS Lambda', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: false, hasLogs: true, hasTraces: false, invocations: '~2.4M/day' },
-    { name: 'fraud-scorer', type: 'Lambda', aws: 'AWS Lambda', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false, invocations: '~1.8M/day' },
-    { name: 'report-generator', type: 'Lambda', aws: 'AWS Lambda', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false, invocations: '~50K/day' },
-    // Data
-    { name: 'transactions-db', type: 'Aurora PostgreSQL', aws: 'Amazon RDS', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: true, hasLogs: false, hasTraces: false, instance: 'db.r6g.2xlarge', multiAZ: true },
-    { name: 'accounts-db', type: 'Aurora PostgreSQL', aws: 'Amazon RDS', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: false, hasLogs: false, hasTraces: false, instance: 'db.r6g.xlarge', multiAZ: true },
-    { name: 'ledger-db', type: 'DynamoDB', aws: 'Amazon DynamoDB', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
-    { name: 'session-store', type: 'ElastiCache Redis', aws: 'Amazon ElastiCache', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, nodes: 6 },
-    // AI/ML
-    { name: 'fraud-model', type: 'SageMaker Endpoint', aws: 'Amazon SageMaker', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false },
-    { name: 'risk-model', type: 'SageMaker Endpoint', aws: 'Amazon SageMaker', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: true, hasTraces: false },
-    { name: 'advisor-agent', type: 'Bedrock Agent', aws: 'Amazon Bedrock', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
-    // Networking
-    { name: 'public-api', type: 'API Gateway', aws: 'Amazon API Gateway', region: 'us-east-1', hasMetrics: true, hasAlarms: true, hasDashboard: true, hasLogs: true, hasTraces: false, requests: '~85M/day' },
-    { name: 'partner-api', type: 'API Gateway', aws: 'Amazon API Gateway', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false, requests: '~12M/day' },
-    // Messaging
-    { name: 'transaction-stream', type: 'Kinesis', aws: 'Amazon Kinesis', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
-    { name: 'event-backbone', type: 'MSK', aws: 'Amazon MSK', region: 'us-east-1', hasMetrics: true, hasAlarms: false, hasDashboard: false, hasLogs: false, hasTraces: false },
+
+  useCases: [
+    { id: 'uc-1', title: 'Monitor payments end-to-end', description: 'Full observability for public-api → payments-cluster → transactions-db with SLOs for PCI-DSS', icon: 'rocket', gapIds: ['g-alarms', 'g-logs', 'g-traces', 'g-dashboards', 'g-slos'] },
+    { id: 'uc-2', title: 'Fix alert noise', description: 'Clean up 52 stale alarms, reconfigure thresholds, add missing coverage', icon: 'bell', gapIds: ['g-stale', 'g-alarms'] },
+    { id: 'uc-3', title: 'Consolidate from Datadog', description: 'Migrate 4 accounts from Datadog to CloudWatch with parallel running. Save ~$8,000/mo.', icon: 'download', gapIds: ['g-alarms', 'g-logs', 'g-traces', 'g-dashboards'] },
+    { id: 'uc-4', title: 'Unified cross-account view', description: 'Link all 12 accounts for single-pane observability across 5 regions', icon: 'globe', gapIds: ['g-cross-account', 'g-dashboards'] },
+    { id: 'uc-5', title: 'PCI-DSS compliance', description: 'SLOs, audit logging, and compliance dashboards for payment processing', icon: 'gauge', gapIds: ['g-slos', 'g-logs', 'g-dashboards'] },
   ],
-  coverage: { totalServices: 22, withMetrics: 22, withAlarms: 8, withDashboards: 3, withLogs: 9, withTraces: 0, existingAlarmCount: 147, staleAlarms: 52 },
-  setup: {
-    summary: { headline: 'I found 22 services across 12 accounts — and some issues', subtext: 'You have 147 existing alarms (52 are stale or misconfigured), 3 dashboards last updated 4 months ago, and no tracing. I can fix the gaps and consolidate everything.' },
-    tier1: { ...TIER_LABELS.tier1, items: [
-      { id: 't1-alarms', title: 'Fix 52 stale alarms + create 91 new ones', description: 'Reconfigure 52 misconfigured alarms and add coverage for 14 unmonitored services. Total after: 238 alarms.', icon: 'bell', viewLabel: 'View alarms', viewPath: '/console', detailsPerResource: true, details: [
-        { service: 'EKS clusters (3)', alarms: 'Pod restart rate, node CPU/memory, pending pods, OOM kills' },
-        { service: 'ECS services (14)', alarms: 'CPUUtilization > 90%, MemoryUtilization > 85%, RunningTaskCount < desired' },
-        { service: 'Lambda functions (23)', alarms: 'Errors > 0.5%, Duration p99 > threshold, Throttles > 0, ConcurrentExecutions' },
-        { service: 'Aurora/RDS (6)', alarms: 'CPUUtilization > 80%, FreeableMemory, ReadLatency, ReplicaLag, Deadlocks' },
-        { service: 'DynamoDB (4)', alarms: 'ThrottledRequests, SystemErrors, ConsumedRCU/WCU vs provisioned' },
-        { service: 'API Gateways (3)', alarms: '5XXError > 0.5%, Latency p99, IntegrationLatency, Count anomaly' },
-        { service: 'Kinesis + MSK', alarms: 'GetRecords.IteratorAgeMilliseconds, ReadProvisionedThroughputExceeded' },
-        { service: 'SageMaker (2)', alarms: 'ModelLatency p99, Invocation5XXErrors, CPUUtilization, MemoryUtilization' },
-        { service: 'Stale alarms (52)', alarms: 'Reconfigure thresholds, remove orphaned alarms for deleted resources' },
-      ]},
-      { id: 't1-dashboard', title: 'Rebuild 3 stale dashboards + create 4 new ones', description: 'Current dashboards are 4 months old and missing 15 services. I\'ll rebuild and add cross-account views.', icon: 'chart', viewLabel: 'View dashboards', viewPath: '/home', details: [
-        { dashboard: 'Executive Overview', status: 'Rebuild — add cross-account health, SLO status, cost trend' },
-        { dashboard: 'Payments Pipeline', status: 'Rebuild — add EKS pod metrics, Kinesis lag, fraud model latency' },
-        { dashboard: 'Compliance', status: 'Rebuild — add audit trail, KYC metrics, PCI-DSS indicators' },
-        { dashboard: 'EKS Operations (new)', status: 'Create — pod health, node utilization, HPA scaling across 3 clusters' },
-        { dashboard: 'Data Pipeline (new)', status: 'Create — Kinesis throughput, MSK consumer lag, DynamoDB capacity' },
-        { dashboard: 'ML Models (new)', status: 'Create — SageMaker endpoint latency, invocation errors, Bedrock token usage' },
-        { dashboard: 'Cross-Region (new)', status: 'Create — latency comparison, failover readiness, replication lag' },
-      ]},
-      { id: 't1-anomaly', title: 'Enable anomaly detection on 28 key metrics', description: 'Using historical data to establish baselines across all critical services', icon: 'wave', viewLabel: 'View detectors', viewPath: '/home', details: [
-        { metric: 'Transaction volume per region', reason: 'Detect regional traffic shifts or outages' },
-        { metric: 'EKS pod restart rate', reason: 'Catch crash loops before they cascade' },
-        { metric: 'Aurora replication lag', reason: 'Cross-region consistency for compliance' },
-        { metric: 'Kinesis iterator age', reason: 'Stream processing backlog detection' },
-        { metric: 'SageMaker model latency', reason: 'ML model degradation (data drift)' },
-        { metric: 'API Gateway error rate per endpoint', reason: 'Per-route anomaly detection' },
-        { metric: 'MSK consumer group lag', reason: 'Event processing delays' },
-      ]},
-      { id: 't1-logclass', title: 'Optimize log classes across 9 log groups', description: 'Move low-query log groups to Infrequent Access. Estimated savings: ~$340/mo', icon: 'archive', viewLabel: 'View log groups', viewPath: '/home', details: [
-        { logGroup: '/aws/lambda/report-generator', currentClass: 'Standard', recommended: 'Infrequent Access', reason: 'Batch job, rarely queried' },
-        { logGroup: '/aws/ecs/notification-hub', currentClass: 'Standard', recommended: 'Infrequent Access', reason: 'Low-priority notifications' },
-        { logGroup: '/aws/sagemaker/fraud-model', currentClass: 'Standard', recommended: 'Keep Standard', reason: 'Needs real-time debugging for model issues' },
-        { logGroup: '/aws/lambda/fraud-scorer', currentClass: 'Standard', recommended: 'Keep Standard', reason: 'Critical path — needs live tail' },
-      ]},
-    ]},
-    tier2: { ...TIER_LABELS.tier2, items: [
-      { id: 't2-cw-agent', title: 'Deploy CloudWatch Agent on ECS + EKS', description: 'Adds memory, disk, GPU, and custom metrics. ECS sidecar + EKS DaemonSet.', impact: 'ECS: rolling restart of 14 services (~86 tasks, ~8 min). EKS: DaemonSet rollout (~3 min per cluster). Zero-downtime. Reversible.', defaultOn: true, icon: 'cpu', viewLabel: 'View agents', viewPath: '/home', detailsPerResource: true, details: [
-        { service: '14 ECS services (86 tasks)', action: 'Add CW Agent sidecar, collect memory + disk + network + custom metrics' },
-        { service: 'payments-cluster (180 pods)', action: 'Deploy CW Agent DaemonSet, collect pod/node/container metrics' },
-        { service: 'trading-cluster (220 pods)', action: 'Deploy CW Agent DaemonSet, collect pod/node/container metrics' },
-        { service: 'analytics-cluster (80 pods)', action: 'Deploy CW Agent DaemonSet, collect pod/node/container metrics' },
-      ]},
-      { id: 't2-logs', title: 'Enable log delivery for 13 unlogged services', description: 'EKS pod logs, remaining ECS services, Aurora audit logs, API Gateway access logs.', impact: 'EKS: Fluent Bit DaemonSet (~2 min). ECS: rolling redeploy. Aurora: parameter group update. All reversible.', defaultOn: true, icon: 'file', viewLabel: 'View logs', viewPath: '/home', detailsPerResource: true, details: [
-        { service: '3 EKS clusters', action: 'Deploy Fluent Bit DaemonSet for pod log collection' },
-        { service: '5 ECS services (no logs)', action: 'Add awslogs log driver to task definitions' },
-        { service: '4 Aurora/RDS databases', action: 'Enable audit log + slow query log export' },
-        { service: 'partner-api', action: 'Enable access logging to CloudWatch Logs' },
-      ]},
-      { id: 't2-traces', title: 'Enable X-Ray tracing across all services', description: 'Full distributed tracing from API Gateway through EKS/ECS to databases.', impact: 'EKS: ADOT collector DaemonSet (~3 min). ECS: X-Ray sidecar (rolling restart). API GW: config update. Reversible.', defaultOn: true, icon: 'path', viewLabel: 'View traces', viewPath: '/home', detailsPerResource: true, details: [
-        { service: '3 API Gateways', action: 'Enable X-Ray tracing on all stages' },
-        { service: '3 EKS clusters', action: 'Deploy ADOT collector for distributed tracing' },
-        { service: '14 ECS services', action: 'Add X-Ray daemon sidecar container' },
-        { service: '23 Lambda functions', action: 'Enable active tracing (config toggle)' },
-        { service: '2 SageMaker endpoints', action: 'Enable inference tracing' },
-      ]},
-      { id: 't2-container-insights', title: 'Enable Container Insights on EKS + ECS', description: 'Cluster, node, pod, and task-level metrics with enhanced observability.', impact: 'EKS: enhanced observability add-on (~2 min). ECS: cluster setting update. No restarts. Reversible.', defaultOn: true, icon: 'container', viewLabel: 'View insights', viewPath: '/home', detailsPerResource: true, details: [
-        { cluster: 'payments-cluster (EKS)', pods: 180, action: 'Enable enhanced Container Insights with Prometheus metrics' },
-        { cluster: 'trading-cluster (EKS)', pods: 220, action: 'Enable enhanced Container Insights with Prometheus metrics' },
-        { cluster: 'analytics-cluster (EKS)', pods: 80, action: 'Enable enhanced Container Insights' },
-        { cluster: 'ECS clusters (5 regions)', services: 14, action: 'Enable containerInsights account setting' },
-      ]},
-      { id: 't2-app-signals', title: 'Enable Application Signals', description: 'APM-level visibility with auto-instrumented service map, latency breakdown, and error tracking.', impact: 'Requires ADOT auto-instrumentation on EKS + CW Agent on ECS. Rolling restarts. +10-15% memory overhead. Reversible.', defaultOn: true, icon: 'signal', viewLabel: 'View service map', viewPath: '/home', details: [
-        { what: 'Auto-instrumentation', action: 'Java/Python/Node auto-instrumentation via ADOT on EKS and CW Agent on ECS' },
-        { what: 'Service map', action: 'Real-time dependency map across 22 services, 12 accounts, 5 regions' },
-        { what: 'SLO-ready', action: 'Enables SLO creation on discovered operations — needed for PCI-DSS compliance' },
-      ]},
-    ]},
-    tier3: { ...TIER_LABELS.tier3, items: [
-      { id: 't3-slos', title: 'Define SLOs for PCI-DSS compliance', question: 'What availability and latency targets for payment processing? Compliance requires documented SLOs.', suggestion: 'For PCI-DSS: 99.95% availability on payment endpoints, p99 latency < 300ms, error rate < 0.1%. I can create these with burn-rate alerting.', icon: 'target' },
-      { id: 't3-alerts', title: 'Consolidate alert routing (PagerDuty + Slack)', question: 'You have 3 PagerDuty services and 8 Slack channels. Want to consolidate routing rules?', suggestion: 'I can map alarms to PagerDuty services by severity and team ownership, and route to the right Slack channels.', icon: 'route' },
-      { id: 't3-cross-account', title: 'Set up cross-account observability (12 accounts)', question: 'Link all 12 accounts for unified monitoring? This requires IAM changes in each account.', suggestion: 'I\'ll generate CloudFormation StackSets to deploy the observability access manager across all accounts. Needs org admin approval.', icon: 'link' },
-      { id: 't3-datadog', title: 'Plan Datadog migration', question: '4 accounts still use Datadog. Want to create a migration plan with parallel running?', suggestion: 'I can set up dual-shipping (metrics to both CW and Datadog) for 30 days, then cut over. Estimated savings: ~$8,000/mo.', icon: 'route' },
-      { id: 't3-genai', title: 'Enable GenAI observability', question: 'Your Bedrock agent and SageMaker models need specialized monitoring. Enable AI-specific dashboards?', suggestion: 'I can track token usage, model latency, hallucination rates, and cost per inference across your AI stack.', icon: 'signal' },
-    ]},
+
+  attention: [
+    { id: 'att-1', severity: 'critical', category: 'alarm', title: 'transactions-db CPU at 76%', description: 'Aurora PostgreSQL CPU approaching 80% threshold. Connection count also elevated at 340/500.', app: 'Payments Platform', time: '12 min ago' },
+    { id: 'att-2', severity: 'critical', category: 'coverage', title: '52 stale alarms across 4 accounts', description: 'Orphaned alarms for deleted resources, outdated thresholds. Generating noise and masking real issues.', app: 'All', time: 'Detected just now' },
+    { id: 'att-3', severity: 'high', category: 'alarm', title: 'fraud-model latency approaching SLA', description: 'p99 latency at 290ms, SLA is 300ms. Trending upward over the past week — possible data drift.', app: 'Payments Platform', time: '25 min ago' },
+    { id: 'att-4', severity: 'high', category: 'coverage', title: 'No distributed tracing on any service', description: 'X-Ray/ADOT not enabled across 22 services and 12 accounts. No request flow visibility.', app: 'All', time: 'Detected just now' },
+    { id: 'att-5', severity: 'high', category: 'compliance', title: 'No SLOs defined (PCI-DSS gap)', description: 'PCI-DSS compliance requires documented SLOs on payment processing. None configured.', app: 'Payments Platform', time: 'Compliance' },
+    { id: 'att-6', severity: 'medium', category: 'insight', title: 'MSK consumer lag increasing', description: 'event-backbone consumer lag at 342 messages, up 40% from yesterday. Processing may be falling behind.', app: 'Trading Engine', time: '1 hour trend' },
+    { id: 'att-7', severity: 'medium', category: 'cost', title: 'Datadog running in parallel', description: '4 accounts still have Datadog agents. Consolidating could save ~$8,000/mo.', app: 'All', time: 'Optimization' },
+    { id: 'att-8', severity: 'low', category: 'insight', title: 'analytics-cluster underutilized', description: 'EKS cluster in eu-west-1 running at 22% CPU. Consider scaling down or consolidating workloads.', app: 'Compliance & Analytics', time: '7 day avg' },
+  ],
+
+  serviceMaps: {
+    'meridian-payments': {
+      nodes: [
+        { id: 'public-api', label: 'Public API', type: 'API GW', status: 'healthy', x: 5, y: 50 },
+        { id: 'payments-cluster', label: 'Payments EKS', type: 'EKS', status: 'warning', x: 30, y: 30 },
+        { id: 'transaction-processor', label: 'Txn Processor', type: 'Lambda', status: 'healthy', x: 30, y: 70 },
+        { id: 'fraud-scorer', label: 'Fraud Scorer', type: 'Lambda', status: 'healthy', x: 55, y: 30 },
+        { id: 'fraud-model', label: 'Fraud Model', type: 'SageMaker', status: 'warning', x: 55, y: 70 },
+        { id: 'transactions-db', label: 'Txn DB', type: 'Aurora', status: 'warning', x: 80, y: 50 },
+        { id: 'transaction-stream', label: 'Kinesis', type: 'Kinesis', status: 'healthy', x: 80, y: 15 },
+      ],
+      edges: [
+        { from: 'public-api', to: 'payments-cluster' },
+        { from: 'public-api', to: 'transaction-processor' },
+        { from: 'payments-cluster', to: 'fraud-scorer' },
+        { from: 'payments-cluster', to: 'transactions-db' },
+        { from: 'transaction-processor', to: 'fraud-model' },
+        { from: 'transaction-processor', to: 'transactions-db' },
+        { from: 'fraud-scorer', to: 'fraud-model' },
+        { from: 'transactions-db', to: 'transaction-stream' },
+      ],
+    },
   },
-  // Widget display data — persona-specific
-  widgetData: {
-    alarms: { total: 238, ok: 220, alarm: 3, insufficient: 15, nearThreshold: [
-      { name: 'payments-cluster', metric: 'Pod restarts', value: 8, threshold: 10, unit: '/hr' },
-      { name: 'transactions-db', metric: 'CPU', value: 76, threshold: 80, unit: '%' },
-      { name: 'trading-cluster', metric: 'Memory', value: 78, threshold: 85, unit: '%' },
-      { name: 'fraud-model', metric: 'Latency p99', value: 280, threshold: 300, unit: 'ms' },
-    ]},
-    dashboard: { metrics: [
-      { name: 'Public API', color: '#0ea5e9' },
-      { name: 'Payments', color: '#f59e0b' },
-      { name: 'Trading', color: '#8b5cf6' },
-      { name: 'Fraud Model', color: '#ef4444' },
-      { name: 'Transactions DB', color: '#22c55e' },
-      { name: 'Kinesis', color: '#f97316' },
-    ]},
-    anomaly: { detectors: [
-      { metric: 'Transaction volume (us-east-1)', distance: '6%' },
-      { metric: 'EKS pod restart rate', distance: '18%' },
-      { metric: 'Aurora replication lag', distance: '3%' },
-      { metric: 'Kinesis iterator age', distance: '42%' },
-      { metric: 'SageMaker model latency', distance: '15%' },
-      { metric: 'MSK consumer lag', distance: '28%' },
-      { metric: 'API error rate /v2/payments', distance: '9%' },
-    ]},
-    logs: { total: 22, standard: 20, ia: 2, topByVolume: [
-      { name: 'payments-cluster', volume: '18.4 GB/day' },
-      { name: 'trading-cluster', volume: '12.1 GB/day' },
-      { name: 'transaction-processor', volume: '6.8 GB/day' },
-      { name: 'public-api', volume: '4.2 GB/day' },
-    ]},
-    traces: { latency: [
-      { label: 'p50', value: '45ms' },
-      { label: 'p95', value: '180ms' },
-      { label: 'p99', value: '320ms' },
-    ]},
-    cwAgent: { services: [
-      { name: 'payments-cluster', mem: 71 }, { name: 'trading-cluster', mem: 68 },
-      { name: 'analytics-cluster', mem: 42 }, { name: 'auth-service', mem: 55 },
-      { name: 'compliance-engine', mem: 48 }, { name: 'account-service', mem: 39 },
-    ]},
-    containerInsights: { clusters: [
-      { name: 'payments (EKS)', tasks: 180 }, { name: 'trading (EKS)', tasks: 220 },
-      { name: 'analytics (EKS)', tasks: 80 }, { name: 'ECS (5 regions)', tasks: 86 },
-    ]},
-    logClass: { saved: '~$340/mo', detail: 'report-generator + notification-hub → Infrequent Access. Critical path logs kept on Standard.' },
-    appSignals: { detail: 'Service map across 22 services, 12 accounts, 5 regions. SLO-ready for PCI-DSS compliance.' },
-  },
+
   agentActivity: [
     { time: 'Just now', action: 'Scanned 12 accounts across 5 regions, discovered 22 services' },
-    { time: 'Just now', action: 'Found 147 existing alarms — 52 stale or misconfigured across 4 accounts' },
+    { time: 'Just now', action: 'Grouped services into 4 applications by tags' },
+    { time: 'Just now', action: 'Found 147 existing alarms — 52 stale or misconfigured' },
     { time: 'Just now', action: '3 dashboards found — last updated 4 months ago' },
-    { time: 'Just now', action: 'Detected Datadog agents in 4 accounts (parallel monitoring)' },
-    { time: 'Just now', action: 'Identified PCI-DSS compliance gaps: no SLOs, incomplete audit logging' },
-    { time: 'Just now', action: 'Generated setup plan — waiting for your go-ahead' },
+    { time: 'Just now', action: 'Identified PCI-DSS compliance gaps' },
+    { time: 'Just now', action: 'Ready — select gaps to fix or choose a use case' },
+  ],
+
+  slos: [
+    { id: "slo-payments-avail", service: "Payments Platform", name: "Availability", target: 99.95, current: 99.92, trend: "down", status: "at-risk", window: "30d rolling", burnRate: 3.2, budgetRemaining: 12 },
+    { id: "slo-payments-latency", service: "Payments Platform", name: "Latency p99 < 500ms", target: 99.5, current: 99.8, trend: "stable", status: "healthy", window: "30d rolling", burnRate: 0.4, budgetRemaining: 78 },
+    { id: "slo-trading-avail", service: "Trading Engine", name: "Availability", target: 99.99, current: 99.995, trend: "stable", status: "healthy", window: "30d rolling", burnRate: 0.1, budgetRemaining: 95 },
+    { id: "slo-trading-latency", service: "Trading Engine", name: "Order latency p99 < 50ms", target: 99.0, current: 99.2, trend: "stable", status: "healthy", window: "30d rolling", burnRate: 0.8, budgetRemaining: 62 },
+    { id: "slo-core-auth", service: "Core Services", name: "Auth availability", target: 99.9, current: 99.95, trend: "up", status: "healthy", window: "30d rolling", burnRate: 0.2, budgetRemaining: 88 },
+    { id: "slo-compliance-audit", service: "Compliance & Analytics", name: "Audit log completeness", target: 100, current: 100, trend: "stable", status: "healthy", window: "7d rolling", burnRate: 0, budgetRemaining: 100 },
+  ],
+  activeAlarms: [
+    { id: "aa-1", name: "transactions-db-cpu", resource: "transactions-db", severity: "critical", state: "ALARM", triggered: "12 min ago", metric: "CPUUtilization", value: "76%", threshold: "80%", recommendation: "Scale up or optimize queries." },
+    { id: "aa-2", name: "fraud-model-latency-p99", resource: "fraud-model", severity: "high", state: "ALARM", triggered: "25 min ago", metric: "ModelLatency p99", value: "290ms", threshold: "300ms", recommendation: "Approaching SLA. Check for data drift." },
+    { id: "aa-3", name: "event-backbone-consumer-lag", resource: "event-backbone", severity: "medium", state: "ALARM", triggered: "1 hour ago", metric: "ConsumerLag", value: "342 msgs", threshold: "200 msgs", recommendation: "Consumer falling behind." },
+    { id: "aa-4", name: "public-api-5xx", resource: "public-api", severity: "low", state: "OK", triggered: "3 hours ago (resolved)", metric: "5XXError", value: "0.1%", threshold: "1%", recommendation: "Resolved. Brief upstream timeout." },
+  ],
+  infraHealth: [
+    { name: "payments-cluster", type: "EKS", status: "warning", note: "CPU 72%, 3 pods restarted", app: "Payments Platform" },
+    { name: "trading-cluster", type: "EKS", status: "healthy", note: "All pods healthy, CPU 45%", app: "Trading Engine" },
+    { name: "analytics-cluster", type: "EKS", status: "healthy", note: "Underutilized, CPU 22%", app: "Compliance & Analytics" },
+    { name: "transactions-db", type: "Aurora PostgreSQL", status: "warning", note: "CPU 76%, connections 340/500", app: "Payments Platform" },
+    { name: "accounts-db", type: "Aurora PostgreSQL", status: "healthy", note: "CPU 34%, connections 45/200", app: "Core Services" },
+    { name: "ledger-db", type: "DynamoDB", status: "healthy", note: "Throttles: 0, on-demand", app: "Trading Engine" },
+    { name: "session-store", type: "ElastiCache Redis", status: "healthy", note: "Hit ratio 94%, CPU 18%", app: "Core Services" },
+    { name: "auth-service", type: "ECS Fargate", status: "healthy", note: "12 tasks, CPU 28%", app: "Core Services" },
+    { name: "compliance-engine", type: "ECS Fargate", status: "healthy", note: "6 tasks, CPU 41%", app: "Compliance & Analytics" },
+  ],
+  dashboards: [
+    { id: "dash-1", name: "Payments Overview", lastViewed: "2 hours ago", widgets: 12 },
+    { id: "dash-2", name: "Trading Floor", lastViewed: "1 day ago", widgets: 8 },
+    { id: "dash-3", name: "Infrastructure", lastViewed: "4 months ago", stale: true, widgets: 15 },
+  ],
+  regionHealth: [
+    { region: "us-east-1", status: "warning", services: 12, alarms: 2, note: "DB CPU high" },
+    { region: "us-west-2", status: "healthy", services: 3, alarms: 0, note: "" },
+    { region: "eu-west-1", status: "healthy", services: 2, alarms: 0, note: "" },
+    { region: "eu-central-1", status: "healthy", services: 1, alarms: 0, note: "" },
+    { region: "ap-southeast-1", status: "healthy", services: 4, alarms: 0, note: "" },
   ],
 }
 
 // ─── Exports ──────────────────────────────────────────────────────
 export const personas = { maria, james }
 export const personaList = [maria, james]
-
-// React context for persona switching
 export const PersonaContext = createContext(null)
 
 export function PersonaProvider({ children }) {
   const [activeId, setActiveId] = useState('maria')
-  const active = personas[activeId]
+  const raw = personas[activeId]
+  const allServices = raw.applications.flatMap(a => a.services)
+  const active = {
+    ...raw,
+    application: {
+      name: raw.user.company + ' Platform',
+      description: raw.applications.map(a => a.name).join(', '),
+      regions: [...new Set(allServices.map(() => 'us-east-1'))],
+      accounts: [{ id: '111222333444', name: raw.user.company.toLowerCase().replace(/\s/g, '-') + '-prod', env: 'production' }],
+    },
+    services: allServices,
+    coverage: {
+      totalServices: allServices.length,
+      withMetrics: allServices.length,
+      withAlarms: allServices.filter(s => s.hasAlarms).length,
+      withDashboards: 0,
+      withLogs: allServices.filter(s => s.hasLogs).length,
+      withTraces: allServices.filter(s => s.hasTraces).length,
+    },
+  }
   return (
     <PersonaContext.Provider value={{ persona: active, activeId, setActiveId, personaList }}>
       {children}
@@ -456,5 +500,4 @@ export function usePersona() {
   return useContext(PersonaContext)
 }
 
-// Backward compat — default export is Maria
 export const persona = maria

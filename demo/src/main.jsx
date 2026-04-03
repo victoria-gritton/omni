@@ -5,6 +5,8 @@ import WatchView from './pages/WatchView'
 import PhoneView from './pages/PhoneView'
 import ConsoleView from './pages/ConsoleView'
 import Day0Page from './pages/Day0Page'
+import GapAnalysisPage from './pages/GapAnalysisPage'
+import GettingStartedPage from './pages/GettingStartedPage'
 import LandingPage from './pages/LandingPage'
 import DevOpsFlowPage from './pages/DevOpsFlowPage'
 import DevOpsConsoleView from './pages/DevOpsConsoleView'
@@ -37,6 +39,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/console" element={<ConsoleLayout><ConsoleView /></ConsoleLayout>} />
           <Route path="/monitor" element={<ConsoleLayout><MonitorPage /></ConsoleLayout>} />
           <Route path="/day0" element={<ConsoleLayout><Day0Page /></ConsoleLayout>} />
+          <Route path="/gaps" element={<ConsoleLayout><GapAnalysisPage /></ConsoleLayout>} />
+          <Route path="/getting-started" element={<ConsoleLayout><GettingStartedPage /></ConsoleLayout>} />
           <Route path="/explore" element={<ConsoleLayout><ExplorePage /></ConsoleLayout>} />
           <Route path="/investigate" element={<ConsoleLayout><InvestigatePage /></ConsoleLayout>} />
           <Route path="/query" element={<Navigate to="/explore" replace />} />
