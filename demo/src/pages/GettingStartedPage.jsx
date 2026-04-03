@@ -374,32 +374,55 @@ export default function GettingStartedPage() {
               {/* EKS section */}
               {hasEks && (
                 <div className="glass-card p-4 mb-3 border-l-2 border-l-cyan-400/50">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-[11px] font-medium text-foreground">EKS — CloudWatch Observability Add-on</p>
-                      <p className="text-[9px] text-foreground-muted">Single add-on install per cluster. Enables all capabilities at once.</p>
+                      <p className="text-[9px] text-foreground-muted">Single add-on install per cluster. Most capabilities enabled by default.</p>
                     </div>
                     <span className="text-[9px] text-foreground-disabled">{eksServices.length} cluster{eksServices.length > 1 ? 's' : ''} · ~3 min each</span>
                   </div>
 
-                  {/* What's included */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {['Container Insights', 'Application Signals', 'Fluent Bit logs', 'Prometheus scraping'].map(cap => (
-                      <span key={cap} className="text-[8px] px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-400 border border-cyan-400/20">{cap}</span>
-                    ))}
-                  </div>
-
-                  {/* Auto-instrumentation languages detected */}
-                  <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 mb-3">
-                    <p className="text-[9px] text-foreground-disabled mb-1.5">Auto-instrumentation (detected languages)</p>
-                    <div className="flex gap-2">
-                      {['Java', 'Python', 'Node.js'].map(lang => (
-                        <span key={lang} className="text-[9px] px-2 py-0.5 rounded bg-purple-400/10 text-purple-400 border border-purple-400/20">{lang}</span>
-                      ))}
+                  {/* Capabilities with config notes */}
+                  <div className="flex flex-col gap-2 mb-3">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-cyan-400">Container Insights (Enhanced)</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted">Cluster, node, pod, container metrics. Auto-detects GPUs, Trainium/Inferentia, and EFA adapters.</p>
+                    </div>
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted mb-1.5">Auto-instruments Java, Python, Node.js, .NET. Generates service map, latency breakdown, error tracking.</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[8px] text-foreground-disabled">Namespaces:</span>
+                        {['default', 'payments', 'trading'].map(ns => (
+                          <span key={ns} className="text-[8px] px-1.5 py-0.5 rounded bg-purple-400/10 text-purple-400 border border-purple-400/20">{ns}</span>
+                        ))}
+                        <span className="text-[8px] text-foreground-disabled">(kube-system excluded)</span>
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-green-400">Fluent Bit Logs</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Enabled by default</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted">Pod logs shipped to CloudWatch Logs. All namespaces collected by default.</p>
+                    </div>
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-orange-400">Prometheus Scraping</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">Auto-discovery</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted">Auto-discovers NGINX, Java/JMX, App Mesh exporters. Custom app metrics need <code className="text-[8px] bg-background-surface-1 px-1 rounded">prometheus.io/scrape: "true"</code> annotation.</p>
                     </div>
                   </div>
 
                   {/* Cluster selection */}
+                  <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-1.5">Select clusters</p>
                   <div className="flex flex-col gap-0.5">
                     {eksServices.map(item => {
                       const isSelected = selections.has(item.id)
@@ -418,28 +441,49 @@ export default function GettingStartedPage() {
               {/* ECS section */}
               {hasEcs && (
                 <div className="glass-card p-4 mb-3 border-l-2 border-l-primary/50">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div>
                       <p className="text-[11px] font-medium text-foreground">ECS — Sidecar per service</p>
-                      <p className="text-[9px] text-foreground-muted">CW Agent added to each task definition. Supports Fargate + EC2.</p>
+                      <p className="text-[9px] text-foreground-muted">CW Agent sidecar added to each task definition. Requires per-service configuration.</p>
                     </div>
                     <span className="text-[9px] text-foreground-disabled">{ecsServices.length} service{ecsServices.length > 1 ? 's' : ''} · ~5 min total</span>
                   </div>
 
-                  {/* What's included */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {['Enhanced metrics', 'Application Signals', 'StatsD/EMF support'].map(cap => (
-                      <span key={cap} className="text-[8px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{cap}</span>
-                    ))}
-                  </div>
-
-                  {/* Auto-instrumentation */}
-                  <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5 mb-3">
-                    <p className="text-[9px] text-foreground-disabled mb-1.5">Application Signals auto-instrumentation</p>
-                    <p className="text-[9px] text-foreground-muted">ADOT SDK init container added per task. Service names auto-detected from task definition.</p>
+                  {/* Capabilities with config notes */}
+                  <div className="flex flex-col gap-2 mb-3">
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-cyan-400">Enhanced Metrics</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-green-400/10 text-green-400">Included with sidecar</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted">Memory, disk, network metrics. StatsD and EMF endpoints available for custom app metrics.</p>
+                    </div>
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-purple-400">Application Signals</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Additional setup needed</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted mb-1.5">Requires ADOT SDK init container per task definition + environment variables for service name and cluster.</p>
+                      <p className="text-[9px] text-foreground-muted">I'll generate the task definition changes — you review and deploy via your IaC pipeline.</p>
+                    </div>
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-green-400">Container Insights</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate enablement</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted">Enabled at the cluster level (not part of the agent sidecar). I'll configure this in the next step.</p>
+                    </div>
+                    <div className="rounded-lg bg-background/40 border border-border-muted/20 p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-medium text-foreground-muted">Logs</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded bg-status-degraded/10 text-status-degraded">Separate configuration</span>
+                      </div>
+                      <p className="text-[9px] text-foreground-muted">ECS logs use the awslogs log driver in the task definition — configured in the logging step, not the agent.</p>
+                    </div>
                   </div>
 
                   {/* Service selection */}
+                  <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-1.5">Select services</p>
                   <div className="flex flex-col gap-0.5">
                     {ecsServices.map(item => {
                       const isSelected = selections.has(item.id)
