@@ -156,12 +156,9 @@ export default function GettingStartedPage() {
   const [showExport, setShowExport] = useState(false)
   const contentRef = useRef(null)
 
-  // Selections: all items pre-selected by default
-  const [selections, setSelections] = useState(() => {
-    const all = new Set()
-    Object.values(stepItems).flat().forEach(i => all.add(i.id))
-    return all
-  })
+  // Selections: empty by default, items get selected as user reaches each step
+  const [selections, setSelections] = useState(new Set())
+  const [stepsVisited, setStepsVisited] = useState(new Set(['welcome']))
 
   const step = steps[currentStep]
   const currentItems = stepItems[step.id] || []
@@ -193,6 +190,20 @@ export default function GettingStartedPage() {
   const handleBack = () => { if (currentStep > 0) setCurrentStep(currentStep - 1) }
 
   useEffect(() => { contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }, [currentStep])
+
+  // Auto-select all items when visiting a step for the first time
+  useEffect(() => {
+    if (!stepsVisited.has(step.id) && currentItems.length > 0) {
+      setStepsVisited(prev => new Set(prev).add(step.id))
+      setSelections(prev => {
+        const n = new Set(prev)
+        currentItems.forEach(i => n.add(i.id))
+        return n
+      })
+    } else if (!stepsVisited.has(step.id)) {
+      setStepsVisited(prev => new Set(prev).add(step.id))
+    }
+  }, [currentStep])
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
