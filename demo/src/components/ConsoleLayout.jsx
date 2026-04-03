@@ -106,7 +106,7 @@ const CHAT_RESPONSES = {
     text: <><p>Rollback <span className="text-status-blocked font-medium">not recommended</span>.</p><ul className="mt-1.5 space-y-1"><li className="flex gap-2"><span className="text-foreground-muted">—</span>No deploys in 6 hours</li><li className="flex gap-2"><span className="text-foreground-muted">—</span>Nothing to roll back to</li><li className="flex gap-2"><span className="text-status-active">→</span>Fix: increase memory 512 MB → 1 GB</li></ul></>,
     followUps: ['Approve the fix', 'Show me the runbook', 'What are the risks?'],
   },
-  'post-mortem': {
+  'generate post-mortem': {
     text: <p>I can generate a post-mortem draft with timeline, root cause, and action items. Ready when you are.</p>,
     followUps: ['Yes, generate it', 'Show the timeline first', 'Not now'],
   },
