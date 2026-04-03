@@ -333,14 +333,87 @@ export default function GettingStartedPage() {
             </div>
           )}
 
-          {step.id !== 'welcome' && step.detail && (
+          {step.id !== 'welcome' && step.id !== 'cw-agent' && step.detail && (
             <div className="glass-card p-4 mb-4 ml-14">
               <pre className="text-[11px] text-foreground-muted whitespace-pre-wrap leading-relaxed">{step.detail}</pre>
             </div>
           )}
 
-          {/* Selectable items */}
-          {hasItems && (
+          {/* CW Agent step — rich content */}
+          {step.id === 'cw-agent' && (
+            <div className="ml-14 mb-4">
+              {/* Before vs After */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="glass-card p-3">
+                  <p className="text-[9px] text-foreground-disabled uppercase tracking-wider font-semibold mb-2">Without Agent</p>
+                  <div className="flex flex-col gap-1.5">
+                    {['CPUUtilization', 'NetworkIn/Out', 'DiskReadOps'].map(m => (
+                      <div key={m} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                        <span className="text-[10px] text-foreground">{m}</span>
+                      </div>
+                    ))}
+                    {['MemoryUtilization', 'DiskUsage', 'Custom metrics'].map(m => (
+                      <div key={m} className="flex items-center gap-2 opacity-30">
+                        <div className="w-1.5 h-1.5 rounded-full bg-foreground-disabled" />
+                        <span className="text-[10px] text-foreground-muted line-through">{m}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="glass-card p-3 border-l-2 border-l-cyan-400/50">
+                  <p className="text-[9px] text-cyan-400 uppercase tracking-wider font-semibold mb-2">With Agent</p>
+                  <div className="flex flex-col gap-1.5">
+                    {['CPUUtilization', 'NetworkIn/Out', 'DiskReadOps', 'MemoryUtilization', 'DiskUsage', 'Custom metrics'].map(m => (
+                      <div key={m} className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                        <span className="text-[10px] text-foreground">{m}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Grouped by deployment type */}
+              {(() => {
+                const groups = {}
+                currentItems.forEach(item => {
+                  const method = item.detail.includes('DaemonSet') ? 'EKS — DaemonSet rollout' : 'ECS — Sidecar container'
+                  if (!groups[method]) groups[method] = []
+                  groups[method].push(item)
+                })
+                return Object.entries(groups).map(([method, items]) => (
+                  <div key={method} className="glass-card p-3 mb-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-medium text-foreground">{method}</span>
+                      <span className="text-[9px] text-foreground-disabled">{items.length} services · {method.includes('EKS') ? '~3 min per cluster' : '~5 min total'} · Zero downtime</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      {items.map(item => {
+                        const isSelected = selections.has(item.id)
+                        return (
+                          <div key={item.id} onClick={() => !isDeployed && toggleItem(item.id)} className={`flex items-center gap-2.5 py-1.5 px-2 rounded-lg transition-colors ${isDeployed ? 'opacity-50' : 'cursor-pointer hover:bg-primary/5'} ${isSelected ? 'bg-primary/5' : ''}`}>
+                            {isSelected ? <CheckSquare size={14} weight="fill" className={isDeployed ? 'text-status-active' : 'text-primary'} /> : <Square size={14} className="text-foreground-disabled" />}
+                            <span className="text-[11px] text-foreground flex-1">{item.label}</span>
+                            <span className="text-[9px] text-foreground-muted">${item.cost.toFixed(2)}/mo</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))
+              })()}
+
+              {/* Impact summary */}
+              <div className="rounded-lg bg-status-degraded/5 border border-status-degraded/20 p-3">
+                <p className="text-[10px] text-status-degraded font-medium mb-1">⚡ Infrastructure impact</p>
+                <p className="text-[10px] text-foreground-muted">Rolling restarts for selected services. Each service restarts one task at a time — zero downtime. Fully reversible by removing the sidecar/DaemonSet.</p>
+              </div>
+            </div>
+          )}
+
+          {/* Selectable items (not for welcome or cw-agent which have custom content) */}
+          {hasItems && step.id !== 'cw-agent' && (
             <div className="ml-14">
               <ItemList items={currentItems} selections={selections} onToggle={toggleItem} onToggleAll={toggleAll} deployed={isDeployed} />
             </div>
