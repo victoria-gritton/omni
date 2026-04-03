@@ -106,23 +106,24 @@ function buildSteps(persona) {
 
 function StepIndicator({ steps, currentStep, completedSteps }) {
   return (
-    <div className="flex items-center gap-1 mb-8">
+    <div className="flex flex-col gap-2 mb-8">
       {steps.map((step, i) => {
         const isActive = i === currentStep
         const isDone = completedSteps.has(step.id)
+        const isPast = i < currentStep
         const Icon = step.icon
         return (
-          <div key={step.id} className="flex items-center">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+          <div key={step.id} className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-primary/10 border border-primary/20' : ''}`}>
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
               isDone ? 'bg-status-active/20 text-status-active' :
-              isActive ? 'bg-primary/20 text-primary ring-2 ring-primary/30' :
+              isActive ? 'bg-primary/20 text-primary' :
               'bg-background-surface-1 text-foreground-disabled'
             }`}>
-              {isDone ? <CheckCircle size={16} weight="fill" /> : <Icon size={14} />}
+              {isDone ? <CheckCircle size={14} weight="fill" /> : <Icon size={12} />}
             </div>
-            {i < steps.length - 1 && (
-              <div className={`w-8 h-0.5 mx-1 rounded-full ${isDone ? 'bg-status-active/40' : 'bg-border-muted/30'}`} />
-            )}
+            <span className={`text-[11px] ${isActive ? 'text-primary font-medium' : isDone ? 'text-foreground-muted line-through' : 'text-foreground-disabled'}`}>
+              {i > 0 && i < steps.length - 1 ? `Step ${i}: ` : ''}{step.title}
+            </span>
           </div>
         )
       })}
