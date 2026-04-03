@@ -215,21 +215,21 @@ export default function GettingStartedPage() {
       </div>
 
       {/* Step indicator — timeline */}
-      <div className="flex items-start mb-8 overflow-x-auto pb-2">
+      <div className="flex items-center mb-8 overflow-x-auto pb-2">
         {steps.map((s, i) => {
           const isActive = i === currentStep
           const isDone = deployedSteps.has(s.id)
           const Icon = s.icon
           return (
-            <div key={s.id} className="flex items-start flex-shrink-0" style={{ minWidth: i < steps.length - 1 ? 0 : undefined }}>
-              <button onClick={() => setCurrentStep(i)} className="flex flex-col items-center gap-1.5 w-20">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDone ? 'bg-status-active/20 text-status-active' : isActive ? 'bg-primary/20 text-primary ring-2 ring-primary/30' : 'bg-background-surface-1 text-foreground-disabled'}`}>
-                  {isDone ? <CheckCircle size={16} weight="fill" /> : <Icon size={14} />}
+            <div key={s.id} className="flex items-center flex-shrink-0">
+              <button onClick={() => setCurrentStep(i)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${isActive ? 'bg-primary/10 border border-primary/20' : ''}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-status-active/20 text-status-active' : isActive ? 'bg-primary/20 text-primary' : 'bg-background-surface-1 text-foreground-disabled'}`}>
+                  {isDone ? <CheckCircle size={12} weight="fill" /> : <Icon size={11} />}
                 </div>
-                <span className={`text-[9px] text-center leading-tight ${isActive ? 'text-primary font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled'}`}>{s.title}</span>
+                <span className={`text-[10px] whitespace-nowrap ${isActive ? 'text-primary font-medium' : isDone ? 'text-status-active' : 'text-foreground-disabled'}`}>{s.title}</span>
               </button>
               {i < steps.length - 1 && (
-                <div className={`h-0.5 mt-4 flex-1 min-w-6 ${isDone ? 'bg-status-active/40' : 'bg-border-muted/30'}`} />
+                <div className={`w-6 h-0.5 flex-shrink-0 ${isDone ? 'bg-status-active/40' : 'bg-border-muted/30'}`} />
               )}
             </div>
           )
