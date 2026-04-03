@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code,
-  Cpu, CheckSquare, Square,
+  Cpu, CheckSquare, Square, Globe,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
@@ -150,6 +150,7 @@ export default function GettingStartedPage() {
   const { persona } = usePersona()
   const steps = buildSteps(persona)
   const stepItems = buildStepItems(persona)
+  const allServices = persona.applications.flatMap(a => a.services)
   const [currentStep, setCurrentStep] = useState(0)
   const [deployedSteps, setDeployedSteps] = useState(new Set())
   const [deploying, setDeploying] = useState(false)
@@ -251,7 +252,82 @@ export default function GettingStartedPage() {
             </div>
           </div>
 
-          {step.detail && (
+          {step.id === 'welcome' && (
+            <div className="ml-14 mb-4">
+              {/* Application cards */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {persona.applications.map(app => {
+                  const types = [...new Set(app.services.map(s => s.type))]
+                  return (
+                    <div key={app.id} className="glass-card p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Globe size={14} className="text-primary" />
+                        <span className="text-[11px] font-medium text-foreground">{app.name}</span>
+                      </div>
+                      <p className="text-[10px] text-foreground-muted mb-2">{app.services.length} services</p>
+                      <div className="flex flex-wrap gap-1">
+                        {types.map(t => <span key={t} className="text-[8px] px-1.5 py-0.5 rounded bg-background-surface-1 text-foreground-disabled">{t}</span>)}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Current posture */}
+              <div className="glass-card p-4 mb-4">
+                <h4 className="text-[10px] text-foreground-disabled uppercase tracking-wider font-semibold mb-3">Current Observability</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { label: 'Alarms', have: allServices.filter(s => s.hasAlarms).length, total: allServices.length, color: 'text-red-400', bg: 'bg-red-400' },
+                    { label: 'Logs', have: allServices.filter(s => s.hasLogs).length, total: allServices.length, color: 'text-green-400', bg: 'bg-green-400' },
+                    { label: 'Traces', have: allServices.filter(s => s.hasTraces).length, total: allServices.length, color: 'text-orange-400', bg: 'bg-orange-400' },
+                  ].map(m => (
+                    <div key={m.label}>
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className={`text-heading-m font-semibold ${m.have === 0 ? 'text-foreground-disabled' : m.color}`}>{m.have}</span>
+                        <span className="text-[10px] text-foreground-muted">/ {m.total}</span>
+                      </div>
+                      <p className="text-[10px] text-foreground-muted mb-1">{m.label}</p>
+                      <div className="w-full h-1.5 rounded-full bg-border-muted/30 overflow-hidden">
+                        <div className={`h-full rounded-full ${m.bg}`} style={{ width: `${m.total > 0 ? (m.have / m.total) * 100 : 0}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Agent's plan preview */}
+              <div className="ai-glass-card p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkle size={12} className="text-primary" weight="fill" />
+                  <span className="text-[10px] text-primary font-medium">My recommended plan</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { icon: Cpu, label: 'CW Agent', count: allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type)).length, unit: 'deployments', color: 'text-cyan-400' },
+                    { icon: Bell, label: 'Alarms', count: Math.round(allServices.filter(s => !s.hasAlarms).length * 2.6), unit: 'to create', color: 'text-red-400' },
+                    { icon: FileText, label: 'Logs', count: allServices.filter(s => !s.hasLogs).length, unit: 'to enable', color: 'text-green-400' },
+                    { icon: Path, label: 'Traces', count: allServices.filter(s => !s.hasTraces).length, unit: 'to enable', color: 'text-orange-400' },
+                    { icon: ChartBar, label: 'Dashboard', count: 1, unit: 'to create', color: 'text-primary' },
+                    { icon: WaveTriangle, label: 'Anomaly', count: 5, unit: 'detectors', color: 'text-purple-400' },
+                  ].filter(r => r.count > 0).map(r => {
+                    const Icon = r.icon
+                    return (
+                      <div key={r.label} className="flex items-center gap-2">
+                        <Icon size={12} className={r.color} />
+                        <div>
+                          <span className="text-[11px] font-medium text-foreground">{r.count}</span>
+                          <span className="text-[9px] text-foreground-muted ml-1">{r.unit}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step.id !== 'welcome' && step.detail && (
             <div className="glass-card p-4 mb-4 ml-14">
               <pre className="text-[11px] text-foreground-muted whitespace-pre-wrap leading-relaxed">{step.detail}</pre>
             </div>
