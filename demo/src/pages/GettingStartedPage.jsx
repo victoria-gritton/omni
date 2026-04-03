@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code,
-  Cpu, CheckSquare, Square, Globe,
+  Cpu, CheckSquare, Square, Globe, PaperPlaneRight,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
+import { AgentDrawer } from '../components/Drawer'
 
 // Generate selectable items per step from persona services
 function buildStepItems(persona) {
@@ -155,6 +156,8 @@ export default function GettingStartedPage() {
   const [deployedSteps, setDeployedSteps] = useState(new Set())
   const [deploying, setDeploying] = useState(false)
   const [showExport, setShowExport] = useState(false)
+  const [drawerInvestigation, setDrawerInvestigation] = useState(null)
+  const [agentInput, setAgentInput] = useState('')
   const contentRef = useRef(null)
 
   // Selections: empty by default, items get selected as user reaches each step
@@ -382,8 +385,24 @@ export default function GettingStartedPage() {
           </div>
         </div>
 
-        <RightSidebar stepItems={stepItems} selections={selections} deployedSteps={deployedSteps} cost={persona.cost} />
+        <div className="flex flex-col gap-4">
+          <RightSidebar stepItems={stepItems} selections={selections} deployedSteps={deployedSteps} cost={persona.cost} />
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-3"><Robot size={16} className="text-primary" /><h3 className="text-body-s font-semibold text-foreground">Ask the agent</h3></div>
+            <div className="relative">
+              <input type="text" value={agentInput} onChange={(e) => setAgentInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && agentInput.trim()) { setDrawerInvestigation({ title: 'Agent', subtitle: 'Getting Started', messages: [{ type: 'text', content: `You asked: "${agentInput}". I'm here to help with your setup.` }], followUps: ['What thresholds are you recommending?', 'Which services are most critical?', 'Show me the CloudFormation template'] }); setAgentInput('') } }} placeholder="e.g. 'Why these alarms?'" className="w-full h-9 rounded-lg bg-background-surface-1 border border-border-muted px-3 pr-9 text-[12px] text-foreground placeholder:text-foreground-disabled focus:outline-none focus:border-primary/40" />
+              <button onClick={() => { if (agentInput.trim()) { setDrawerInvestigation({ title: 'Agent', subtitle: 'Getting Started', messages: [{ type: 'text', content: `You asked: "${agentInput}". I'm here to help with your setup.` }], followUps: ['What thresholds are you recommending?', 'Which services are most critical?', 'Show me the CloudFormation template'] }); setAgentInput('') } }} className="absolute right-1.5 top-1.5 w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20"><PaperPlaneRight size={12} /></button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {drawerInvestigation && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" style={{ animation: 'fadeIn 0.2s ease-out' }} onClick={() => setDrawerInvestigation(null)} />
+          <AgentDrawer investigation={drawerInvestigation} onClose={() => setDrawerInvestigation(null)} onExportCode={() => setShowExport(true)} />
+        </>
+      )}
 
       {showExport && <IaCExportModal onClose={() => setShowExport(false)} title={step.title} subtitle={`${selectedInStep} items selected`} />}
     </div>
