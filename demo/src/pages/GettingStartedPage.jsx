@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Sparkle, Robot, ArrowRight, ArrowLeft, Bell, FileText, Path,
   ChartBar, WaveTriangle, CheckCircle, Play, Code, CaretRight,
-  PaperPlaneRight, X, Download,
+  PaperPlaneRight, X, Download, Cpu,
 } from '@phosphor-icons/react'
 import { usePersona } from '../data/persona'
 import { IaCExportModal } from '../components/IaCExportModal'
@@ -16,6 +16,8 @@ function buildSteps(persona) {
   const noLogs = allServices.filter(s => !s.hasLogs).length
   const noTraces = allServices.filter(s => !s.hasTraces).length
   const alarmCount = Math.round(noAlarms * 2.6)
+  const computeServices = allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type))
+  const needsAgent = computeServices.length > 0
 
   return [
     {
@@ -27,13 +29,22 @@ function buildSteps(persona) {
       detail: `Here's what I found:\n${persona.applications.map(a => `• ${a.name} — ${a.services.length} services`).join('\n')}`,
       action: null,
     },
+    ...(needsAgent ? [{
+      id: 'cw-agent',
+      icon: Cpu,
+      color: 'text-cyan-400',
+      title: 'Install CloudWatch Agent',
+      agentMessage: `I found ${computeServices.length} compute services (ECS, EKS) that need the CloudWatch Agent. The agent unlocks memory, disk, and custom metrics that aren't available by default — without it, I can only create basic CPU alarms.`,
+      detail: `What the agent adds:\n• Memory utilization (not available by default)\n• Disk usage and I/O\n• Network metrics (connections, packets)\n• Custom application metrics\n\nDeployment:\n${computeServices.filter(s => s.type === 'ECS Fargate').length > 0 ? `• ECS: sidecar container (rolling restart, ~5 min, zero downtime)\n` : ''}${computeServices.filter(s => s.type === 'EKS').length > 0 ? `• EKS: DaemonSet rollout (~3 min per cluster)\n` : ''}\nThis is reversible — you can remove the agent at any time.`,
+      action: { label: `Deploy agent on ${computeServices.length} services`, type: 'deploy' },
+    }] : []),
     {
       id: 'alarms',
       icon: Bell,
       color: 'text-red-400',
       title: 'Set up alarms',
       agentMessage: noAlarms > 0
-        ? `${noAlarms} of your ${total} services have no alarms. I recommend creating ~${alarmCount} alarms based on your service types — CPU, memory, errors, and latency thresholds.`
+        ? `${noAlarms} of your ${total} services have no alarms. ${needsAgent ? 'Now that the CloudWatch Agent is installed, I can create the full set of alarms including memory and disk — not just CPU.' : 'I recommend creating ~' + alarmCount + ' alarms based on your service types.'} I recommend ~${alarmCount} alarms total.`
         : 'All your services already have alarms configured.',
       detail: noAlarms > 0 ? `I'll create alarms like:\n• ECS/EKS: CPU > 90%, Memory > 85%\n• Lambda: Errors > 1%, Duration p99 > 10s\n• RDS/Aurora: CPU > 80%, Read latency > 20ms\n• API Gateway: 5xx > 1%, Latency p99 > 1s\n\nEach alarm costs $0.10/month.` : null,
       action: noAlarms > 0 ? { label: `Create ${alarmCount} alarms`, type: 'deploy' } : null,
