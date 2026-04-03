@@ -302,28 +302,25 @@ export default function GettingStartedPage() {
                 </div>
               </div>
 
-              {/* Agent's plan preview */}
+              {/* Service map */}
               <div className="ai-glass-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkle size={12} className="text-primary" weight="fill" />
-                  <span className="text-[10px] text-primary font-medium">My recommended plan</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <Globe size={12} className="text-primary" />
+                  <span className="text-[10px] text-primary font-medium">Discovered Service Map</span>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { icon: Cpu, label: 'CW Agent', count: allServices.filter(s => ['ECS Fargate', 'EKS', 'EC2'].includes(s.type)).length, unit: 'deployments', color: 'text-cyan-400' },
-                    { icon: Bell, label: 'Alarms', count: Math.round(allServices.filter(s => !s.hasAlarms).length * 2.6), unit: 'to create', color: 'text-red-400' },
-                    { icon: FileText, label: 'Logs', count: allServices.filter(s => !s.hasLogs).length, unit: 'to enable', color: 'text-green-400' },
-                    { icon: Path, label: 'Traces', count: allServices.filter(s => !s.hasTraces).length, unit: 'to enable', color: 'text-orange-400' },
-                    { icon: ChartBar, label: 'Dashboard', count: 1, unit: 'to create', color: 'text-primary' },
-                    { icon: WaveTriangle, label: 'Anomaly', count: 5, unit: 'detectors', color: 'text-purple-400' },
-                  ].filter(r => r.count > 0).map(r => {
-                    const Icon = r.icon
+                <div className="flex flex-col gap-2">
+                  {persona.applications.map((app, ai) => {
+                    const svcs = app.services
                     return (
-                      <div key={r.label} className="flex items-center gap-2">
-                        <Icon size={12} className={r.color} />
-                        <div>
-                          <span className="text-[11px] font-medium text-foreground">{r.count}</span>
-                          <span className="text-[9px] text-foreground-muted ml-1">{r.unit}</span>
+                      <div key={app.id}>
+                        <p className="text-[9px] text-foreground-disabled uppercase tracking-wider mb-1.5">{app.name}</p>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {svcs.map((s, si) => (
+                            <div key={s.name} className="flex items-center">
+                              <div className="px-2 py-1 rounded bg-background-surface-1 border border-border-muted/30 text-[9px] text-foreground">{s.name}</div>
+                              {si < svcs.length - 1 && <div className="w-3 h-px bg-border-muted/40" />}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )
