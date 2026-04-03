@@ -22,10 +22,6 @@ export default function WatchView() {
           <a href="#/" className="text-[11px] text-link">← Demos</a>
         </div>
 
-        <p className="text-body-m text-foreground text-center max-w-[500px]">
-          Click "View investigation in CloudWatch+" on the phone to continue →
-        </p>
-
         <div className="flex items-center gap-12">
         {/* Watch bezel */}
         <div className="flex items-center gap-12">
@@ -187,6 +183,9 @@ export default function WatchView() {
 
         </div>
 
+        <p className="text-body-m text-foreground text-center max-w-[500px]">
+          Click "View investigation in CloudWatch+" on the phone to continue →
+        </p>
       </div>
     </div>
   )
