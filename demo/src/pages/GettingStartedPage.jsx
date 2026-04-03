@@ -1020,7 +1020,7 @@ export default function GettingStartedPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 sticky top-6 self-start">
           <RightSidebar stepItems={stepItems} selections={selections} deployedSteps={deployedSteps} cost={persona.cost} />
           <div className="glass-card p-4">
             <div className="flex items-center gap-2 mb-3"><Robot size={16} className="text-primary" /><h3 className="text-body-s font-semibold text-foreground">Ask the agent</h3></div>
